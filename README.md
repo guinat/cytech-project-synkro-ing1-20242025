@@ -12,7 +12,7 @@
 
 2. Déplacez-vous dans le dossier cloné :
    ```bash
-   cd cytech-project-web-s2-ing1-20242025
+   cd cytech-project-synkro-ing1-20242025
    ```
 
 ---
