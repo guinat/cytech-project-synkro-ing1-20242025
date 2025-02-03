@@ -7,7 +7,7 @@
 ## Étape 1 : Cloner le dépôt
 1. Clonez la branche principale du dépôt :
    ```bash
-   git clone https://github.com/guinat/cytech-project-web-s2-ing1-20242025.git
+   git clone https://github.com/guinat/cytech-project-synkro-ing1-20242025.git
    ```
 
 2. Déplacez-vous dans le dossier cloné :
