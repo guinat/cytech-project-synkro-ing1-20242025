@@ -1,10 +1,10 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
-import Header from './components/Header';
+import Header from '@/components/Header';
 
-import HelloWorld from './components/HelloWorld';
-import Page1 from './pages/Page1';
-import Page2 from './pages/Page2';
+import HelloWorld from '@/components/HelloWorld';
+import Page1 from '@/pages/Page1';
+import Page2 from '@/pages/Page2';
 
 const App = () => {
   return (

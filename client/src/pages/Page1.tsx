@@ -1,10 +1,11 @@
-import Page1Component from '../components/Page1Component'
+import MaxWidthWrapper from '@/components/MaxWidthWrapper'
+import Page1Component from '@/components/Page1Component'
 
 const Page1 = () => {
     return (
-        <div>
+        <MaxWidthWrapper>
             <Page1Component />
-        </div>
+        </MaxWidthWrapper>
     )
 }
 
