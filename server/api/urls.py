@@ -1,7 +1,6 @@
-from django.urls import path
-from .views import HelloWorld
+from django.urls import path, include
+from . import views
 
 urlpatterns = [
-    path('hello/', HelloWorld.as_view(), name='hello'),
-
+    path('users/', include('users.urls')),
 ]
