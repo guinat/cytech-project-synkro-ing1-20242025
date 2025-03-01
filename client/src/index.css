@@ -88,7 +88,6 @@
   --chart-5: hsl(16, 35%, 65%);              /* approx. de oklch(0.645 0.246 16.439) */
 }
 
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

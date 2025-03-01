@@ -1,20 +1,44 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from '@/context/AuthContext';
 
 import Header from '@/components/Header';
+import AuthRedirect from '@/components/AuthRedirect';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
-import HelloWorld from '@/components/HelloWorld';
-import Page1 from '@/pages/Page1';
-import Page2 from '@/pages/Page2';
+import Home from '@/pages/Home';
+import Debug from '@/pages/Debug';
+import Login from '@/pages/Login';
+import Register from '@/pages/Register';
+import Logout from '@/pages/Logout';
 
 const App = () => {
   return (
     <Router>
-      <Header />
-      <Routes>
-        <Route path="/" element={<HelloWorld />} />
-        <Route path="/page1" element={<Page1 />} />
-        <Route path="/page2" element={<Page2 />} />
-      </Routes>
+      <AuthProvider>
+        <Header />
+        <Routes>
+          <Route path="/login" element={
+            <AuthRedirect title="Login">
+              <Login />
+            </AuthRedirect>
+          } />
+          <Route path="/register" element={
+            <AuthRedirect title="Register">
+              <Register />
+            </AuthRedirect>
+          } />
+          <Route path="/logout" element={<Logout />} />
+          <Route
+            path="/debug"
+            element={
+              <ProtectedRoute>
+                <Debug />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/" element={<Home />} />
+        </Routes>
+      </AuthProvider>
     </Router>
   );
 };
