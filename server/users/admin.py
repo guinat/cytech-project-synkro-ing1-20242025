@@ -1,32 +1,32 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, Role
+from django.contrib.auth import get_user_model
+from django.utils.translation import gettext_lazy as _
 
-
-@admin.register(Role)
-class RoleAdmin(admin.ModelAdmin):
-    list_display = ('role_name',)
+User = get_user_model()
 
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    list_display = ('email', 'username', 'first_name', 'last_name', 'is_staff')
-    list_filter = ('is_staff', 'is_superuser', 'is_active', 'role')
-    search_fields = ('email', 'username', 'first_name', 'last_name')
-    ordering = ('email',)
-
+    """Admin configuration for custom User model"""
+    list_display = ('username', 'email', 'role', 'level', 'points', 'email_verified', 'is_staff', 'is_active')
+    list_filter = ('role', 'level', 'email_verified', 'is_staff', 'is_active')
+    search_fields = ('username', 'email')
+    ordering = ('username',)
+    
     fieldsets = (
-        (None, {'fields': ('email', 'password')}),
-        ('Personal info', {'fields': ('username', 'first_name', 'last_name')}),
-        ('Permissions', {'fields': ('is_active',
-         'is_staff', 'is_superuser', 'role')}),
-        ('Important dates', {'fields': ('last_login', 'created_at')}),
+        (None, {'fields': ('username', 'email', 'password')}),
+        (_('Personal info'), {'fields': ('role', 'level', 'points')}),
+        (_('Verification'), {'fields': ('email_verified',)}),
+        (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
     )
-    readonly_fields = ('created_at',)
-
+    
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'username', 'password1', 'password2'),
+            'fields': ('username', 'email', 'password1', 'password2', 'role', 'level'),
         }),
     )
+    
+    readonly_fields = ('date_joined', 'last_login')

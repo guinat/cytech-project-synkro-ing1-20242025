@@ -1,45 +1,58 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/context/AuthContext';
+import { Toaster } from '@/components/ui/sonner';
+import Header from '@/components/common/Header';
 
-import Header from '@/components/Header';
-import AuthRedirect from '@/components/AuthRedirect';
-import ProtectedRoute from '@/components/ProtectedRoute';
+// Auth components
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import AuthRedirect from '@/components/auth/AuthRedirect';
+import AdminRoute from '@/components/auth/AdminRoute';
 
-import Home from '@/pages/Home';
-import Debug from '@/pages/Debug';
-import Login from '@/pages/Login';
-import Register from '@/pages/Register';
-import Logout from '@/pages/Logout';
+// Pages
+import LoginPage from '@/pages/auth/LoginPage';
+import RegisterPage from '@/pages/auth/RegisterPage';
+import EmailVerificationPage from '@/pages/auth/EmailVerificationPage';
+import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from '@/pages/auth/ResetPasswordPage';
+import EditProfilePage from '@/pages/auth/EditProfilePage';
 
-const App = () => {
+
+import DashboardPage from '@/pages/DashboardPage';
+import HomePage from '@/pages/HomePage';
+import AdminPage from '@/pages/admin/AdminPage';
+
+const App: React.FC = () => {
   return (
-    <Router>
-      <AuthProvider>
-        <Header />
-        <Routes>
-          <Route path="/login" element={
-            <AuthRedirect title="Login">
-              <Login />
-            </AuthRedirect>
-          } />
-          <Route path="/register" element={
-            <AuthRedirect title="Register">
-              <Register />
-            </AuthRedirect>
-          } />
-          <Route path="/logout" element={<Logout />} />
-          <Route
-            path="/debug"
-            element={
-              <ProtectedRoute>
-                <Debug />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/" element={<Home />} />
-        </Routes>
-      </AuthProvider>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <div className="min-h-screen bg-gray-50 flex flex-col">
+          <Header />
+          <main className="flex-grow">
+            <Routes>
+              {/* Auth routes */}
+              <Route path="/" element={<HomePage />} />
+              <Route path="/login" element={<AuthRedirect><LoginPage /></AuthRedirect>} />
+              <Route path="/register" element={<AuthRedirect><RegisterPage /></AuthRedirect>} />
+              <Route path="/forgot-password" element={<AuthRedirect><ForgotPasswordPage /></AuthRedirect>} />
+              <Route path="/reset-password" element={<AuthRedirect><ResetPasswordPage /></AuthRedirect>} />
+              <Route path="/verify-email" element={<EmailVerificationPage />} />
+              
+              {/* Protected routes */}
+              <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+              <Route path="/profile/edit" element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>} />
+              
+              {/* Admin routes */}
+              <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+              
+              {/* Default redirect */}
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+          </main>
+          <Toaster richColors />
+        </div>
+      </Router>
+    </AuthProvider>
   );
 };
 

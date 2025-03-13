@@ -1,119 +1,230 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { authApi } from '../api/auth';
-import { User } from '../api/types';
+import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
+import authService, { User } from '@/services/auth.service';
 
 interface AuthContextType {
-    user: User | null;
-    loading: boolean;
-    error: string | null;
-    login: (email: string, password: string) => Promise<void>;
-    register: (userData: any) => Promise<void>;
-    logout: () => void;
-    isAuthenticated: boolean;
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (username: string, email: string, password: string, passwordConfirm: string) => Promise<void>;
+  logout: () => void;
+  requestPasswordReset: (email: string) => Promise<void>;
+  resetPassword: (token: string, password: string, passwordConfirm: string) => Promise<void>;
+  resendVerificationEmail: () => Promise<void>;
+  verifyEmail: (token: string) => Promise<void>;
+  updateProfile: (username: string, currentPassword: string) => Promise<void>;
+  requestEmailChange: (newEmail: string, currentPassword: string) => Promise<void>;
+  confirmEmailChange: (otpCode: string) => Promise<void>;
+  changePassword: (oldPassword: string, newPassword: string, newPasswordConfirm: string) => Promise<void>;
 }
 
+// Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const navigate = useNavigate();
+// Provider Component
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        const checkAuth = async () => {
-            const token = localStorage.getItem('accessToken');
-            if (token) {
-                try {
-                    const userData = await authApi.getCurrentUser();
-                    setUser(userData);
-                } catch (err) {
-                    localStorage.removeItem('accessToken');
-                    localStorage.removeItem('refreshToken');
-                }
-            }
-            setLoading(false);
-        };
-
-        checkAuth();
-    }, []);
-
-    const login = async (email: string, password: string) => {
+  // Check if user is already logged in on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (authService.isAuthenticated()) {
         try {
-            setError(null);
-            setLoading(true);
-
-            const { access, refresh } = await authApi.login({ email, password });
-
-            localStorage.setItem('accessToken', access);
-            localStorage.setItem('refreshToken', refresh);
-
-            const userData = await authApi.getCurrentUser();
-            setUser(userData);
-            navigate('/debug');
-        } catch (err: any) {
-            setError(err.response?.data?.detail || 'Login failed');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-
-    const register = async (userData: any) => {
-        try {
-            setError(null);
-            setLoading(true);
-
-            console.log("Sending registration data:", userData);
-
-            const response = await authApi.register(userData);
-            console.log("Registration success:", response);
-
-            await login(userData.email, userData.password);
-        } catch (err: any) {
-            console.error("Registration error:", err.response?.data || err);
-
-            if (err.response?.data?.errors) {
-                setError(JSON.stringify(err.response.data.errors));
-            } else if (err.response?.data?.message) {
-                setError(err.response.data.message);
-            } else if (err.response?.data?.error) {
-                setError(err.response.data.error);
-            } else {
-                setError('Registration failed. Please try again.');
+          const userData = await authService.getProfile();
+          setUser(userData);
+        } catch (error) {
+          // Token might be expired, try to refresh
+          const refreshToken = localStorage.getItem('refresh_token');
+          if (refreshToken) {
+            try {
+              const { access } = await authService.refreshToken(refreshToken);
+              authService.storeTokens(access, refreshToken);
+              
+              // Try again with new token
+              const userData = await authService.getProfile();
+              setUser(userData);
+            } catch (refreshError) {
+              // Refresh failed, clear tokens
+              authService.removeTokens();
             }
-
-            setLoading(false);
+          } else {
+            // No refresh token, clear tokens
+            authService.removeTokens();
+          }
         }
+      }
+      
+      setIsLoading(false);
     };
 
-    const logout = () => {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        setUser(null);
-        navigate('/login');
-    };
-
-    return (
-        <AuthContext.Provider value={{
-            user,
-            loading,
-            error,
-            login,
-            register,
-            logout,
-            isAuthenticated: !!user
-        }}>
-            {children}
-        </AuthContext.Provider>
-    );
-};
-
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
+    checkAuth();
+  }, []);
+  
+  const login = async (email: string, password: string) => {
+    try {
+      const response = await authService.login({
+        email,
+        password
+      });
+      
+      // Store tokens
+      authService.storeTokens(response.access, response.refresh);
+      
+      // Set user
+      setUser(response.user);
+    } catch (error) {
+      // Directly throw the original error to preserve ApiError type
+      throw error;
     }
-    return context;
+  };
+
+  const register = async (username: string, email: string, password: string, passwordConfirm: string) => {
+    try {
+      const response = await authService.register({
+        username,
+        email,
+        password,
+        password_confirm: passwordConfirm
+      });
+      
+      // Store tokens
+      authService.storeTokens(response.access, response.refresh);
+      
+      // Set user
+      setUser(response.user);
+    } catch (error) {
+      // Directly throw the original error to preserve ApiError type
+      throw error;
+    }
+  };
+
+  const logout = () => {
+    // Remove tokens from localStorage
+    authService.removeTokens();
+    
+    // Clear user state
+    setUser(null);
+  };
+
+
+  const resetPassword = async (token: string, password: string, passwordConfirm: string) => {
+    try {
+      await authService.resetPassword(token, password, passwordConfirm);
+    } catch (error) {
+      // Directly throw the original error to preserve ApiError type
+      throw error;
+    }
+  };
+
+  const requestPasswordReset = async (email: string) => {
+    try {
+      await authService.requestPasswordReset(email);
+    } catch (error) {
+      // Directly throw the original error to preserve ApiError type
+      throw error;
+    }
+  };
+
+  const resendVerificationEmail = async () => {
+    try {
+      await authService.resendVerificationEmail();
+    } catch (error) {
+      // Directly throw the original error to preserve ApiError type
+      throw error;
+    }
+  };
+
+  const verifyEmail = async (token: string) => {
+    try {
+      await authService.verifyEmail(token);
+      
+      // If user is logged in, update their verified status
+      if (user) {
+        setUser({
+          ...user,
+          email_verified: true
+        });
+      }
+    } catch (error) {
+      // Directly throw the original error to preserve ApiError type
+      throw error;
+    }
+  };
+
+  const updateProfile = async (username: string, currentPassword: string) => {
+    try {
+      const response = await authService.updateProfile(username, currentPassword);
+      
+      // Update user in state
+      setUser(response.user);
+    } catch (error) {
+      // Directly throw the original error to preserve ApiError type
+      throw error;
+    }
+  };
+
+  const requestEmailChange = async (newEmail: string, currentPassword: string) => {
+    try {
+      await authService.requestEmailChange(newEmail, currentPassword);
+    } catch (error) {
+      // Directly throw the original error to preserve ApiError type
+      throw error;
+    }
+  };
+
+  const confirmEmailChange = async (otpCode: string) => {
+    try {
+      const response = await authService.confirmEmailChange(otpCode);
+      
+      // Update user in state
+      setUser(response.user);
+    } catch (error) {
+      // Directly throw the original error to preserve ApiError type
+      throw error;
+    }
+  };
+  
+  const changePassword = async (oldPassword: string, newPassword: string, newPasswordConfirm: string) => {
+    try {
+      await authService.changePassword(oldPassword, newPassword, newPasswordConfirm);
+    } catch (error) {
+      // Directly throw the original error to preserve ApiError type
+      throw error;
+    }
+  };
+
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated: !!user,
+        isLoading,
+        login,
+        register,
+        logout,
+        requestPasswordReset,
+        resetPassword,
+        resendVerificationEmail,
+        verifyEmail,
+        updateProfile,
+        requestEmailChange,
+        confirmEmailChange,
+        changePassword
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };
+
+// Custom hook to use the auth context
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
