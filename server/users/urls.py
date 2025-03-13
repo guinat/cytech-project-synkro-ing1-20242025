@@ -1,17 +1,41 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from . import views
+from django.urls import path
+from rest_framework_simplejwt.views import TokenRefreshView
+from .views import (
+    RegisterView,
+    LoginView,
+    UserProfileView,
+    PasswordChangeView,
+    VerifyEmailView,
+    ResendVerificationEmailView,
+    PasswordResetRequestView,
+    PasswordResetConfirmView,
+    ProfileUpdateView,
+    EmailChangeRequestView,
+    EmailChangeConfirmView
+)
 
-router = DefaultRouter()
-router.register(r'users', views.UserViewSet)
-router.register(r'roles', views.RoleViewSet)
+app_name = 'users'
 
 urlpatterns = [
-    path('', include(router.urls)),
-    path('register/', views.RegisterView.as_view(), name='register'),
-    path('login/', views.CustomTokenObtainPairView.as_view(),
-         name='token_obtain_pair'),
-    path('login/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('me/', views.current_user, name='current_user'),
-]
+    # Authentication
+    path('register/', RegisterView.as_view(), name='register'),
+    path('login/', LoginView.as_view(), name='login'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    
+    # User profile
+    path('profile/', UserProfileView.as_view(), name='profile'),
+    path('profile/update/', ProfileUpdateView.as_view(), name='profile_update'),
+    
+    # Email change
+    path('email/change/request/', EmailChangeRequestView.as_view(), name='email_change_request'),
+    path('email/change/confirm/', EmailChangeConfirmView.as_view(), name='email_change_confirm'),
+    
+    # Password management
+    path('password/change/', PasswordChangeView.as_view(), name='password_change'),
+    path('password/reset/', PasswordResetRequestView.as_view(), name='password_reset_request'),
+    path('password/reset/<str:token>/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    
+    # Email verification
+    path('email/verify/<str:token>/', VerifyEmailView.as_view(), name='verify_email'),
+    path('email/resend-verification/', ResendVerificationEmailView.as_view(), name='resend_verification'),
+] 
