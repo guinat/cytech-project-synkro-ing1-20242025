@@ -23,13 +23,14 @@ cd client
 npm i
 ```
 
-## 3. Configuration du back-end
+## 3. Configuration du back-end (dans un autre terminal)
 
 ### Création d'un environnement virtuel Python
 
 #### Windows
 
 ```bash
+cd ../server
 python -m venv env
 ./env/Scripts/activate
 ```
@@ -72,7 +73,7 @@ Suivez les instructions pour créer un compte administrateur.
 
 ### Démarrer le serveur back-end
 
-Dans le dossier racine du projet, avec l'environnement virtuel activé :
+Dans le dossier server du projet, avec l'environnement virtuel activé :
 
 ```bash
 python manage.py runserver

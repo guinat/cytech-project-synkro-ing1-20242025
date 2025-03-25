@@ -22,14 +22,14 @@ function TabsList({
 }: React.ComponentProps<typeof TabsPrimitive.List>) {
   return (
     <TabsPrimitive.List
-    data-slot="tabs-list"
-    className={cn(
-      // Vous pouvez modifier ici la bordure inférieure
-      "border-b border-blue-200", // Couleur et épaisseur de la bordure
-      // Ou complètement enlever la bordure
-      // "border-b-0", 
-      "inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px]",
-      className
+      data-slot="tabs-list"
+      className={cn(
+        // Vous pouvez modifier ici la bordure inférieure
+        "border-b border-blue-200", // Couleur et épaisseur de la bordure
+        // Ou complètement enlever la bordure
+        // "border-b-0", 
+        "inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px]",
+        className
       )}
       {...props}
     />
