@@ -21,7 +21,7 @@ const items = [
   },
   {
     title: "My Profile",
-    url: "/",
+    url: "/dashboard",
     icon: Inbox,
   },
   {
