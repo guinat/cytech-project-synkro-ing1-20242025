@@ -12,7 +12,7 @@ import { motion } from 'framer-motion';
 const DashboardPage: React.FC = () => {
   const { user, isLoading, resendVerificationEmail } = useAuth();
   const navigate = useNavigate();
-  
+
   const handleResendVerification = async () => {
     try {
       await resendVerificationEmail();
@@ -21,12 +21,12 @@ const DashboardPage: React.FC = () => {
       toast.error('Failed to send verification email. Please try again later.');
     }
   };
-  
+
   if (isLoading) {
     return (
       <MaxWidthWrapper>
         <div className="min-h-screen flex items-center justify-center">
-          <motion.div 
+          <motion.div
             className="text-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -42,17 +42,17 @@ const DashboardPage: React.FC = () => {
       </MaxWidthWrapper>
     );
   }
-  
+
   if (!user) {
     return (
       <MaxWidthWrapper>
-        <motion.div 
+        <motion.div
           className="min-h-screen flex items-center justify-center bg-gray-50 p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <motion.div 
+          <motion.div
             className="text-center"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -73,21 +73,21 @@ const DashboardPage: React.FC = () => {
       </MaxWidthWrapper>
     );
   }
-  
+
   // Helper function to get badge variant based on level
   const getLevelBadgeVariant = (level: string) => {
     switch (level) {
       case 'beginner':
         return 'info';
       case 'intermediate':
-        return 'success'; 
+        return 'success';
       case 'advanced':
         return 'error';
       default:
         return 'default';
     }
   };
-  
+
   // Helper function to get progress color based on level
   const getProgressColor = (level: string) => {
     switch (level) {
@@ -105,14 +105,14 @@ const DashboardPage: React.FC = () => {
   // Animation variants for staggered animations
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { 
+    visible: {
       opacity: 1,
-      transition: { 
+      transition: {
         staggerChildren: 0.1
       }
     }
   };
-  
+
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
     visible: {
@@ -121,36 +121,35 @@ const DashboardPage: React.FC = () => {
       transition: { duration: 0.5 }
     }
   };
-//animation pour la barre de progression
+  //animation pour la barre de progression
   const progressVariants = {
     hidden: { width: '0%' },
-    visible: { 
-      width: `${
-        user.level === 'beginner' 
+    visible: {
+      width: `${user.level === 'beginner'
           ? (user.points / 100) * 100
           : user.level === 'intermediate'
-          ? (user.points / 500) * 100
-          : user.level === 'advanced'
-          ? (user.points / 1000) * 100
-          : 100
-      }%`,
-      transition: { 
-        duration: 1.2, 
+            ? (user.points / 500) * 100
+            : user.level === 'advanced'
+              ? (user.points / 1000) * 100
+              : 100
+        }%`,
+      transition: {
+        duration: 1.2,
         ease: "easeOut",
         delay: 0.5
       }
     }
   };
-  
+
   return (
     <MaxWidthWrapper>
-      <motion.div 
+      <motion.div
         className="min-h-screen py-8 space-y-8"
         initial="hidden"
         animate="visible"
         variants={containerVariants}
       >
-        <motion.div 
+        <motion.div
           className="flex justify-between items-center"
           variants={itemVariants}
         >
@@ -176,9 +175,9 @@ const DashboardPage: React.FC = () => {
                     ) : (
                       <div className="flex w-full justify-between items-center space-x-2">
                         <StatusBadge variant="warning" text="Not verified" position="inline" />
-                        <Button 
-                          variant="link" 
-                          className="text-xs p-0 h-auto cursor-pointer text-muted-foreground" 
+                        <Button
+                          variant="link"
+                          className="text-xs p-0 h-auto cursor-pointer text-muted-foreground"
                           onClick={handleResendVerification}
                         >
                           Resend verification email
@@ -200,7 +199,7 @@ const DashboardPage: React.FC = () => {
                   </p>
                 </motion.div>
                 <Separator />
-                <motion.div 
+                <motion.div
                   variants={itemVariants}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -210,7 +209,7 @@ const DashboardPage: React.FC = () => {
               </CardContent>
             </Card>
           </motion.div>
-          
+
           <motion.div variants={itemVariants}>
             <Card>
               <CardHeader>
@@ -220,8 +219,8 @@ const DashboardPage: React.FC = () => {
                 <motion.div variants={itemVariants}>
                   <p className="text-sm text-muted-foreground">Current level</p>
                   <div className="flex items-center space-x-2">
-                    <StatusBadge 
-                      variant={getLevelBadgeVariant(user.level)} 
+                    <StatusBadge
+                      variant={getLevelBadgeVariant(user.level)}
                       text={user.level.charAt(0).toUpperCase() + user.level.slice(1)}
                       position="inline"
                       pulse={false}
@@ -238,17 +237,17 @@ const DashboardPage: React.FC = () => {
                 <motion.div variants={itemVariants} className="mt-6">
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-xs text-muted-foreground">
-                      {user.level === 'beginner' 
+                      {user.level === 'beginner'
                         ? `${user.points}/100 points to Intermediate`
                         : user.level === 'intermediate'
-                        ? `${user.points}/500 points to Advanced`
-                        : user.level === 'advanced'
-                        ? `${user.points}/1000 points to Expert`
-                        : `${user.points} total points (Expert)`}
+                          ? `${user.points}/500 points to Advanced`
+                          : user.level === 'advanced'
+                            ? `${user.points}/1000 points to Expert`
+                            : `${user.points} total points (Expert)`}
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                    <motion.div 
+                    <motion.div
                       className={`h-2.5 rounded-full ${getProgressColor(user.level)}`}
                       variants={progressVariants}
                     ></motion.div>
