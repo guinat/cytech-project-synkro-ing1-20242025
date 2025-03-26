@@ -1,5 +1,7 @@
 import MaxWidthWrapper from '@/components/common/MaxWidthWrapper';
 
+
+
 const HomePage = () => {
   return (
     <MaxWidthWrapper>
