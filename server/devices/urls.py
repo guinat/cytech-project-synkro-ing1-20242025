@@ -4,9 +4,11 @@ from .views import TVViewSet, LightViewSet, SmartLockViewSet
 
 router = DefaultRouter()
 router.register(r'tv', TVViewSet)
-router.register(r'light', LightViewSet)
+router.register(r'lights', LightViewSet)
 router.register(r'smartlock', SmartLockViewSet)
 
 urlpatterns = [
     path('api/', include(router.urls)),
 ]
+
+

@@ -80,6 +80,12 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # React frontend
 ]
+
+CSRF_TRUSTED_ORIGINS = ['http://localhost:5173']
+
+CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_HTTPONLY = False 
+
 CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = "config.urls"

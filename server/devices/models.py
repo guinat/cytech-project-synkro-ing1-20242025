@@ -65,6 +65,7 @@ class Light(models.Model):
     brightness = models.IntegerField()
     color = models.CharField(max_length=50)
     color_temperature = models.IntegerField()
+    is_on = models.BooleanField(default=False)
 
 class Thermostat(models.Model):
     device = models.OneToOneField(Device, on_delete=models.CASCADE, primary_key=True)
