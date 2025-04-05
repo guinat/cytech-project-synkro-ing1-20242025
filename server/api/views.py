@@ -25,4 +25,10 @@ def api_root(request, format=None):
         
         # Email verification
         'resend_verification_email': reverse('users:resend_verification', request=request, format=format),
+        
+        # Device management
+        'device_types': reverse('devicetype-list', request=request, format=format),
+        'devices': reverse('device-list', request=request, format=format),
+        'data_points': reverse('devicedatapoint-list', request=request, format=format),
+        'commands': reverse('devicecommand-list', request=request, format=format),
     })

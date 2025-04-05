@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     
     # Local apps
     "users",
-    "devices", 
+    "devices",
     "api",
 ]
 
