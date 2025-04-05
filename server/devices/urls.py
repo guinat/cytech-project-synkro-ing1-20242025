@@ -1,12 +1,19 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import TVViewSet, LightViewSet, SmartLockViewSet
+from .views import (
+    DeviceTypeViewSet, DeviceViewSet, 
+    DeviceDataPointViewSet, DeviceCommandViewSet,
+    HomeViewSet, RoomViewSet
+)
 
 router = DefaultRouter()
-router.register(r'tv', TVViewSet)
-router.register(r'light', LightViewSet)
-router.register(r'smartlock', SmartLockViewSet)
+router.register(r'device-types', DeviceTypeViewSet)
+router.register(r'devices', DeviceViewSet)
+router.register(r'data-points', DeviceDataPointViewSet)
+router.register(r'commands', DeviceCommandViewSet)
+router.register(r'homes', HomeViewSet, basename='home')
+router.register(r'rooms', RoomViewSet, basename='room')
 
 urlpatterns = [
-    path('api/', include(router.urls)),
-]
+    path('', include(router.urls)),
+] 

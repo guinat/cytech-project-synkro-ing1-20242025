@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from '@/context/AuthContext';
+import { HomeProvider } from '@/context/HomeContext';
 import { Toaster } from '@/components/ui/sonner';
 import Header from '@/components/common/Header';
 // Auth components
@@ -14,16 +15,15 @@ import EmailVerificationPage from '@/pages/auth/EmailVerificationPage';
 import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from '@/pages/auth/ResetPasswordPage';
 import EditProfilePage from '@/pages/auth/EditProfilePage';
-import DashboardPage from '@/pages/DashboardPage';
+import DashboardPage from '@/pages/dashboard/DashboardPage';
 import HomePage from '@/pages/HomePage';
 import AdminPage from '@/pages/admin/AdminPage';
-import ControlCenterPage from './pages/ControlCenterPage';
+import ControlCenterPage from '@/pages/ControlCenterPage';
 
-// Créez un composant wrapper pour gérer conditionnellement l'affichage du Header
+// wrapper
 const AppContent: React.FC = () => {
   const location = useLocation();
 
-  // Liste des routes où le Header ne doit pas être affiché
   const hiddenHeaderRoutes = ['/control-center'];
 
   return (
@@ -56,12 +56,15 @@ const AppContent: React.FC = () => {
   );
 };
 
+// Dashboard
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
+      <HomeProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </HomeProvider>
     </AuthProvider>
   );
 };

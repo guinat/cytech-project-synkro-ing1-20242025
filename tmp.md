@@ -55,7 +55,6 @@ pip install -r requirements.txt
 ### Configuration de la base de données Django
 
 ```bash
-python manage.py makemigrations
 python manage.py migrate
 ```
 
