@@ -153,6 +153,7 @@ class HomeMembership(models.Model):
     home = models.ForeignKey(Home, on_delete=models.CASCADE, related_name='invitations')
     email = models.EmailField()
     code = models.CharField(max_length=50, unique=True, editable=False)
+    token = models.CharField(max_length=100, unique=True, null=True, blank=True)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='member')
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
@@ -168,6 +169,7 @@ class HomeMembership(models.Model):
         
         # Set expiration date if not already set
         if not self.expires_at:
-            self.expires_at = timezone.now() + timezone.timedelta(days=7)
+            # Par défaut, les invitations expirent après 15 minutes
+            self.expires_at = timezone.now() + timezone.timedelta(minutes=15)
             
         super().save(*args, **kwargs)

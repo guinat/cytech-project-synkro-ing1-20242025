@@ -1,31 +1,38 @@
 from django.shortcuts import render
-from rest_framework import status, permissions
+from rest_framework import status, permissions, views
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate, get_user_model
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
+
+from utils.permissions import IsAdminUser
+from utils.tokens import TokenGenerator
+from utils.api_responses import APIResponse, ErrorCodeEnum
 
 from .serializers import (
     UserLoginSerializer,
     UserSerializer, 
     UserRegistrationSerializer,
     PasswordChangeSerializer,
-    PasswordResetRequestSerializer,
-    PasswordResetConfirmSerializer,
     AdminUserSerializer,
     ProfileUpdateSerializer,
     EmailChangeRequestSerializer,
-    EmailChangeConfirmSerializer
+    EmailChangeConfirmSerializer,
+    AvatarUploadSerializer,
+    PasswordResetRequestSerializer,
+    PasswordResetConfirmSerializer,
 )
-from .tokens import TokenGenerator
 from .email import send_verification_email, send_password_reset_email
+from utils.mixins import APIResponseMixin
 
 User = get_user_model()
 
 
-class RegisterView(APIView):
+class UserRegisterView(APIResponseMixin, APIView):
     """View for user registration"""
     permission_classes = [AllowAny]
     
@@ -40,28 +47,25 @@ class RegisterView(APIView):
             # Generate JWT tokens
             refresh = RefreshToken.for_user(user)
             
-            return Response({
-                'message': 'User registered successfully. Please verify your email.',
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-                'user': UserSerializer(user).data
-            }, status=status.HTTP_201_CREATED)
+            return APIResponse.success(
+                data={
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                    'user': UserSerializer(user).data
+                },
+                message='User registered successfully. Please verify your email.',
+                status_code=status.HTTP_201_CREATED
+            )
         
-        # Format error response
-        formatted_errors = {}
-        for field, error_list in serializer.errors.items():
-            formatted_errors[field] = error_list[0] if error_list else "Invalid data"
-        
-        return Response(
-                {
-                    'error': 'Registration Failed',
-                    'details': formatted_errors
-            }, 
-            status=status.HTTP_400_BAD_REQUEST
+        return APIResponse.error(
+            message='Registration Error',
+            errors=APIResponse.format_serializer_errors(serializer.errors),
+            status_code=status.HTTP_400_BAD_REQUEST,
+            error_code=ErrorCodeEnum.VALIDATION_ERROR
         )
 
 
-class LoginView(APIView):
+class UserLoginView(APIResponseMixin, APIView):
     """View for user login"""
     permission_classes = [AllowAny]
     
@@ -69,74 +73,92 @@ class LoginView(APIView):
         serializer = UserLoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data
-            
-            # Update last_login timestamp
-            from django.utils import timezone
             user.last_login = timezone.now()
-            
-            # Award points for login
-            user.points += 10  # Award 10 points for each login
-            
-            # Update user level based on new points
+            user.points += 10
             user.update_level()
             
-            # Save all changes
             user.save(update_fields=['last_login', 'points', 'level'])
             
-            # Generate JWT tokens
             refresh = RefreshToken.for_user(user)
             
-            return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+                        
+            return APIResponse.success(data={
+                'refresh': refresh_token,
+                'access': access_token,
                 'user': UserSerializer(user).data
-            }, status=status.HTTP_200_OK)
+            })
         
-        # Format error response
-        formatted_errors = {}
-        for field, error_list in serializer.errors.items():
-            formatted_errors[field] = error_list[0] if error_list else "Invalid data"
-        
-        return Response(
-                {
-                    'error': 'Authentication Failed',
-                    'details': formatted_errors
-                }, 
-                status=status.HTTP_400_BAD_REQUEST
+        return APIResponse.error(
+            message='Login Error',
+            errors=APIResponse.format_serializer_errors(serializer.errors),
+            status_code=status.HTTP_400_BAD_REQUEST,
+            error_code=ErrorCodeEnum.INVALID_CREDENTIALS
         )
 
 
-class UserProfileView(APIView):
-    """View for retrieving and updating user profile"""
+class UserLogoutView(APIResponseMixin, APIView):
+    """View for user logout"""
     permission_classes = [IsAuthenticated]
     
+    def post(self, request):
+        """Logout user"""
+        refresh_token = request.data.get('refresh')
+        if refresh_token:
+            try:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            except Exception as e:
+                return APIResponse.error(
+                    message='Logout Error',
+                    errors={'detail': str(e)},
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    error_code=ErrorCodeEnum.TOKEN_INVALID
+                )
+        return APIResponse.success(message='Logged out successfully')
+
+
+class UserProfileView(APIResponseMixin, APIView):
+    """View for user profile operations"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserSerializer
+    
     def get(self, request):
-        """Get user profile data"""
-        serializer = UserSerializer(request.user)
-        return Response(serializer.data)
+        """Get user profile"""
+        serializer = self.serializer_class(request.user)
+        return APIResponse.success(
+            message='User profile retrieved successfully',
+            data=serializer.data,
+            status_code=status.HTTP_200_OK
+        )
     
     def patch(self, request):
-        """Update user profile data"""
-        serializer = UserSerializer(request.user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
+        """Update user profile"""
+        serializer = self.serializer_class(
+            request.user, 
+            data=request.data, 
+            partial=True
+        )
         
-        # Format error response
-        formatted_errors = {}
-        for field, error_list in serializer.errors.items():
-            formatted_errors[field] = error_list[0] if error_list else "Invalid data"
+        if not serializer.is_valid():
+            return APIResponse.error(
+                message='Validation Error',
+                errors=APIResponse.format_serializer_errors(serializer.errors),
+                status_code=status.HTTP_400_BAD_REQUEST,
+                error_code=ErrorCodeEnum.VALIDATION_ERROR
+            )
         
-        return Response(
-            {
-                'error': 'Profile Update Error',
-                'details': formatted_errors
-            }, 
-            status=status.HTTP_400_BAD_REQUEST
+        serializer.save()
+        
+        return APIResponse.success(
+            message='User profile updated successfully',
+            data=serializer.data,
+            status_code=status.HTTP_200_OK
         )
 
 
-class PasswordChangeView(APIView):
+class UserPasswordChangeView(APIResponseMixin, APIView):
     """View for changing password"""
     permission_classes = [IsAuthenticated]
     
@@ -145,61 +167,57 @@ class PasswordChangeView(APIView):
         if serializer.is_valid():
             # Check if old password is correct
             if not request.user.check_password(serializer.validated_data['old_password']):
-                return Response(
-                    {
-                        'error': 'Authentication Error',
-                        'details': {'old_password': 'Current password is incorrect'}
-                    }, 
-                    status=status.HTTP_400_BAD_REQUEST
+                return APIResponse.error(
+                    message='Authentication Error',
+                    errors={'old_password': 'Current password is incorrect'},
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    error_code=ErrorCodeEnum.INVALID_CREDENTIALS
                 )
             
             # Set new password
             request.user.set_password(serializer.validated_data['new_password'])
             request.user.save()
             
-            return Response({'message': 'Password changed successfully.'}, 
-                            status=status.HTTP_200_OK)
+            return APIResponse.success(
+                message='Password changed successfully.',
+                status_code=status.HTTP_200_OK
+            )
         
-        # Format error response
-        formatted_errors = {}
-        for field, error_list in serializer.errors.items():
-            formatted_errors[field] = error_list[0] if error_list else "Invalid data"
-        
-        return Response(
-            {
-                'error': 'Password Change Error',
-                'details': formatted_errors
-            }, 
-            status=status.HTTP_400_BAD_REQUEST
+        return APIResponse.error(
+            message='Password Change Error',
+            errors=APIResponse.format_serializer_errors(serializer.errors),
+            status_code=status.HTTP_400_BAD_REQUEST,
+            error_code=ErrorCodeEnum.VALIDATION_ERROR
         )
 
 
-class VerifyEmailView(APIView):
+class UserVerifyEmailView(APIResponseMixin, APIView):
     """View for verifying email address"""
     permission_classes = [AllowAny]
     
     def post(self, request, token):
         """Verify email with token"""
-        user = TokenGenerator.verify_token(token, 'email_verification')
+        user = TokenGenerator.get_user_from_token(token, 'email_verification')
         
         if not user:
-            return Response(
-                {
-                    'error': 'Token Error',
-                    'details': {'token': 'Invalid or expired verification token'}
-                }, 
-                status=status.HTTP_400_BAD_REQUEST
+            return APIResponse.error(
+                message='Token Error',
+                errors={'token': 'Invalid or expired verification token'},
+                status_code=status.HTTP_400_BAD_REQUEST,
+                error_code=ErrorCodeEnum.TOKEN_INVALID
             )
         
         # Mark email as verified
         user.email_verified = True
         user.save(update_fields=['email_verified'])
         
-        return Response({'message': 'Email verified successfully'}, 
-                        status=status.HTTP_200_OK)
+        return APIResponse.success(
+            message='Email verified successfully',
+            status_code=status.HTTP_200_OK
+        )
 
 
-class ResendVerificationEmailView(APIView):
+class UserResendVerificationEmailView(APIResponseMixin, APIView):
     """View for resending verification email"""
     permission_classes = [IsAuthenticated]
     
@@ -209,111 +227,113 @@ class ResendVerificationEmailView(APIView):
         
         # Check if email is already verified
         if user.email_verified:
-            return Response(
-                {
-                    'error': 'Already Verified',
-                    'details': {'email_verified': 'Email is already verified'}
-                }, 
-                status=status.HTTP_400_BAD_REQUEST
+            return APIResponse.error(
+                message='Already Verified',
+                errors={'email_verified': 'Email is already verified'},
+                status_code=status.HTTP_400_BAD_REQUEST,
+                error_code=ErrorCodeEnum.VALIDATION_ERROR
             )
         
         # Send verification email
         send_verification_email(user, request)
         
-        return Response({'message': 'Verification email sent successfully'}, 
-                        status=status.HTTP_200_OK)
+        return APIResponse.success(
+            message='Verification email sent successfully',
+            status_code=status.HTTP_200_OK
+        )
 
 
-class PasswordResetRequestView(APIView):
-    """View for requesting password reset"""
+class UserForgotPasswordView(APIResponseMixin, APIView):
+    """View for sending password reset email"""
     permission_classes = [AllowAny]
+    serializer_class = PasswordResetRequestSerializer
     
     def post(self, request):
-        serializer = PasswordResetRequestSerializer(data=request.data)
-        if serializer.is_valid():
-            email = serializer.validated_data['email']
-            user = User.objects.filter(email=email).first()
-            
-            # Always return success response for security reasons,
-            # even if email doesn't exist
-            if user:
-                send_password_reset_email(user, request)
-            
-            return Response({'message': 'If the email exists, we have sent a password reset link.'}, 
-                            status=status.HTTP_200_OK)
+        """Send password reset email"""
+        serializer = self.serializer_class(data=request.data)
         
-        # Format error response
-        formatted_errors = {}
-        for field, error_list in serializer.errors.items():
-            formatted_errors[field] = error_list[0] if error_list else "Invalid data"
+        if not serializer.is_valid():
+            return APIResponse.error(
+                message='Validation Error',
+                errors=APIResponse.format_serializer_errors(serializer.errors),
+                status_code=status.HTTP_400_BAD_REQUEST,
+                error_code=ErrorCodeEnum.VALIDATION_ERROR
+            )
         
-        return Response(
-            {
-                'error': 'Password Reset Request Error',
-                'details': formatted_errors
-            }, 
-            status=status.HTTP_400_BAD_REQUEST
+        email = serializer.validated_data.get('email')
+        
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return APIResponse.error(
+                message='User not found',
+                errors={'email': 'No user found with this email address'},
+                status_code=status.HTTP_404_NOT_FOUND,
+                error_code=ErrorCodeEnum.NOT_FOUND
+            )
+        
+        # Send password reset email
+        send_password_reset_email(user, request)
+        
+        return APIResponse.success(
+            message='Password reset instructions sent to your email',
+            status_code=status.HTTP_200_OK
         )
 
 
-class PasswordResetConfirmView(APIView):
-    """View for confirming password reset"""
+class UserResetPasswordView(APIResponseMixin, APIView):
+    """View for resetting password with token"""
     permission_classes = [AllowAny]
+    serializer_class = PasswordResetConfirmSerializer
     
     def post(self, request, token):
-        serializer = PasswordResetConfirmSerializer(data=request.data)
-        if serializer.is_valid():
-            user = TokenGenerator.verify_token(token, 'password_reset')
-            
-            if not user:
-                return Response(
-                    {
-                        'error': 'Token Error',
-                        'details': {'token': 'Invalid or expired reset token'}
-                    }, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            # Set new password
-            user.set_password(serializer.validated_data['password'])
-            user.save()
-            
-            return Response({'message': 'Password reset successfully'}, 
-                            status=status.HTTP_200_OK)
+        """Reset password with token"""
+        user = TokenGenerator.get_user_from_token(token, 'password_reset')
         
-        # Format error response
-        formatted_errors = {}
-        for field, error_list in serializer.errors.items():
-            formatted_errors[field] = error_list[0] if error_list else "Invalid data"
+        if not user:
+            return APIResponse.error(
+                message='Token Error',
+                errors={'token': 'Invalid or expired password reset token'},
+                status_code=status.HTTP_400_BAD_REQUEST,
+                error_code=ErrorCodeEnum.TOKEN_INVALID
+            )
         
-        return Response(
-            {
-                'error': 'Password Reset Confirmation Error',
-                'details': formatted_errors
-            }, 
-            status=status.HTTP_400_BAD_REQUEST
+        serializer = self.serializer_class(data=request.data)
+        
+        if not serializer.is_valid():
+            return APIResponse.error(
+                message='Validation Error',
+                errors=APIResponse.format_serializer_errors(serializer.errors),
+                status_code=status.HTTP_400_BAD_REQUEST,
+                error_code=ErrorCodeEnum.VALIDATION_ERROR
+            )
+        
+        # Update password
+        password = serializer.validated_data.get('password')
+        user.set_password(password)
+        user.save(update_fields=['password'])
+        
+        # Logout user from all devices
+        Token.objects.filter(user=user).delete()
+        
+        return APIResponse.success(
+            message='Password reset successfully',
+            status_code=status.HTTP_200_OK
         )
 
 
-# Admin views
-class IsAdminUser(permissions.BasePermission):
-    """Custom permission to only allow admin users."""
-    
-    def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == 'admin'
-
-
-class AdminUserListView(APIView):
+class AdminUserListView(APIResponseMixin, APIView):
     """View for admin to list all users"""
     permission_classes = [IsAuthenticated, IsAdminUser]
     
     def get(self, request):
+        """List all users"""
         users = User.objects.all().order_by('-date_joined')
-        serializer = UserSerializer(users, many=True)
-        return Response(serializer.data)
+        serializer = AdminUserSerializer(users, many=True)
+        return APIResponse.success(data=serializer.data)
 
 
-class AdminUserDetailView(APIView):
+class AdminUserDetailView(APIResponseMixin, APIView):
     """View for admin to retrieve, update or delete a user"""
     permission_classes = [IsAuthenticated, IsAdminUser]
     
@@ -321,201 +341,305 @@ class AdminUserDetailView(APIView):
         return get_object_or_404(User, pk=pk)
     
     def get(self, request, pk):
+        """Get user details"""
         user = self.get_object(pk)
-        serializer = UserSerializer(user)
-        return Response(serializer.data)
+        serializer = AdminUserSerializer(user)
+        return APIResponse.success(data=serializer.data)
     
     def patch(self, request, pk):
+        """Update user details"""
         user = self.get_object(pk)
         serializer = AdminUserSerializer(user, data=request.data, partial=True)
-        
         if serializer.is_valid():
-            user = serializer.save()
-            return Response(UserSerializer(user).data)
+            serializer.save()
+            return APIResponse.success(
+                data=serializer.data,
+                message='User updated successfully'
+            )
         
-        # Format error response
-        formatted_errors = {}
-        for field, error_list in serializer.errors.items():
-            formatted_errors[field] = error_list[0] if error_list else "Invalid data"
-        
-        return Response(
-            {
-                'error': 'User Update Error',
-                'details': formatted_errors
-            },
-            status=status.HTTP_400_BAD_REQUEST
+        return APIResponse.error(
+            message='User Update Error',
+            errors=APIResponse.format_serializer_errors(serializer.errors),
+            status_code=status.HTTP_400_BAD_REQUEST,
+            error_code=ErrorCodeEnum.VALIDATION_ERROR
         )
     
     def delete(self, request, pk):
+        """Delete user"""
         user = self.get_object(pk)
         
-        # Prevent admin from deleting themselves
-        if user.id == request.user.id:
-            return Response(
-                {"error": "You cannot delete your own account"}, 
-                status=status.HTTP_400_BAD_REQUEST
+        # Prevent self-deletion
+        if user == request.user:
+            return APIResponse.error(
+                message='Self Deletion Error',
+                errors={'user': 'You cannot delete your own account'},
+                status_code=status.HTTP_400_BAD_REQUEST,
+                error_code=ErrorCodeEnum.VALIDATION_ERROR
             )
         
         user.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return APIResponse.success(
+            message='User deleted successfully',
+            status_code=status.HTTP_204_NO_CONTENT
+        )
 
 
-# Add the new views for profile update and email change
-
-class ProfileUpdateView(APIView):
+class UserProfileUpdateView(APIResponseMixin, APIView):
     """View for updating user profile"""
     permission_classes = [IsAuthenticated]
     
     def put(self, request):
-        """Update user profile data"""
-        serializer = ProfileUpdateSerializer(request.user, data=request.data, context={'request': request})
+        """Update user profile"""
+        print(f"Profile update request received with method PUT")
+        print(f"Request data: {request.data}")
+        
+        serializer = ProfileUpdateSerializer(instance=request.user, data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save()
-            return Response({
-                'message': 'Profile updated successfully',
-                'user': UserSerializer(request.user).data
-            })
+            try:
+                user = serializer.save()
+                
+                # Log the updated fields
+                updated_fields = list(serializer.validated_data.keys())
+                print(f"Profile updated for user {user.username}. Updated fields: {updated_fields}")
+                
+                return APIResponse.success(
+                    data={
+                        'user': UserSerializer(user).data,
+                        'updated_fields': updated_fields
+                    },
+                    message='Profile updated successfully'
+                )
+            except Exception as e:
+                # Log the error for debugging
+                import traceback
+                print(f"ERROR updating profile: {str(e)}")
+                print(traceback.format_exc())
+                
+                return APIResponse.error(
+                    message='Error updating profile',
+                    errors={'detail': str(e)},
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    error_code=ErrorCodeEnum.SERVER_ERROR
+                )
         
-        # Format error response
-        formatted_errors = {}
-        for field, error_list in serializer.errors.items():
-            formatted_errors[field] = error_list[0] if error_list else "Invalid data"
+        return APIResponse.error(
+            message='Profile Update Error',
+            errors=APIResponse.format_serializer_errors(serializer.errors),
+            status_code=status.HTTP_400_BAD_REQUEST,
+            error_code=ErrorCodeEnum.VALIDATION_ERROR
+        )
+    
+    def patch(self, request):
+        """Partially update user profile"""
+        print(f"Profile update request received with method PATCH")
+        print(f"Request data: {request.data}")
         
-        return Response(
-            {
-                'error': 'Profile Update Validation Error',
-                'details': formatted_errors
-            }, 
-            status=status.HTTP_400_BAD_REQUEST
+        serializer = ProfileUpdateSerializer(instance=request.user, data=request.data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            try:
+                user = serializer.save()
+                
+                # Log the updated fields
+                updated_fields = list(serializer.validated_data.keys())
+                print(f"Profile updated for user {user.username}. Updated fields: {updated_fields}")
+                
+                return APIResponse.success(
+                    data={
+                        'user': UserSerializer(user).data,
+                        'updated_fields': updated_fields
+                    },
+                    message='Profile updated successfully'
+                )
+            except Exception as e:
+                # Log the error for debugging
+                import traceback
+                print(f"ERROR updating profile: {str(e)}")
+                print(traceback.format_exc())
+                
+                return APIResponse.error(
+                    message='Error updating profile',
+                    errors={'detail': str(e)},
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    error_code=ErrorCodeEnum.SERVER_ERROR
+                )
+        
+        return APIResponse.error(
+            message='Profile Update Error',
+            errors=APIResponse.format_serializer_errors(serializer.errors),
+            status_code=status.HTTP_400_BAD_REQUEST,
+            error_code=ErrorCodeEnum.VALIDATION_ERROR
         )
 
 
-class EmailChangeRequestView(APIView):
+class UserEmailChangeRequestView(APIResponseMixin, APIView):
     """View for requesting email change with OTP verification"""
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
-        """Request email change and send OTP to current email"""
+        """Request to change email with OTP verification"""
         serializer = EmailChangeRequestSerializer(data=request.data, context={'request': request})
-        
         if serializer.is_valid():
-            user = request.user
+            # Extract data
             new_email = serializer.validated_data['new_email']
             
-            # Generate a 6-digit OTP code
-            import random
-            otp_code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+            # Check if new email is different from current
+            if request.user.email == new_email:
+                return APIResponse.error(
+                    message='Email Unchanged',
+                    errors={'new_email': 'New email must be different from current email'},
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    error_code=ErrorCodeEnum.VALIDATION_ERROR
+                )
             
-            # Calculate expiration time (15 minutes from now)
+            # Check if new email is already in use
+            if User.objects.filter(email=new_email).exists():
+                return APIResponse.error(
+                    message='Email Taken',
+                    errors={'new_email': 'This email is already in use'},
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    error_code=ErrorCodeEnum.VALIDATION_ERROR
+                )
+            
+            # Generate and store OTP
+            from random import randint
+            otp = str(randint(100000, 999999))
+            
+            from users.models import EmailChangeRequest
             from django.utils import timezone
-            import datetime
-            expires_at = timezone.now() + datetime.timedelta(minutes=15)
             
-            # Create or update the email change request
-            from .models import EmailChangeRequest
-            email_change_request, created = EmailChangeRequest.objects.update_or_create(
-                user=user,
-                is_used=False,
-                defaults={
-                    'new_email': new_email,
-                    'otp_code': otp_code,
-                    'expires_at': expires_at,
-                }
+            # Mark old requests as used
+            EmailChangeRequest.objects.filter(user=request.user, is_used=False).update(is_used=True)
+            
+            # Create new request
+            EmailChangeRequest.objects.create(
+                user=request.user,
+                new_email=new_email,
+                otp_code=otp,
+                expires_at=timezone.now() + timezone.timedelta(minutes=15)
             )
             
-            # Send OTP to current email
-            from .email import send_email_change_otp
-            send_email_change_otp(user, otp_code)
+            # Send OTP via email
+            from users.email import send_email_change_otp
             
-            return Response({
-                'message': 'Verification code sent to your current email'
-            }, status=status.HTTP_200_OK)
+            # Send OTP directly to the current email address (not the new one)
+            try:
+                # Pass both the current user (with current email) and the new email for reference
+                send_email_change_otp(request.user, otp, new_email)
+                email_sent = True
+            except Exception as e:
+                # Log the error but don't fail the request
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to send email change OTP: {str(e)}")
+                email_sent = False
+            
+            # Standard success message
+            success_message = 'Verification code sent to your current email address. Please verify within 15 minutes.'
+            if not email_sent:
+                success_message += ' Warning: Email sending failed, please contact administrator.'
+            
+            # Never return OTP in response
+            return APIResponse.success(
+                message=success_message,
+                data={'email_sent': email_sent}
+            )
         
-        # Format error response
-        formatted_errors = {}
-        for field, error_list in serializer.errors.items():
-            formatted_errors[field] = error_list[0] if error_list else "Invalid data"
-        
-        return Response(
-            {
-                'error': 'Email Change Request Error',
-                'details': formatted_errors
-            }, 
-            status=status.HTTP_400_BAD_REQUEST
+        return APIResponse.error(
+            message='Email Change Error',
+            errors=APIResponse.format_serializer_errors(serializer.errors),
+            status_code=status.HTTP_400_BAD_REQUEST,
+            error_code=ErrorCodeEnum.VALIDATION_ERROR
         )
 
 
-class EmailChangeConfirmView(APIView):
+class UserEmailChangeConfirmView(APIResponseMixin, APIView):
     """View for confirming email change with OTP code"""
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
-        """Confirm email change with OTP code"""
+        """Confirm email change with OTP"""
         serializer = EmailChangeConfirmSerializer(data=request.data)
-        
         if serializer.is_valid():
-            user = request.user
-            otp_code = serializer.validated_data['otp_code']
+            otp = serializer.validated_data['otp_code']
             
-            # Find the email change request
-            from .models import EmailChangeRequest
+            # Get email change request from database
+            from users.models import EmailChangeRequest
+            
             try:
-                email_change_request = EmailChangeRequest.objects.get(
-                    user=user,
-                    otp_code=otp_code,
-                    is_used=False
-                )
+                # Get the most recent unused request for this user
+                email_change_request = EmailChangeRequest.objects.filter(
+                    user=request.user,
+                    is_used=False,
+                    otp_code=otp,
+                    expires_at__gt=timezone.now()
+                ).latest('created_at')
                 
-                # Check if the request is still valid
-                if not email_change_request.is_valid():
-                    return Response(
-                        {
-                            'error': 'OTP Error',
-                            'details': {'otp_code': 'OTP code has expired'}
-                        }, 
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                # Request exists and is not expired
+                new_email = email_change_request.new_email
                 
-                # Update user's email
-                old_email = user.email
-                user.email = email_change_request.new_email
-                
-                # If email changes, reset email_verified
-                if old_email != email_change_request.new_email:
-                    user.email_verified = False
-                
-                user.save(update_fields=['email', 'email_verified'])
+                # Change email
+                old_email = request.user.email
+                request.user.email = new_email
+                request.user.email_verified = False  # Require verification of new email
+                request.user.save()
                 
                 # Mark request as used
                 email_change_request.is_used = True
-                email_change_request.save(update_fields=['is_used'])
+                email_change_request.save()
                 
                 # Send verification email to new address
-                send_verification_email(user, request)
+                send_verification_email(request.user, request)
                 
-                return Response({
-                    'message': 'Email changed successfully. Please verify your new email address.',
-                    'user': UserSerializer(user).data
-                }, status=status.HTTP_200_OK)
-            
-            except EmailChangeRequest.DoesNotExist:
-                return Response(
-                    {
-                        'error': 'OTP Error',
-                        'details': {'otp_code': 'Invalid OTP code'}
-                    }, 
-                    status=status.HTTP_400_BAD_REQUEST
+                # Return complete user data
+                from .serializers import UserSerializer
+                
+                return APIResponse.success(
+                    message=f'Email successfully changed from {old_email} to {new_email}. Please verify your new email.',
+                    data=UserSerializer(request.user).data
                 )
+                
+            except EmailChangeRequest.DoesNotExist:
+                # No valid request found
+                return APIResponse.error(
+                    message='No Pending Request',
+                    errors={'otp': 'No pending email change request found or OTP is invalid/expired'},
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    error_code=ErrorCodeEnum.VALIDATION_ERROR
+                )
+            
+        return APIResponse.error(
+            message='Email Change Confirmation Error',
+            errors=APIResponse.format_serializer_errors(serializer.errors),
+            status_code=status.HTTP_400_BAD_REQUEST,
+            error_code=ErrorCodeEnum.VALIDATION_ERROR
+        )
+
+
+class UserAvatarUploadView(APIResponseMixin, APIView):
+    """View for uploading user avatar"""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        """Handle avatar upload"""
+        serializer = AvatarUploadSerializer(data=request.data, context={'request': request})
         
-        # Format error response
-        formatted_errors = {}
-        for field, error_list in serializer.errors.items():
-            formatted_errors[field] = error_list[0] if error_list else "Invalid data"
+        if serializer.is_valid():
+            user = serializer.save()
+            
+            # Prepare response data
+            response_data = {
+                'avatar_url': f"data:{user.avatar_mime_type};base64,{user.avatar}"
+            }
+            
+            return APIResponse.success(
+                data=response_data,
+                message='Avatar uploaded successfully',
+                status_code=status.HTTP_200_OK
+            )
         
-        return Response(
-            {
-                'error': 'Email Change Confirmation Error',
-                'details': formatted_errors
-            }, 
-            status=status.HTTP_400_BAD_REQUEST
+        return APIResponse.error(
+            message='Image Upload Error',
+            errors=APIResponse.format_serializer_errors(serializer.errors),
+            status_code=status.HTTP_400_BAD_REQUEST,
+            error_code=ErrorCodeEnum.VALIDATION_ERROR
         )

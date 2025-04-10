@@ -13,8 +13,9 @@
         <h2>Email Change Verification</h2>
         <p>Hello {{ user.username }},</p>
         <p>
-          We received a request to change your email address. To verify this
-          action, please use the following verification code:
+          We received a request to change your email address from
+          <strong>{{ user.email }}</strong> to <strong>{{ new_email }}</strong>.
+          To verify this action, please use the following verification code:
         </p>
 
         <div class="code">{{ otp_code }}</div>

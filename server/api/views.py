@@ -11,24 +11,5 @@ def api_root(request, format=None):
     API root endpoint to display available endpoints
     """
     return Response({
-        # Authentication
-        'register': reverse('users:register', request=request, format=format),
-        'login': reverse('users:login', request=request, format=format),
-        'token_refresh': reverse('users:token_refresh', request=request, format=format),
-        
-        # User profile
-        'profile': reverse('users:profile', request=request, format=format),
-        
-        # Password management
-        'password_change': reverse('users:password_change', request=request, format=format),
-        'password_reset_request': reverse('users:password_reset_request', request=request, format=format),
-        
-        # Email verification
-        'resend_verification_email': reverse('users:resend_verification', request=request, format=format),
-        
-        # Device management
-        'device_types': reverse('devicetype-list', request=request, format=format),
-        'devices': reverse('device-list', request=request, format=format),
-        'data_points': reverse('devicedatapoint-list', request=request, format=format),
-        'commands': reverse('devicecommand-list', request=request, format=format),
+        #TODO: Add endpoints
     })

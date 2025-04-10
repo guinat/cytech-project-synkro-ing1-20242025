@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Invitation à rejoindre une maison sur Synkro</title>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo">
+        <h2>Synkro</h2>
+      </div>
+      <p>Bonjour,</p>
+      <p>
+        {{ owner_name }} vous invite à rejoindre sa maison "<strong
+          >{{ home_name }}</strong
+        >" sur Synkro.
+      </p>
+
+      <p>Votre rôle dans cette maison sera : <strong>{{ role }}</strong></p>
+
+      <p style="text-align: center; margin: 30px 0">
+        <a
+          href="{{ invitation_url }}"
+          style="
+            background-color: #4caf50;
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+          "
+          >Accepter l'invitation</a
+        >
+      </p>
+
+      <p>Cette invitation expirera le {{ expiration_date }}.</p>
+
+      <p>
+        Pour rejoindre cette maison, il vous suffit de cliquer sur le bouton
+        ci-dessus. Vous serez alors automatiquement ajouté à la maison après
+        vous être connecté.
+      </p>
+
+      <p>
+        Si vous n'avez pas de compte Synkro, vous devrez d'abord vous inscrire
+        avec cette adresse email avant de pouvoir accepter l'invitation.
+      </p>
+
+      <p>Cordialement,<br />L'équipe Synkro</p>
+
+      <div class="footer">
+        <p>
+          Ceci est un email automatique. Merci de ne pas répondre à ce message.
+        </p>
+        <p>&copy; {{ year }} Synkro. Tous droits réservés.</p>
+      </div>
+    </div>
+  </body>
+</html>
