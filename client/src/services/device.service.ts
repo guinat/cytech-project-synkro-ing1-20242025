@@ -1,4 +1,4 @@
-import api from './api';
+import api, { PaginatedResponse, ApiResponse } from './api';
 
 // Interfaces for device types
 export interface DeviceType {
@@ -55,20 +55,12 @@ export interface DeviceCommand {
   created_by_username?: string;
 }
 
-// Interface for pagination
-export interface PaginatedResponse<T> {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: T[];
-}
-
 // Service class for devices
 class DeviceService {
   // Get all device types
   async getDeviceTypes(): Promise<DeviceType[]> {
-    const response = await api.get<PaginatedResponse<DeviceType>>('/devices/device-types/');
-    return response.results;
+    const response = await api.get<ApiResponse<DeviceType[]>>('/devices/device-types/');
+    return response.data || [];
   }
 
   // Get a device type by its ID
@@ -84,7 +76,7 @@ class DeviceService {
     search?: string;
     room?: number;
     home?: number;
-  }): Promise<PaginatedResponse<Device>> {
+  }): Promise<ApiResponse<Device[]>> {
     // Creating request parameters
     const params = new URLSearchParams();
     if (filters) {
@@ -97,7 +89,7 @@ class DeviceService {
     }
     
     const queryString = params.toString() ? `?${params.toString()}` : '';
-    return api.get<PaginatedResponse<Device>>(`/devices/devices/${queryString}`);
+    return api.get<ApiResponse<Device[]>>(`/devices/devices/${queryString}`);
   }
 
   // Get a device by its ID
@@ -120,9 +112,37 @@ class DeviceService {
     return api.delete<void>(`/devices/devices/${id}/`);
   }
 
-  // Send a command to a device
-  async sendCommand(deviceId: number, command: any): Promise<DeviceCommand> {
-    return api.post<DeviceCommand>(`/devices/devices/${deviceId}/command/`, { command });
+  // Toggle a device on/off (for lights, plugs, etc.)
+  async toggleDevice(id: number, currentState?: boolean): Promise<ApiResponse<{device_id: number, state: boolean}>> {
+    const payload = currentState !== undefined ? { current_state: currentState } : {};
+    const response = await api.post<ApiResponse<{device_id: number, state: boolean}>>(
+      `/devices/devices/${id}/toggle/`,
+      payload
+    );
+    return response;
+  }
+
+  // Set temperature for a thermostat
+  async setTemperature(id: number, temperature: number): Promise<ApiResponse<{device_id: number, temperature: number}>> {
+    const response = await api.post<ApiResponse<{device_id: number, temperature: number}>>(
+      `/devices/devices/${id}/set_temperature/`,
+      { temperature }
+    );
+    return response;
+  }
+
+  // Send a generic command to a device
+  async sendCommand(deviceId: number, commandType: string, params?: Record<string, any>): Promise<ApiResponse<DeviceCommand>> {
+    const payload = {
+      command_type: commandType,
+      params: params || {}
+    };
+    
+    const response = await api.post<ApiResponse<DeviceCommand>>(
+      `/devices/devices/${deviceId}/send_command/`,
+      payload
+    );
+    return response;
   }
 
   // Get device data

@@ -168,8 +168,12 @@ class HomeSerializer(serializers.ModelSerializer):
         """Validate home data"""
         # For create operation, check if user is not exceeding maximum homes limit
         user = self.context['request'].user
-        if not self.instance and Home.objects.filter(owner=user).count() >= 3:
-            raise serializers.ValidationError({"non_field_errors": "You cannot create more than 3 homes."})
+        if not self.instance:  # This is a creation, not an update
+            homes_count = Home.objects.filter(owner=user).count()
+            if homes_count >= 3:
+                raise serializers.ValidationError({
+                    "non_field_errors": "You cannot create more than 3 homes. Please delete an existing home before creating a new one."
+                })
         return data
     
     def get_member_count(self, obj):

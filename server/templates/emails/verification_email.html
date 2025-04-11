@@ -5,8 +5,8 @@
     <title>Verify Your Email</title>
   </head>
   <body>
-    <div class="container">
-      <div class="logo">
+    <div>
+      <div>
         <h2>Synkro</h2>
       </div>
       <p>Hi {{ user.username }},</p>
@@ -15,8 +15,8 @@
         the button below:
       </p>
 
-      <p style="text-align: center">
-        <a href="{{ verification_url }}" class="button">Verify Email</a>
+      <p>
+        <a href="{{ verification_url }}">Verify Email</a>
       </p>
 
       <p>This verification link will expire in 15 minutes.</p>
@@ -25,7 +25,7 @@
 
       <p>Best regards,<br />The Synkro Team</p>
 
-      <div class="footer">
+      <div>
         <p>This is an automated email. Please do not reply to this message.</p>
         <p>&copy; {{ year }} Synkro. All rights reserved.</p>
       </div>

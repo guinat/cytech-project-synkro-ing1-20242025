@@ -68,6 +68,12 @@ class IsAdminOrReadOnly(permissions.BasePermission):
         # Check if user is administrator
         return request.user.is_superuser or (hasattr(request.user, 'role') and request.user.role == 'admin')
 
+class IsHomeMember(permissions.BasePermission):
+    """
+    Permission to verify that the user is a member of the home
+    """
+    def has_object_permission(self, request, view, obj):
+        return IsHomeOwnerOrMember().has_object_permission(request, view, obj)
 
 class IsHomeOwnerOrMember(permissions.BasePermission):
     """
@@ -94,6 +100,24 @@ class IsHomeOwnerOrMember(permissions.BasePermission):
                 return True
                 
         return False
+
+class IsHomeOwnerOrAdmin(permissions.BasePermission):
+    """
+    Permission to verify that the user is either the owner of the home
+    or an administrator.
+    """
+    def has_object_permission(self, request, view, obj):
+        # Check first if the user is an administrator
+        if request.user.is_superuser or (hasattr(request.user, 'role') and request.user.role == 'admin'):
+            return True
+        
+        # If the object is an instance of Home, check directly if the user is the owner
+        from devices.models import Home
+        if isinstance(obj, Home):
+            return obj.owner == request.user
+        
+        # Otherwise, check via IsHomeOwnerOrMember
+        return IsHomeOwnerOrMember().has_object_permission(request, view, obj)
 
 
 class IsComplexOrAdminUser(permissions.BasePermission):

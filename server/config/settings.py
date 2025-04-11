@@ -64,8 +64,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "utils.middleware.RequestLoggingMiddleware",  # Middleware de journalisation des requêtes
-    "utils.middleware.ExceptionMiddleware",       # Middleware de gestion des exceptions
 ]
 
 # Configuration pour Django REST framework

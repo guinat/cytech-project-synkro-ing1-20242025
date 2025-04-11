@@ -11,7 +11,6 @@ from utils.tokens import TokenGenerator
 
 FRONTEND_URL = "http://localhost:5173"
 
-# Using the central email directory instead of a local directory
 EMAIL_DIR = Path(__file__).resolve().parent.parent / 'emails'
 
 def send_home_invitation_email(invitation, request):
@@ -49,11 +48,8 @@ def send_home_invitation_email(invitation, request):
         'year': datetime.datetime.now().year
     }
     
-    # Ensure email directory exists
-    os.makedirs(EMAIL_DIR, exist_ok=True)
-    
-    # Render email content from template
-    html_message = render_to_string(os.path.join(EMAIL_DIR, 'home_invitation.html'), context)
+    # Render email content from template - use the Django template system directly
+    html_message = render_to_string('emails/home_invitation.html', context)
     plain_message = strip_tags(html_message)
     
     # Send email

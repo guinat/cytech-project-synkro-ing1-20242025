@@ -2,57 +2,43 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Invitation à rejoindre une maison sur Synkro</title>
+    <title>Invitation to join a home on Synkro</title>
   </head>
   <body>
-    <div class="container">
-      <div class="logo">
+    <div>
+      <div>
         <h2>Synkro</h2>
       </div>
-      <p>Bonjour,</p>
+      <p>Hello,</p>
       <p>
-        {{ owner_name }} vous invite à rejoindre sa maison "<strong
+        {{ owner_name }} invites you to join their home "<strong
           >{{ home_name }}</strong
-        >" sur Synkro.
+        >" on Synkro.
       </p>
 
-      <p>Votre rôle dans cette maison sera : <strong>{{ role }}</strong></p>
-
-      <p style="text-align: center; margin: 30px 0">
-        <a
-          href="{{ invitation_url }}"
-          style="
-            background-color: #4caf50;
-            color: white;
-            padding: 12px 20px;
-            text-decoration: none;
-            border-radius: 4px;
-            font-weight: bold;
-          "
-          >Accepter l'invitation</a
-        >
-      </p>
-
-      <p>Cette invitation expirera le {{ expiration_date }}.</p>
+      <p>Your role in this home will be: <strong>{{ role }}</strong></p>
 
       <p>
-        Pour rejoindre cette maison, il vous suffit de cliquer sur le bouton
-        ci-dessus. Vous serez alors automatiquement ajouté à la maison après
-        vous être connecté.
+        <a href="{{ invitation_url }}">Accept invitation</a>
+      </p>
+
+      <p>This invitation will expire on {{ expiration_date }}.</p>
+
+      <p>
+        To join this home, simply click the button above. You will then be
+        automatically added to the home after logging in.
       </p>
 
       <p>
-        Si vous n'avez pas de compte Synkro, vous devrez d'abord vous inscrire
-        avec cette adresse email avant de pouvoir accepter l'invitation.
+        If you don't have a Synkro account, you'll need to register first with
+        this email address before you can accept the invitation.
       </p>
 
-      <p>Cordialement,<br />L'équipe Synkro</p>
+      <p>Regards,<br />The Synkro Team</p>
 
-      <div class="footer">
-        <p>
-          Ceci est un email automatique. Merci de ne pas répondre à ce message.
-        </p>
-        <p>&copy; {{ year }} Synkro. Tous droits réservés.</p>
+      <div>
+        <p>This is an automated email. Please do not reply to this message.</p>
+        <p>&copy; {{ year }} Synkro. All rights reserved.</p>
       </div>
     </div>
   </body>
