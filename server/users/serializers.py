@@ -3,18 +3,33 @@ from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 import re
+import base64
+import imghdr
 
 User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """Serializer for the User model - used for general user data"""
+    """Serializer for User model - used for profile view"""
+    avatar_url = serializers.SerializerMethodField()
     
     class Meta:
         model = User
-        fields = ['id', 'email', 'username', 'role', 'level', 'points', 
-                  'email_verified', 'date_joined', 'last_login']
-        read_only_fields = ['id', 'date_joined', 'last_login', 'email_verified', 'role', 'level', 'points']
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name',
+            'gender', 'date_of_birth', 'home_role', 'avatar_url',
+            'role', 'level', 'points', 'email_verified',
+            'is_profile_completed', 'date_joined', 'last_login'
+        ]
+        read_only_fields = [
+            'id', 'email', 'role', 'level', 'points', 'email_verified', 
+            'date_joined', 'last_login', 'is_profile_completed'
+        ]
+    
+    def get_avatar_url(self, obj):
+        if obj.avatar and obj.avatar_mime_type:
+            return f"data:{obj.avatar_mime_type};base64,{obj.avatar}"
+        return None
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -36,40 +51,43 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     def validate_username(self, value):
         """Validate that username is unique and has proper format"""
-        # Handle uniqueness validation before Django's built-in validator can interfere
         if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError("This username is already taken")
+            raise serializers.ValidationError({"username": "This username is already taken"})
         
         if len(value) < 3:
-            raise serializers.ValidationError("Username must be at least 3 characters")
+            raise serializers.ValidationError({"username": "Username must be at least 3 characters"})
         
         if not re.match(r'^[a-zA-Z0-9_]+$', value):
-            raise serializers.ValidationError("Username can only contain letters, numbers, and underscores")
+            raise serializers.ValidationError({"username": "Username can only contain letters, numbers, and underscores"})
         
         return value
     
     def validate_email(self, value):
         """Validate that email is unique"""
         if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("This email is already registered")
+            raise serializers.ValidationError({"email": "This email is already registered"})
         
         return value
 
     def validate_password(self, value):
         """Validate password complexity"""
-        # Check minimum length
         if len(value) < 8:
-            raise serializers.ValidationError("Password must be at least 8 characters")
-        
+            raise serializers.ValidationError({"password": "Password must be at least 8 characters"})
         # Check for uppercase, lowercase and digit
-        if not (re.search(r'[A-Z]', value) and re.search(r'[a-z]', value) and re.search(r'[0-9]', value)):
-            raise serializers.ValidationError("Password must contain at least one uppercase letter, one lowercase letter, and one number")
+        if not (re.search(r'[A-Z]', value)):
+            raise serializers.ValidationError({"password": "Password must contain at least one uppercase letter"})
+        if not (re.search(r'[a-z]', value)):
+            raise serializers.ValidationError({"password": "Password must contain at least one lowercase letter"})
+        if not (re.search(r'[0-9]', value)):
+            raise serializers.ValidationError({"password": "Password must contain at least one digit"})
+        if not (re.search(r'[!@#$%^&*()_+{}\[\]:;<>,.?~\\-]', value)):
+            raise serializers.ValidationError({"password": "Password must contain at least one special character"})
         
         # Use Django's built-in validator as well
         try:
             validate_password(value)
         except ValidationError as e:
-            raise serializers.ValidationError(e.messages)
+            raise serializers.ValidationError({"password": e.messages})
         
         return value
 
@@ -103,7 +121,6 @@ class UserLoginSerializer(serializers.Serializer):
         if not user:
             raise serializers.ValidationError("Invalid email or password")
         return user
-    
 
 
 class PasswordChangeSerializer(serializers.Serializer):
@@ -117,17 +134,22 @@ class PasswordChangeSerializer(serializers.Serializer):
         """Validate password complexity"""
         # Check minimum length
         if len(value) < 8:
-            raise serializers.ValidationError("Password must be at least 8 characters")
-        
+            raise serializers.ValidationError({"password": "Password must be at least 8 characters"})
         # Check for uppercase, lowercase and digit
-        if not (re.search(r'[A-Z]', value) and re.search(r'[a-z]', value) and re.search(r'[0-9]', value)):
-            raise serializers.ValidationError("Password must contain at least one uppercase letter, one lowercase letter, and one number")
+        if not (re.search(r'[A-Z]', value)):
+            raise serializers.ValidationError({"password": "Password must contain at least one uppercase letter"})
+        if not (re.search(r'[a-z]', value)):
+            raise serializers.ValidationError({"password": "Password must contain at least one lowercase letter"})
+        if not (re.search(r'[0-9]', value)):
+            raise serializers.ValidationError({"password": "Password must contain at least one digit"})
+        if not (re.search(r'[!@#$%^&*()_+{}\[\]:;<>,.?~\\-]', value)):
+            raise serializers.ValidationError({"password": "Password must contain at least one special character"})
         
         # Use Django's built-in validator as well
         try:
             validate_password(value)
         except ValidationError as e:
-            raise serializers.ValidationError(e.messages)
+            raise serializers.ValidationError({"password": e.messages})
         
         return value
     
@@ -155,17 +177,22 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         """Validate password complexity"""
         # Check minimum length
         if len(value) < 8:
-            raise serializers.ValidationError("Password must be at least 8 characters")
-        
+            raise serializers.ValidationError({"password": "Password must be at least 8 characters"})
         # Check for uppercase, lowercase and digit
-        if not (re.search(r'[A-Z]', value) and re.search(r'[a-z]', value) and re.search(r'[0-9]', value)):
-            raise serializers.ValidationError("Password must contain at least one uppercase letter, one lowercase letter, and one number")
+        if not (re.search(r'[A-Z]', value)):
+            raise serializers.ValidationError({"password": "Password must contain at least one uppercase letter"})
+        if not (re.search(r'[a-z]', value)):
+            raise serializers.ValidationError({"password": "Password must contain at least one lowercase letter"})
+        if not (re.search(r'[0-9]', value)):
+            raise serializers.ValidationError({"password": "Password must contain at least one digit"})
+        if not (re.search(r'[!@#$%^&*()_+{}\[\]:;<>,.?~\\-]', value)):
+            raise serializers.ValidationError({"password": "Password must contain at least one special character"})
         
         # Use Django's built-in validator as well
         try:
             validate_password(value)
         except ValidationError as e:
-            raise serializers.ValidationError(e.messages)
+            raise serializers.ValidationError({"password": e.messages})
         
         return value
     
@@ -178,38 +205,39 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
 
 class AdminUserSerializer(serializers.ModelSerializer):
-    """Serializer for admin to manage users with extended permissions"""
+    """Admin-only serializer for updating user data"""
+    avatar_url = serializers.SerializerMethodField()
     
     class Meta:
         model = User
-        fields = ['id', 'email', 'username', 'role', 'level', 'points', 
-                  'email_verified', 'is_active', 'date_joined', 'last_login']
-        read_only_fields = ['id', 'date_joined', 'last_login']
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name',
+            'gender', 'date_of_birth', 'home_role', 'avatar_url',
+            'role', 'level', 'points', 'email_verified', 
+            'is_staff', 'is_superuser'
+        ]
+        read_only_fields = ['id', 'email', 'date_joined', 'last_login']
     
-    def validate_email(self, value):
-        # Check if the email already exists (for a different user when updating)
-        user_id = self.instance.id if self.instance else None
-        if User.objects.filter(email=value).exclude(id=user_id).exists():
-            raise serializers.ValidationError("This email is already in use.")
-        return value
-    
-    def validate_username(self, value):
-        # Check if the username already exists (for a different user when updating)
-        user_id = self.instance.id if self.instance else None
-        if User.objects.filter(username=value).exclude(id=user_id).exists():
-            raise serializers.ValidationError("This username is already taken.")
-        return value
+    def get_avatar_url(self, obj):
+        if obj.avatar and obj.avatar_mime_type:
+            return f"data:{obj.avatar_mime_type};base64,{obj.avatar}"
+        return None
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
     """Serializer for updating user profile"""
     
-    current_password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+    current_password = serializers.CharField(write_only=True, required=False, style={'input_type': 'password'})
     new_email = serializers.EmailField(required=False, write_only=True)
+    profile_picture = serializers.CharField(required=False)
     
     class Meta:
         model = User
-        fields = ['username', 'current_password', 'new_email']
+        fields = [
+            'username', 'first_name', 'last_name', 
+            'gender', 'date_of_birth', 'home_role',
+            'current_password', 'new_email', 'profile_picture'
+        ]
     
     def validate_username(self, value):
         # Check if the username already exists (for a different user)
@@ -226,17 +254,80 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         return value
     
     def validate_current_password(self, value):
-        # Check if current password is correct
+        # Get the user from the request
         user = self.context.get('request').user
-        if not user.check_password(value):
+        
+        # If this is the first profile completion (is_profile_completed=False), ignore password validation
+        if not user.is_profile_completed:
+            return value
+        
+        # For users who already have a complete profile, check the password
+        if value and not user.check_password(value):
             raise serializers.ValidationError("Current password is incorrect.")
+        return value
+    
+    def validate_profile_picture(self, value):
+        if value and not isinstance(value, str):
+            raise serializers.ValidationError("Profile picture must be a base64 encoded string")
         return value
         
     def update(self, instance, validated_data):
-        # Only update username, email will be handled separately
-        if 'username' in validated_data:
-            instance.username = validated_data['username']
-            instance.save(update_fields=['username'])
+        # Remove fields that should be handled separately
+        current_password = validated_data.pop('current_password', None)
+        new_email = validated_data.pop('new_email', None)
+        
+        # For updates that require password verification
+        # (email change, etc.), only if the user has a complete profile
+        if instance.is_profile_completed:
+            if new_email and current_password and instance.check_password(current_password):
+                # Email change logic would go here
+                pass
+        else:
+            # For first profile completion, allow updates without password
+            pass
+        
+        # Handle profile picture
+        profile_picture = validated_data.pop('profile_picture', None)
+        if profile_picture:
+            try:
+                if ',' in profile_picture:
+                    # Format: data:image/png;base64,BASE64DATA
+                    header, b64data = profile_picture.split(',', 1)
+                    
+                    if ';base64' in header:
+                        mime_type = header.split(':')[1].split(';')[0]
+                        
+                        # Save avatar data
+                        instance.avatar = b64data
+                        instance.avatar_mime_type = mime_type
+                    else:
+                        raise serializers.ValidationError({"profile_picture": "Invalid format, no base64 encoding found"})
+                else:
+                    # If no separator, try to store directly as base64
+                    instance.avatar = profile_picture
+                    instance.avatar_mime_type = "image/png"  # Default MIME type
+            except Exception as e:
+                # Don't raise an error, just continue with other fields
+                pass
+        
+        # Update the instance with the validated data
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        # Check if profile is completed
+        is_complete = all([
+            instance.username,
+            instance.first_name,
+            instance.last_name,
+            instance.date_of_birth,
+            instance.gender,
+            # Add any other fields that are required for a complete profile
+        ])
+        
+        # Update the is_profile_completed field
+        instance.is_profile_completed = is_complete
+        
+        instance.save()
         
         return instance
 
@@ -263,4 +354,46 @@ class EmailChangeRequestSerializer(serializers.Serializer):
 
 class EmailChangeConfirmSerializer(serializers.Serializer):
     """Serializer for confirming an email change with OTP"""
-    otp_code = serializers.CharField(required=True, min_length=6, max_length=6) 
+    otp_code = serializers.CharField(required=True, min_length=6, max_length=6)
+
+
+class AvatarUploadSerializer(serializers.Serializer):
+    """Serializer for uploading and processing user avatars"""
+    
+    avatar = serializers.ImageField(write_only=True)
+    
+    def validate_avatar(self, value):
+        """Validate the avatar file"""
+        # Check file size (max 5MB)
+        if value.size > 5 * 1024 * 1024:
+            raise serializers.ValidationError("Image file too large (max 5MB)")
+        
+        # Check image format
+        allowed_formats = ['jpeg', 'jpg', 'png', 'gif']
+        image_format = imghdr.what(value)
+        
+        if image_format not in allowed_formats:
+            raise serializers.ValidationError(
+                f"Unsupported image format. Allowed formats: {', '.join(allowed_formats)}"
+            )
+            
+        return value
+    
+    def save(self, **kwargs):
+        """Convert the image to base64 and save to user model"""
+        user = self.context['request'].user
+        image_file = self.validated_data['avatar']
+        
+        # Get file content and encode to base64
+        file_content = image_file.read()
+        encoded_content = base64.b64encode(file_content).decode('utf-8')
+        
+        # Determine MIME type
+        mime_type = image_file.content_type
+        
+        # Save to user model
+        user.avatar = encoded_content
+        user.avatar_mime_type = mime_type
+        user.save(update_fields=['avatar', 'avatar_mime_type'])
+        
+        return user 

@@ -8,9 +8,9 @@ from .views import (
 
 router = DefaultRouter()
 router.register(r'device-types', DeviceTypeViewSet)
-router.register(r'devices', DeviceViewSet)
-router.register(r'data-points', DeviceDataPointViewSet)
-router.register(r'commands', DeviceCommandViewSet)
+router.register(r'devices', DeviceViewSet, basename='device')
+router.register(r'data-points', DeviceDataPointViewSet, basename='datapoint')
+router.register(r'commands', DeviceCommandViewSet, basename='command')
 router.register(r'homes', HomeViewSet, basename='home')
 router.register(r'rooms', RoomViewSet, basename='room')
 

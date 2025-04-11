@@ -7,8 +7,8 @@ const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   
   const handleSuccess = () => {
-    navigate('/dashboard');
-    toast.success("Account created successfully! Please verify your email.");
+    navigate('/complete-profile');
+    toast.success("Account created successfully! Please complete your profile to continue.");
   };
 
   const handleError = (error: string) => {

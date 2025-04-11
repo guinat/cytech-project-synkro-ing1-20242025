@@ -7,7 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -30,6 +30,7 @@ type LoginFormValues = z.infer<typeof loginFormSchema>;
 const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onError }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
+  const navigate = useNavigate();
   
 
   // Initialize form with react-hook-form
@@ -47,15 +48,26 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onError }) => {
     try {
       // Pass the form values to the login function
       await login(values.email, values.password);
-    
+      
+      console.log("Login successful, attempting to redirect...");
+      
       // Call onSuccess callback if provided
-      if (onSuccess) onSuccess();
+      if (onSuccess) {
+        console.log("Calling onSuccess...");
+        onSuccess();
+      } else {
+        // If onSuccess is not provided, redirect directly
+        console.log("onSuccess not provided, manual redirect...");
+        navigate('/dashboard');
+      }
     } catch (err: any) {
       // Handle backend validation errors
       let errorMessage = 'Login failed';
       if (err.name === 'ApiError') {
         errorMessage = err.message;
       }
+      
+      console.error("Login error:", errorMessage);
     
       // Call onError callback if provided
       if (onError) onError(errorMessage);

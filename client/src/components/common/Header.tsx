@@ -1,188 +1,341 @@
-  import React, { useState, useEffect } from 'react';
-  import { Link, useLocation, useNavigate } from 'react-router-dom';
-  import SynkroLogo from '@/assets/synkro.svg';
-  import { Menu, X, LogOut } from 'lucide-react';
-  import { Button } from '@/components/ui/button';
-  import MaxWidthWrapper from '@/components/common/MaxWidthWrapper';
-  import { Separator } from '@/components/ui/separator';
-  import { useAuth } from '@/context/AuthContext';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import SynkroLogo from '@/assets/synkro.svg';
+import { Menu, LogOut, User as UserIcon, Settings, ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/context/AuthContext';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
-  type NavLink = {
-    path: string;
-    label: string;
-    requiredRole?: 'user' | 'admin';
+type NavLink = {
+  path: string;
+  label: string;
+  requiredRole?: 'user' | 'admin';
+};
+
+const Header: React.FC = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated, logout, user } = useAuth();
+  
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location.pathname]);
+  
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMenuOpen]);
+  
+  const isActive = (path: string) => location.pathname === path;
+
+  const navLinks: NavLink[] = [
+    {
+      path: '/',
+      label: 'Home',
+    },
+    {
+      path: '/dashboard',
+      label: 'Dashboard',
+      requiredRole: 'user'
+    },
+    {
+      path: '/admin',
+      label: 'Administration',
+      requiredRole: 'admin'
+    },
+  ];
+
+  const filteredNavLinks = navLinks.filter(link => {
+    if (!link.requiredRole) return true;
+    if (link.requiredRole === 'user' && isAuthenticated) return true;
+    return user?.role === link.requiredRole;
+  });
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
   };
 
-  const Header: React.FC = () => {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const location = useLocation();
-    const navigate = useNavigate();
-    const { isAuthenticated, logout, user } = useAuth();
+  const handleLogin = () => {
+    navigate('/login');
+  };
+
+  const handleRegister = () => {
+    navigate('/register');
+  };
+
+  const UserProfileDropdown = () => {
+    if (!isAuthenticated || !user) return null;
     
-    const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-    const closeMenu = () => setIsMenuOpen(false);
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="flex items-center gap-2 outline-none">
+            <Avatar className="h-8 w-8 ring-2 ring-primary-foreground">
+              <AvatarImage src={user?.avatar_url || undefined} alt={user?.username} />
+              <AvatarFallback className="bg-primary text-primary-foreground">
+                {user?.first_name?.[0]}{user?.last_name?.[0] || user?.username?.[0] || 'U'}
+              </AvatarFallback>
+            </Avatar>
+            <span className="hidden md:block text-sm font-medium overflow-hidden text-ellipsis max-w-[100px]">
+              {user.first_name || user.username}
+            </span>
+            <ChevronDown className="h-4 w-4 hidden md:block text-muted-foreground" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel>
+            <div className="flex flex-col">
+              <span>{user.first_name} {user.last_name}</span>
+              <span className="text-xs text-muted-foreground truncate">{user.email}</span>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+            <UserIcon className="mr-2 h-4 w-4" />
+            Dashboard
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate('/dashboard/profile')}>
+            <UserIcon className="mr-2 h-4 w-4" />
+            Profile
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate('/dashboard/settings')}>
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
+          </DropdownMenuItem>
+          {user.role === 'admin' && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate('/admin')}>
+                <Settings className="mr-2 h-4 w-4" />
+                Admin Panel
+              </DropdownMenuItem>
+            </>
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
+
+  const AuthActions = () => {
+    if (isAuthenticated) {
+      return null; // Authenticated users use the dropdown instead
+    }
     
-    useEffect(() => {
-      if (isMenuOpen) {
-        document.body.style.overflow = 'hidden';
-      } else {
-        document.body.style.overflow = '';
-      }
-      
-      return () => {
-        document.body.style.overflow = '';
-      };
-    }, [isMenuOpen]);
-    
-    const isActive = (path: string) => location.pathname === path;
-
-    const navLinks: NavLink[] = [
-      {
-        path: '/',
-        label: 'Home',
-      },
-      {
-        path: '/dashboard',
-        label: 'Dashboard',
-      },
-      {
-        path: '/admin',
-        label: 'Administration',
-        requiredRole: 'admin'
-      },
-      {
-        path: '/control-center',
-        label:'Control-Center'
-      }
-    ];
-
-    const filteredNavLinks = navLinks.filter(link => {
-      if (!link.requiredRole) return true;
-      return user?.role === link.requiredRole;
-    });
-
-    const handleLogout = () => {
-      logout();
-      closeMenu();
-      navigate('/');
-    };
-
-    const handleLogin = () => {
-      closeMenu();
-      navigate('/login');
-    };
-
-    const handleRegister = () => {
-      closeMenu();
-      navigate('/register');
-    };
-
-    const authActions = isAuthenticated ? (
-      <Button 
-        variant="outline" 
-        onClick={handleLogout}
-      >
-        <LogOut size={22} />
-        <span>Logout</span>
-      </Button>
-    ) : (
+    return (
       <div className="flex items-center gap-3">
         <Button 
-        variant="login" 
-        onClick={handleLogin}
-      >
-        <span>Login</span>
-      </Button>
-      <Button 
-        variant="register" 
-        onClick={handleRegister}
-      >
-        <span>Register</span>
-      </Button>
-      </div>
-    );
-
-    return (
-      <MaxWidthWrapper>
-          <header className="fixed top-0 left-0 right-0 bg-white/70 backdrop-blur-sm flex items-center justify-between py-4 px-4 md:px-8 z-50 border-b border-gray-200">
-
-              <div className="flex items-center group">
-                <Link to="/"  onClick={closeMenu}>
-                  <div className="flex items-center gap-2">
-                    <img src={SynkroLogo} alt="Synkro Logo"className="h-8 w-8 mr-2 transition-transform duration-300 group-hover:rotate-12"/>
-                    <span className="text-logo">
-                        Synkro
-                    </span>
-                  </div>
-              </Link>
-              </div>
-              
-              <nav className="hidden md:flex items-center space-x-8">
-              {filteredNavLinks.map((link) => {
-                  return (
-                  <Link 
-                      key={`desktop-${link.path}`}
-                      to={link.path} 
-                      className={`link ${
-                      isActive(link.path) 
-                          ? 'link-active' 
-                          : 'link-hover'
-                      }`}
-                  >
-                      <span>{link.label}</span>
-                  </Link>
-                  );
-              })}
-              
-              </nav>
-              
-              <div className="hidden md:flex items-center space-x-4">
-                  {authActions}
-              </div>
-              
-              <button 
-              className="md:hidden p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200 focus:outline-none"
-              onClick={toggleMenu}
-              aria-label="Toggle menu"
-              >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
-          </header>
-      
-        <div 
-          className={`fixed inset-0 bg-white z-40 transition-all duration-300 transform ${isMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'} md:hidden`}
+          variant="outline" 
+          onClick={handleLogin}
+          className="text-primary border-primary hover:bg-primary hover:text-white"
         >
-          <div className="pt-20 px-6 h-full overflow-y-auto">
-            <nav className="flex flex-col items-center space-y-4">
-              {filteredNavLinks.map((link) => {
-                return (
-                  <Link 
-                    key={`mobile-${link.path}`}
-                    to={link.path} 
-                    className={`link py-3 w-full text-center flex items-center justify-left gap-4 p-4 rounded-lg ${
-                      isActive(link.path) 
-                        ? 'link-active bg-primary-foreground/90' 
-                        : 'link-hover hover:bg-primary-foreground/30'
-                    }`}
-                    onClick={closeMenu}
-                  >
-                    <span>{link.label}</span>
-                  </Link>
-                );
-              })}
-
-              <Separator className="my-2" />
-
-              <div className="flex flex-col w-full space-y-3 mt-2">
-                {authActions}
-              </div>
-            </nav>
-          </div>
-        </div>
-        
-        <div className="h-16"></div>
-      </MaxWidthWrapper>
+          Login
+        </Button>
+        <Button 
+          variant="default" 
+          onClick={handleRegister}
+        >
+          Register
+        </Button>
+      </div>
     );
   };
 
-  export default Header;
+  return (
+    <>
+      <header className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md flex items-center h-16 px-4 md:px-8 z-40 border-b border-gray-200 shadow-sm">
+        <div className="container mx-auto flex items-center justify-between">
+          {/* Logo - Left section */}
+          <div className="flex items-center group">
+            <Link to="/">
+              <div className="flex items-center gap-2">
+                <img src={SynkroLogo} alt="Synkro Logo" className="h-8 w-8 mr-2 transition-transform duration-300 group-hover:rotate-12"/>
+                <span className="text-logo">
+                  Synkro
+                </span>
+              </div>
+            </Link>
+          </div>
+          
+          {/* Navigation - Center section */}
+          <nav className="hidden md:flex items-center">
+            {filteredNavLinks.map((link) => (
+              <Link 
+                key={`desktop-${link.path}`}
+                to={link.path} 
+                className={`mx-4 transition-colors duration-200 text-sm font-medium hover:text-primary ${
+                  isActive(link.path) 
+                    ? 'text-primary' 
+                    : 'text-muted-foreground'
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+          
+          {/* Right side - Actions and User Profile */}
+          <div className="flex items-center gap-4">
+            {/* Authentication actions - visible on desktop */}
+            <div className="hidden md:block">
+              <AuthActions />
+            </div>
+            {/* User profile dropdown - only for authenticated users */}
+            <div className="hidden md:block">
+              <UserProfileDropdown />
+            </div>
+            
+            {/* Mobile menu button */}
+            <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+              <SheetTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="md:hidden"
+                  aria-label="Toggle menu"
+                >
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[90%] max-w-[350px] p-0">
+                <div className="flex flex-col h-full">
+                  <div className="p-4 border-b">
+                    {/* Mobile user profile info */}
+                    {isAuthenticated && user ? (
+                      <div className="flex flex-row gap-2">
+                      <div className="flex items-center gap-3 p-2">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={user?.avatar_url || undefined} alt={user?.username} />
+                          <AvatarFallback className="bg-primary text-primary-foreground">
+                            {user?.first_name?.[0]}{user?.last_name?.[0] || user?.username?.[0] || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{user.first_name} {user.last_name}</p>
+                          <p className="text-xs text-muted-foreground truncate max-w-[200px]">{user.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-center ml-4">
+                        <Button 
+                          variant="ghost"
+                          size="icon"
+                          onClick={handleLogout}
+                        >
+                          <LogOut className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center gap-3 p-2">
+                        <img src={SynkroLogo} alt="Synkro Logo" className="h-8 w-8" />
+                        <span className="font-bold text-xl">Synkro</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Mobile navigation links */}
+                  <div className="flex-1 overflow-auto p-4">
+                    <nav className="flex flex-col space-y-1">
+                      {filteredNavLinks.map((link) => (
+                        <Link 
+                          key={`mobile-${link.path}`}
+                          to={link.path} 
+                          className={`flex items-center gap-2 p-3 rounded-md transition-colors duration-200 ${
+                            isActive(link.path) 
+                              ? 'bg-primary/10 text-primary font-medium' 
+                              : 'text-foreground hover:bg-muted'
+                          }`}
+                        >
+                          <span>{link.label}</span>
+                        </Link>
+                      ))}
+                    </nav>
+                  </div>
+
+                  {/* Mobile footer actions */}
+                  {isAuthenticated ? (
+                    <div className="p-4 border-t mt-auto">
+                      <p className="text-sm font-medium mb-4 italic">Quick Actions</p>
+                      <div className="flex flex-col gap-2">
+                        <Link to="/dashboard">
+                          <Button variant="outline" className="w-full">
+                            Dashboard
+                          </Button>
+                        </Link>
+                        <Link to="/dashboard/profile">
+                          <Button variant="outline" className="w-full">
+                            Profile
+                          </Button>
+                        </Link>
+                        <Link to="/dashboard/settings">
+                          <Button variant="outline" className="w-full">
+                            Settings
+                          </Button>
+                        </Link>
+                        <Link to="/logout">
+                          <Button variant="outline" className="w-full">
+                            Logout
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                    ) : (
+                      <div className="p-4 border-t mt-auto">
+                      <div className="flex flex-col gap-2">
+                        <Button 
+                          variant="outline"
+                          className="w-full" 
+                          onClick={handleLogin}
+                        >
+                          Login
+                        </Button>
+                        <Button 
+                          variant="default"
+                          className="w-full" 
+                          onClick={handleRegister}
+                        >
+                          Register
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </div>
+      </header>
+      
+      {/* Spacer to push content below the fixed header */}
+      <div className="h-16"></div>
+    </>
+  );
+};
+
+export default Header;

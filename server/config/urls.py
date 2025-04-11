@@ -24,14 +24,9 @@ from django.conf.urls.static import static
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("api.urls")),  # API endpoints
-    
-    # Catch-all for SPA frontend routing
-    # This must be the last pattern and will match any URL not matched by the patterns above
-    # path("", TemplateView.as_view(template_name="index.html")),
 ]
 
 # Serve static and media files in development
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-    if hasattr(settings, 'MEDIA_URL'):
-        urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
