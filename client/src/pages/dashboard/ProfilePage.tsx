@@ -1,3 +1,4 @@
+// TODO: Delete some FormField like First Name, Last Name, Gender ...
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -8,12 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, Loader2, User, Mail, Key, UploadCloud, PencilIcon, ArrowLeft, CheckCircle, AlertTriangle } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,8 +26,8 @@ const profileFormSchema = z.object({
   last_name: z.string().min(1, { message: 'Last name is required' }),
   username: z.string().min(3, { message: 'Username must be at least 3 characters' }),
   email: z.string().email({ message: 'Please enter a valid email address' }),
-  gender: z.enum(['male', 'female', 'other'], { 
-    required_error: 'Please select a gender' 
+  gender: z.enum(['male', 'female', 'other'], {
+    required_error: 'Please select a gender'
   }),
   date_of_birth: z.date({
     required_error: 'Date of birth is required',
@@ -72,7 +70,7 @@ const ProfilePage: React.FC = () => {
     try {
       // Convert date to ISO format
       const formattedDate = values.date_of_birth ? format(values.date_of_birth, 'yyyy-MM-dd') : undefined;
-      
+
       // Prepare data to update
       const updateData = {
         first_name: values.first_name,
@@ -84,25 +82,25 @@ const ProfilePage: React.FC = () => {
         current_password: values.current_password,
         email: values.email, // Add email for prepareProfileChanges
       };
-      
+
       // If email has changed, open confirmation dialog
       if (values.email !== user?.email) {
         // Store all profile changes to apply after email confirmation
         prepareProfileChanges(updateData);
-        
+
         setShowEmailChangeDialog(true);
         setIsLoading(false);
         return;
       }
-      
+
       // Update profile
       await updateProfile(updateData);
-      
+
       // Update avatar if needed
       if (avatar) {
         await uploadAvatar(avatar);
       }
-      
+
       toast.success('Profile updated successfully');
       setIsEditMode(false); // Return to display mode after update
     } catch (error: any) {
@@ -116,7 +114,7 @@ const ProfilePage: React.FC = () => {
   // Function to send verification email
   const handleResendVerificationEmail = async () => {
     if (!user) return;
-    
+
     setIsVerificationSending(true);
     try {
       await resendVerificationEmail();
@@ -134,19 +132,19 @@ const ProfilePage: React.FC = () => {
     const files = e.target.files;
     if (files && files.length > 0) {
       const file = files[0];
-      
+
       // Check file type
       if (!file.type.startsWith('image/')) {
         toast.error('Please select a valid image');
         return;
       }
-      
+
       // Check size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
         toast.error('Image must be less than 2MB');
         return;
       }
-      
+
       // Create preview
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -155,7 +153,7 @@ const ProfilePage: React.FC = () => {
         }
       };
       reader.readAsDataURL(file);
-      
+
       setAvatar(file);
     }
   };
@@ -187,7 +185,7 @@ const ProfilePage: React.FC = () => {
               <CardTitle>Personal Information</CardTitle>
               <CardDescription>Your profile information</CardDescription>
             </div>
-            <Button 
+            <Button
               onClick={() => setIsEditMode(true)}
               className="flex items-center"
             >
@@ -199,10 +197,10 @@ const ProfilePage: React.FC = () => {
             <div className="flex flex-col sm:flex-row items-center gap-6">
               <div className="relative">
                 <Avatar className="h-32 w-32">
-                  <AvatarImage 
-                    src={user.avatar_url || user.avatar} 
-                    alt={user.username} 
-                    className="object-cover" 
+                  <AvatarImage
+                    src={user.avatar_url || user.avatar}
+                    alt={user.username}
+                    className="object-cover"
                   />
                   <AvatarFallback className="text-3xl bg-primary text-primary-foreground">
                     {getInitials()}
@@ -214,7 +212,7 @@ const ProfilePage: React.FC = () => {
                 <p className="text-muted-foreground">@{user.username}</p>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div>
@@ -225,19 +223,19 @@ const ProfilePage: React.FC = () => {
                       {user.email}
                     </p>
                     {user.email_verified ? (
-                      <StatusBadge 
-                        variant="success" 
-                        position="inline" 
-                        className="ml-2" 
-                        text="Verified" 
+                      <StatusBadge
+                        variant="success"
+                        position="inline"
+                        className="ml-2"
+                        text="Verified"
                       />
                     ) : (
                       <div className="flex items-center">
-                        <StatusBadge 
-                          variant="warning" 
-                          position="inline" 
-                          className="ml-2" 
-                          text="Not verified" 
+                        <StatusBadge
+                          variant="warning"
+                          position="inline"
+                          className="ml-2"
+                          text="Not verified"
                         />
                         <Button
                           variant="ghost"
@@ -257,7 +255,7 @@ const ProfilePage: React.FC = () => {
                     )}
                   </div>
                 </div>
-                
+
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Gender</h3>
                   <p className="flex items-center mt-1">
@@ -266,7 +264,7 @@ const ProfilePage: React.FC = () => {
                   </p>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 {user.date_of_birth && (
                   <div>
@@ -277,7 +275,7 @@ const ProfilePage: React.FC = () => {
                     </p>
                   </div>
                 )}
-                
+
                 {user.home_role && (
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground">Home role</h3>
@@ -289,7 +287,7 @@ const ProfilePage: React.FC = () => {
                 )}
               </div>
             </div>
-            
+
             <div className="pt-4 border-t">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
@@ -312,9 +310,9 @@ const ProfilePage: React.FC = () => {
         // Edit Mode - Profile editing card
         <Card className="w-full max-w-3xl mx-auto">
           <CardHeader className="flex flex-row items-center space-x-2">
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setIsEditMode(false)}
               className="h-8 w-8 rounded-full p-0 mr-2"
             >
@@ -332,7 +330,7 @@ const ProfilePage: React.FC = () => {
                 <TabsTrigger value="profile">General information</TabsTrigger>
                 <TabsTrigger value="password">Password</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="profile">
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -352,11 +350,11 @@ const ProfilePage: React.FC = () => {
                         <div className="absolute inset-0 bg-black/30 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                           <label htmlFor="avatar-upload" className="cursor-pointer p-2 text-white">
                             <UploadCloud className="h-8 w-8" />
-                            <input 
-                              id="avatar-upload" 
-                              type="file" 
-                              accept="image/*" 
-                              className="hidden" 
+                            <input
+                              id="avatar-upload"
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
                               onChange={handleAvatarChange}
                               disabled={isLoading}
                             />
@@ -380,7 +378,7 @@ const ProfilePage: React.FC = () => {
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="last_name"
@@ -395,7 +393,7 @@ const ProfilePage: React.FC = () => {
                         )}
                       />
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
@@ -410,7 +408,7 @@ const ProfilePage: React.FC = () => {
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="email"
@@ -458,7 +456,7 @@ const ProfilePage: React.FC = () => {
                         )}
                       />
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
@@ -466,8 +464,8 @@ const ProfilePage: React.FC = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Gender</FormLabel>
-                            <Select 
-                              onValueChange={field.onChange} 
+                            <Select
+                              onValueChange={field.onChange}
                               defaultValue={field.value}
                               disabled={isLoading}
                             >
@@ -486,52 +484,8 @@ const ProfilePage: React.FC = () => {
                           </FormItem>
                         )}
                       />
-                      
-                      <FormField
-                        control={form.control}
-                        name="date_of_birth"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-col">
-                            <FormLabel>Date of birth</FormLabel>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button
-                                    variant="outline"
-                                    className={cn(
-                                      "w-full pl-3 text-left font-normal",
-                                      !field.value && "text-muted-foreground"
-                                    )}
-                                    disabled={isLoading}
-                                  >
-                                    {field.value ? (
-                                      format(field.value, "dd MMMM yyyy", { locale: fr })
-                                    ) : (
-                                      <span>Select a date</span>
-                                    )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                  </Button>
-                                </FormControl>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                  mode="single"
-                                  selected={field.value}
-                                  onSelect={field.onChange}
-                                  disabled={(date) =>
-                                    date > new Date() || date < new Date("1900-01-01")
-                                  }
-                                  locale={fr}
-                                  initialFocus
-                                />
-                              </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
                     </div>
-                    
+
                     <FormField
                       control={form.control}
                       name="home_role"
@@ -545,7 +499,7 @@ const ProfilePage: React.FC = () => {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="current_password"
@@ -553,11 +507,11 @@ const ProfilePage: React.FC = () => {
                         <FormItem>
                           <FormLabel>Current password</FormLabel>
                           <FormControl>
-                            <Input 
-                              type="password" 
-                              placeholder="Enter your current password to confirm changes" 
-                              {...field} 
-                              disabled={isLoading} 
+                            <Input
+                              type="password"
+                              placeholder="Enter your current password to confirm changes"
+                              {...field}
+                              disabled={isLoading}
                             />
                           </FormControl>
                           <FormMessage />
@@ -567,12 +521,12 @@ const ProfilePage: React.FC = () => {
                         </FormItem>
                       )}
                     />
-                    
+
                     <div className="flex justify-end space-x-3">
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={() => setIsEditMode(false)} 
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsEditMode(false)}
                         disabled={isLoading}
                       >
                         Cancel
@@ -585,7 +539,7 @@ const ProfilePage: React.FC = () => {
                   </form>
                 </Form>
               </TabsContent>
-              
+
               <TabsContent value="password">
                 <ProfilePasswordTab onSuccess={() => setIsEditMode(false)} />
               </TabsContent>
@@ -623,11 +577,11 @@ const ProfilePage: React.FC = () => {
             <Button onClick={() => {
               // Redirect to email change process
               setShowEmailChangeDialog(false);
-              navigate('/auth/email-change', { 
-                state: { 
+              navigate('/auth/email-change', {
+                state: {
                   email: form.getValues().email,
                   password: form.getValues().current_password
-                } 
+                }
               });
             }}>
               Continue
