@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Device } from "@/services/device.service";
 import deviceService from "@/services/device.service";
+import { useDevices } from "@/context/DevicesContext";
 import { Button } from "./button";
 import { Slider } from "./slider";
 import { Switch } from "./switch";
@@ -9,55 +10,65 @@ import { Power, Thermometer, Loader2 } from "lucide-react";
 
 interface DeviceControlProps {
   device: Device;
-  onDeviceUpdated?: () => void; // Callback après mis à jour de l'appareil
+  onDeviceUpdated?: () => void; // Callback after device update
 }
 
-// Composant principal pour contrôler un appareil
+// Main component to control a device
 export function DeviceControl({ device, onDeviceUpdated }: DeviceControlProps) {
-  // Déterminer le type de contrôle à afficher en fonction du type d'appareil
+  // Determine which control to display based on device type
   const renderDeviceControl = () => {
-    // Si l'appareil est hors ligne, montrer qu'il est indisponible
+    // If the device is offline, show it as unavailable
     if (device.status !== 'online') {
       return <DeviceOffline device={device} />;
     }
 
-    // Déterminer le type de contrôle en fonction du type d'appareil
+    // Determine the type of control based on device type
     if (device.device_type_name === 'Smart Light' || 
         device.device_type_name === 'Smart Plug') {
       return <DeviceToggle device={device} onDeviceUpdated={onDeviceUpdated} />;
     } else if (device.device_type_name === 'Smart Thermostat') {
       return <DeviceThermostat device={device} onDeviceUpdated={onDeviceUpdated} />;
     } else {
-      // Pour les autres types d'appareils, montrer un contrôle générique
+      // For other device types, show a generic control
       return <DeviceGeneric device={device} />;
     }
   };
 
   return (
     <div className="mt-4 border rounded-md p-4">
-      <h3 className="text-sm font-medium mb-4">Contrôles</h3>
+      <h3 className="text-sm font-medium mb-4">Controls</h3>
       {renderDeviceControl()}
     </div>
   );
 }
 
-// Contrôle pour les appareils qui peuvent être allumés/éteints
+// Control for devices that can be turned on/off
 function DeviceToggle({ device, onDeviceUpdated }: DeviceControlProps) {
   const [isOn, setIsOn] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { updateDeviceStatus } = useDevices();
 
   const toggleDevice = async () => {
     setLoading(true);
     try {
+      // Call API to toggle the state
       const response = await deviceService.toggleDevice(device.id, isOn);
+      
       if (response.status === 'success' && response.data) {
+        // Update local state
         setIsOn(response.data.state);
-        toast(`${device.name} a été ${response.data.state ? 'allumé' : 'éteint'}.`);
+        
+        // Update device status (simulate connection)
+        await updateDeviceStatus(device.id, 'online');
+        
+        toast(`${device.name} has been ${response.data.state ? 'turned on' : 'turned off'}.`);
+        
+        // Call the callback if provided
         if (onDeviceUpdated) onDeviceUpdated();
       }
     } catch (error) {
-      console.error("Erreur lors du contrôle de l'appareil:", error);
-      toast.error("Impossible de contrôler l'appareil. Veuillez réessayer.");
+      console.error("Error controlling the device:", error);
+      toast.error("Unable to control the device. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -67,7 +78,7 @@ function DeviceToggle({ device, onDeviceUpdated }: DeviceControlProps) {
     <div className="flex items-center justify-between">
       <div className="flex items-center space-x-2">
         <Power className={`h-5 w-5 ${isOn ? 'text-primary' : 'text-muted-foreground'}`} />
-        <span>{isOn ? 'Allumé' : 'Éteint'}</span>
+        <span>{isOn ? 'On' : 'Off'}</span>
       </div>
       <div className="flex items-center space-x-4">
         {loading ? (
@@ -84,23 +95,31 @@ function DeviceToggle({ device, onDeviceUpdated }: DeviceControlProps) {
   );
 }
 
-// Contrôle pour les thermostats
+// Control for thermostats
 function DeviceThermostat({ device, onDeviceUpdated }: DeviceControlProps) {
-  const [temperature, setTemperature] = useState(21); // Température par défaut
+  const [temperature, setTemperature] = useState(21); // Default temperature
   const [loading, setLoading] = useState(false);
+  const { updateDeviceStatus } = useDevices();
 
   const updateTemperature = async (newTemp: number) => {
     setLoading(true);
     try {
       const response = await deviceService.setTemperature(device.id, newTemp);
       if (response.status === 'success' && response.data) {
+        // Update local temperature
         setTemperature(response.data.temperature);
-        toast(`${device.name} a été réglé à ${response.data.temperature}°C.`);
+        
+        // Update device status (simulate connection)
+        await updateDeviceStatus(device.id, 'online');
+        
+        toast(`${device.name} has been set to ${response.data.temperature}°C.`);
+        
+        // Call the callback if provided
         if (onDeviceUpdated) onDeviceUpdated();
       }
     } catch (error) {
-      console.error("Erreur lors du réglage de la température:", error);
-      toast.error("Impossible de régler la température. Veuillez réessayer.");
+      console.error("Error setting temperature:", error);
+      toast.error("Unable to set temperature. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -111,7 +130,7 @@ function DeviceThermostat({ device, onDeviceUpdated }: DeviceControlProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Thermometer className="h-5 w-5 text-primary" />
-          <span>Température</span>
+          <span>Temperature</span>
         </div>
         <div>
           <span className="text-xl font-semibold">{temperature}°C</span>
@@ -140,23 +159,23 @@ function DeviceThermostat({ device, onDeviceUpdated }: DeviceControlProps) {
   );
 }
 
-// Pour les appareils hors ligne
+// For offline devices
 function DeviceOffline({ device }: { device: Device }) {
   return (
     <div className="text-center py-2">
       <p className="text-muted-foreground">
-        Cet appareil est actuellement hors ligne et ne peut pas être contrôlé.
+        This device is currently offline and cannot be controlled.
       </p>
     </div>
   );
 }
 
-// Pour les autres types d'appareils
+// For other device types
 function DeviceGeneric({ device }: { device: Device }) {
   return (
     <div className="text-center py-2">
       <p className="text-muted-foreground">
-        Aucun contrôle spécifique n'est disponible pour ce type d'appareil.
+        No specific controls are available for this device type.
       </p>
     </div>
   );

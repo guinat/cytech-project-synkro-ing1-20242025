@@ -1,12 +1,16 @@
 import { useState, useEffect } from "react";
 import MaxWidthWrapper from "@/components/common/MaxWidthWrapper";
 import { useDevices } from "@/context/DevicesContext";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-import { Home, Plus, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useNavigate } from "react-router-dom";
+import { Home, Plus, Loader2, DoorOpen, X, Check, Smartphone, ArrowRight } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { Home as HomeType, Room as RoomType } from "@/services/home.service";
 
 const DashboardPage = () => {
   const { 
@@ -19,12 +23,35 @@ const DashboardPage = () => {
     loadingRooms, 
     loadingDevices,
     fetchHomes,
-    fetchDevices 
+    fetchDevices,
+    createHome,
+    createRoom 
   } = useDevices();
+  
+  const navigate = useNavigate();
   
   // State for the dashboard
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loadingDashboard, setLoadingDashboard] = useState<boolean>(false);
+  
+  // States for creating a home
+  const [isHomeDialogOpen, setIsHomeDialogOpen] = useState(false);
+  const [isCreatingHome, setIsCreatingHome] = useState(false);
+  const [homeName, setHomeName] = useState("");
+  const [homeAddress, setHomeAddress] = useState("");
+  
+  // States for room creation
+  const [showRoomStep, setShowRoomStep] = useState(false);
+  const [roomsToCreate, setRoomsToCreate] = useState<{name: string; id?: number}[]>([
+    { name: "Living Room" },
+    { name: "Kitchen" },
+    { name: "Bedroom" }
+  ]);
+  const [newRoomName, setNewRoomName] = useState("");
+  
+  // State for device addition query
+  const [showDeviceQuery, setShowDeviceQuery] = useState(false);
+  const [newHomeId, setNewHomeId] = useState<number | null>(null);
 
   // Get dashboard data when a home is selected
   useEffect(() => {
@@ -62,12 +89,162 @@ const DashboardPage = () => {
       setLoadingDashboard(false);
     }
   };
+  
   // Refresh the dashboard
   const refreshDashboard = () => {
     fetchHomes();
     fetchDevices();
     fetchDashboardData();
     toast("Dashboard updated");
+  };
+  
+  // Handle home creation
+  const handleCreateHome = async () => {
+    if (!homeName.trim()) {
+      toast.error("Please enter a home name");
+      return;
+    }
+    
+    setIsCreatingHome(true);
+    try {
+      // Prepare home data
+      const homeData: Partial<HomeType> = {
+        name: homeName.trim()
+      };
+      
+      if (homeAddress.trim()) {
+        homeData.address = homeAddress.trim();
+      }
+      
+      // Create the home
+      const newHome = await createHome(homeData);
+      toast.success(`Home "${newHome.name}" created successfully!`);
+      
+      // Store the new home ID
+      setNewHomeId(newHome.id);
+      
+      // Select the new home
+      setSelectedHome(newHome);
+      
+      // Rafraîchir la liste des pièces pour cette maison
+      await fetchHomes();
+      
+      // Go to rooms step if user wants to add rooms
+      setShowRoomStep(true);
+      
+    } catch (error) {
+      console.error("Error creating home:", error);
+      toast.error("Unable to create home. Please try again.");
+    } finally {
+      setIsCreatingHome(false);
+    }
+  };
+  
+  // Handle adding a room to the list
+  const handleAddRoom = () => {
+    if (!newRoomName.trim()) return;
+    
+    setRoomsToCreate([...roomsToCreate, { name: newRoomName.trim() }]);
+    setNewRoomName("");
+  };
+  
+  // Handle removing a room from the list
+  const handleRemoveRoom = (index: number) => {
+    const updatedRooms = [...roomsToCreate];
+    updatedRooms.splice(index, 1);
+    setRoomsToCreate(updatedRooms);
+  };
+  
+  // Handle creating rooms
+  const handleCreateRooms = async () => {
+    if (!newHomeId) return;
+    
+    setIsCreatingHome(true);
+    try {
+      const createdRooms = [];
+      
+      // Create each room sequentially
+      for (const room of roomsToCreate) {
+        const roomData: Partial<RoomType> = {
+          name: room.name,
+          home: newHomeId
+        };
+        
+        try {
+          const newRoom = await createRoom(roomData);
+          createdRooms.push(newRoom);
+        } catch (roomError) {
+          console.error(`Error creating room ${room.name}:`, roomError);
+          // Continue with other rooms even if one fails
+        }
+      }
+      
+      if (createdRooms.length > 0) {
+        toast.success(`${createdRooms.length} room${createdRooms.length === 1 ? '' : 's'} created successfully!`);
+      } else {
+        toast.error("No rooms were created. Please try again later.");
+      }
+      
+      // Ask if user wants to add devices
+      setShowRoomStep(false);
+      setShowDeviceQuery(true);
+      
+    } catch (error) {
+      console.error("Error creating rooms:", error);
+      toast.error("Unable to create all rooms. Please try again.");
+    } finally {
+      setIsCreatingHome(false);
+    }
+  };
+  
+  // Handle skipping room creation
+  const handleSkipRooms = () => {
+    setShowRoomStep(false);
+    setShowDeviceQuery(true);
+  };
+  
+  // Handle navigating to devices page
+  const handleNavigateToDevices = () => {
+    // Close the dialog
+    setIsHomeDialogOpen(false);
+    
+    // Reset all states
+    setHomeName("");
+    setHomeAddress("");
+    setShowRoomStep(false);
+    setShowDeviceQuery(false);
+    setRoomsToCreate([
+      { name: "Living Room" },
+      { name: "Kitchen" },
+      { name: "Bedroom" }
+    ]);
+    
+    // Make sure to bring the newly created home ID to the devices page
+    // Cela permettra à la page des appareils de savoir quelle maison est sélectionnée
+    const homeToUse = selectedHome ? selectedHome.id : newHomeId;
+    
+    // Navigate to the devices page
+    navigate("/dashboard/devices", { state: { selectedHomeId: homeToUse } });
+  };
+  
+  // Handle finishing the setup
+  const handleFinishSetup = () => {
+    // Close the dialog
+    setIsHomeDialogOpen(false);
+    
+    // Reset all states
+    setHomeName("");
+    setHomeAddress("");
+    setShowRoomStep(false);
+    setShowDeviceQuery(false);
+    setRoomsToCreate([
+      { name: "Living Room" },
+      { name: "Kitchen" },
+      { name: "Bedroom" }
+    ]);
+    
+    // Refresh the dashboard
+    fetchDashboardData();
   };
 
   return (
@@ -126,9 +303,193 @@ const DashboardPage = () => {
               {homes.length > 0 ? (
                 <p>Choose a home in the selector above.</p>
               ) : (
-                <Button variant="outline" onClick={() => toast("Feature to be implemented")}>
-                  <Plus className="mr-2 h-4 w-4" /> Create my first home
-                </Button>
+                <Dialog open={isHomeDialogOpen} onOpenChange={setIsHomeDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">
+                      <Plus className="mr-2 h-4 w-4" /> Create my first home
+                    </Button>
+                  </DialogTrigger>
+                  
+                  <DialogContent className="sm:max-w-md">
+                    {/* Home creation step */}
+                    {!showRoomStep && !showDeviceQuery && (
+                      <>
+                        <DialogHeader>
+                          <DialogTitle>Create your first home</DialogTitle>
+                          <DialogDescription>
+                            Add a home to start managing your devices
+                          </DialogDescription>
+                        </DialogHeader>
+                        
+                        <div className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="home-name">Home name</Label>
+                            <Input
+                              id="home-name"
+                              placeholder="My Home, Beach House, etc."
+                              value={homeName}
+                              onChange={(e) => setHomeName(e.target.value)}
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="home-address">Address (optional)</Label>
+                            <Input
+                              id="home-address"
+                              placeholder="123 Main St, City, Country"
+                              value={homeAddress}
+                              onChange={(e) => setHomeAddress(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        
+                        <DialogFooter>
+                          <Button
+                            onClick={handleCreateHome}
+                            disabled={isCreatingHome || !homeName.trim()}
+                          >
+                            {isCreatingHome ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Creating...
+                              </>
+                            ) : (
+                              "Create and continue"
+                            )}
+                          </Button>
+                        </DialogFooter>
+                      </>
+                    )}
+                    
+                    {/* Room creation step */}
+                    {showRoomStep && (
+                      <>
+                        <DialogHeader>
+                          <DialogTitle>Add rooms to your home</DialogTitle>
+                          <DialogDescription>
+                            You can add or customize rooms now or do it later
+                          </DialogDescription>
+                        </DialogHeader>
+                        
+                        <div className="space-y-4 py-4">
+                          <div className="space-y-4">
+                            {roomsToCreate.map((room, index) => (
+                              <div key={index} className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                  <DoorOpen className="mr-2 h-4 w-4" />
+                                  <span>{room.name}</span>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRemoveRoom(index)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          <div className="flex space-x-2">
+                            <Input
+                              placeholder="Add a new room"
+                              value={newRoomName}
+                              onChange={(e) => setNewRoomName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && newRoomName.trim()) {
+                                  handleAddRoom();
+                                }
+                              }}
+                            />
+                            <Button
+                              variant="outline"
+                              onClick={handleAddRoom}
+                              disabled={!newRoomName.trim()}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <DialogFooter className="flex justify-between sm:justify-between">
+                          <Button
+                            variant="outline"
+                            onClick={handleSkipRooms}
+                          >
+                            Skip
+                          </Button>
+                          <Button
+                            onClick={handleCreateRooms}
+                            disabled={isCreatingHome || roomsToCreate.length === 0}
+                          >
+                            {isCreatingHome ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Creating rooms...
+                              </>
+                            ) : (
+                              "Create rooms"
+                            )}
+                          </Button>
+                        </DialogFooter>
+                      </>
+                    )}
+                    
+                    {/* Device addition query */}
+                    {showDeviceQuery && (
+                      <>
+                        <DialogHeader>
+                          <DialogTitle>Add devices to your home?</DialogTitle>
+                          <DialogDescription>
+                            Would you like to add devices to your home now?
+                          </DialogDescription>
+                        </DialogHeader>
+                        
+                        <div className="py-6">
+                          <div className="flex flex-col gap-4">
+                            <Card>
+                              <CardHeader className="pb-2">
+                                <CardTitle className="text-base">Add devices</CardTitle>
+                              </CardHeader>
+                              <CardContent className="text-sm text-muted-foreground">
+                                <p>Go to the devices page to add and configure your smart devices.</p>
+                              </CardContent>
+                              <CardFooter>
+                                <Button 
+                                  className="w-full"
+                                  onClick={handleNavigateToDevices}
+                                >
+                                  <Smartphone className="mr-2 h-4 w-4" />
+                                  Add devices
+                                  <ArrowRight className="ml-2 h-4 w-4" />
+                                </Button>
+                              </CardFooter>
+                            </Card>
+                            
+                            <Card>
+                              <CardHeader className="pb-2">
+                                <CardTitle className="text-base">Finish setup</CardTitle>
+                              </CardHeader>
+                              <CardContent className="text-sm text-muted-foreground">
+                                <p>Return to the dashboard and add devices later.</p>
+                              </CardContent>
+                              <CardFooter>
+                                <Button 
+                                  variant="outline" 
+                                  className="w-full"
+                                  onClick={handleFinishSetup}
+                                >
+                                  <Check className="mr-2 h-4 w-4" />
+                                  Finish setup
+                                </Button>
+                              </CardFooter>
+                            </Card>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </DialogContent>
+                </Dialog>
               )}
             </CardContent>
           </Card>
