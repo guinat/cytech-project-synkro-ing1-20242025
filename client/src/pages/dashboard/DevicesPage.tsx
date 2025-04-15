@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MaxWidthWrapper from "@/components/common/MaxWidthWrapper";
 import { useDevices } from "@/context/DevicesContext";
 import { Button } from "@/components/ui/button";
@@ -16,8 +16,14 @@ import { Plus, Smartphone, DoorOpen, Home, Trash2, Pencil, Settings } from "luci
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
+import { useLocation } from "react-router-dom";
 
 const DevicesPage = () => {
+  const location = useLocation();
+  
+  // Check if a selected home ID was passed in the location state
+  const passedHomeId = location.state?.selectedHomeId;
+  
   const {
     homes,
     rooms,
@@ -57,6 +63,17 @@ const DevicesPage = () => {
   const [deviceManufacturer, setDeviceManufacturer] = useState("");
   const [deviceModel, setDeviceModel] = useState("");
   const [deviceSerialNumber, setDeviceSerialNumber] = useState("");
+
+  // Effect to set the selected home if passed via location state
+  useEffect(() => {
+    if (passedHomeId && homes.length > 0) {
+      const homeToSelect = homes.find(h => h.id === passedHomeId);
+      if (homeToSelect && (!selectedHome || selectedHome.id !== passedHomeId)) {
+        console.log(`Setting selected home to ${homeToSelect.name} (ID: ${homeToSelect.id}) from navigation state`);
+        setSelectedHome(homeToSelect);
+      }
+    }
+  }, [passedHomeId, homes, selectedHome, setSelectedHome]);
 
   // Handling dialog opening for creating/modifying a device
   const handleOpenDeviceDialog = (device?: Device) => {
@@ -112,26 +129,31 @@ const DevicesPage = () => {
         ...(deviceRoom ? { room: parseInt(deviceRoom) } : {}),
       };
       
-      if (deviceLocation) {
-        deviceData.location = deviceLocation;
+      // Only add optional fields if they have values
+      if (deviceLocation && deviceLocation.trim()) {
+        deviceData.location = deviceLocation.trim();
       }
       
-      if (deviceManufacturer) {
-        deviceData.manufacturer = deviceManufacturer;
+      if (deviceManufacturer && deviceManufacturer.trim()) {
+        deviceData.manufacturer = deviceManufacturer.trim();
       }
       
-      if (deviceModel) {
-        deviceData.model = deviceModel;
+      if (deviceModel && deviceModel.trim()) {
+        deviceData.model = deviceModel.trim();
       }
       
-      if (deviceSerialNumber) {
-        deviceData.serial_number = deviceSerialNumber;
+      if (deviceSerialNumber && deviceSerialNumber.trim()) {
+        deviceData.serial_number = deviceSerialNumber.trim();
       }
+      
+      console.log("Sending device data to backend:", deviceData);
       
       if (editingDevice) {
         await updateDevice(editingDevice.id, deviceData);
+        console.log("Device updated successfully");
       } else {
         await createDevice(deviceData);
+        console.log("Device created successfully");
       }
       
       // Reset the form
@@ -139,8 +161,18 @@ const DevicesPage = () => {
       
       // Close the modal
       setIsDeviceDialogOpen(false);
+      
+      // Refresh the devices list
+      const filters: { room?: number; home?: number } = {};
+      if (selectedRoom) {
+        filters.room = selectedRoom.id;
+      } else if (selectedHome) {
+        filters.home = selectedHome.id;
+      }
+      fetchDevices(filters);
     } catch (error) {
       console.error("Error saving device:", error);
+      toast.error("There was an error processing your request. Please try again.");
     } finally {
       setIsProcessing(false);
     }
@@ -153,7 +185,11 @@ const DevicesPage = () => {
     }
     
     try {
-      await deleteDevice(deviceId);
+      toast.promise(deleteDevice(deviceId), {
+        loading: "Deleting device...",
+        success: () => "Device deleted successfully!",
+        error: "Failed to delete the device. Please try again."
+      });
     } catch (error) {
       console.error("Error deleting device:", error);
     }
@@ -190,6 +226,18 @@ const DevicesPage = () => {
   const filteredRooms = selectedHome
     ? rooms.filter(room => room.home === selectedHome.id)
     : rooms;
+
+  // Improved device control handling to ensure backend sync
+  const handleDeviceControlUpdated = () => {
+    // Refresh the device list to get updated device data
+    const filters: { room?: number; home?: number } = {};
+    if (selectedRoom) {
+      filters.room = selectedRoom.id;
+    } else if (selectedHome) {
+      filters.home = selectedHome.id;
+    }
+    fetchDevices(filters);
+  };
 
   return (
     <MaxWidthWrapper>
@@ -535,7 +583,10 @@ const DevicesPage = () => {
                         )}
                         
                         {/* Device control */}
-                        <DeviceControl device={device} onDeviceUpdated={fetchDevices} />
+                        <DeviceControl 
+                          device={device} 
+                          onDeviceUpdated={handleDeviceControlUpdated} 
+                        />
                       </div>
                     </CardContent>
                     <CardFooter className="justify-end space-x-2">

@@ -1,6 +1,9 @@
 // Base API URL 
 export const API_URL = 'http://localhost:8000/api';
 
+// Enable debug mode for more verbose logging
+export const DEBUG_API = true;
+
 // Interface for paginated responses (legacy format)
 export interface PaginatedResponse<T> {
   count: number;
@@ -225,15 +228,31 @@ export const api = {
     const headers = getAuthHeader();
     headers.set('Content-Type', 'application/json');
     
-    console.log(`API POST Request: ${url}`, data);
-    const response = await fetch(`${API_URL}${url}`, {
-      ...options,
-      method: 'POST',
-      headers,
-      body: data ? JSON.stringify(data) : undefined,
-    });
+    if (DEBUG_API) {
+      console.log(`API POST Request to ${API_URL}${url}`);
+      console.log('Headers:', Object.fromEntries([...headers.entries()]));
+      console.log('Request Data:', data);
+    }
     
-    return parseResponse(response) as Promise<T>;
+    try {
+      const response = await fetch(`${API_URL}${url}`, {
+        ...options,
+        method: 'POST',
+        headers,
+        body: data ? JSON.stringify(data) : undefined,
+      });
+      
+      const result = await parseResponse(response);
+      
+      if (DEBUG_API) {
+        console.log('API Response:', result);
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('API POST Error:', error);
+      throw error;
+    }
   },
   
   // PUT request
@@ -257,14 +276,31 @@ export const api = {
     const headers = getAuthHeader();
     headers.set('Content-Type', 'application/json');
     
-    const response = await fetch(`${API_URL}${url}`, {
-      ...options,
-      method: 'PATCH',
-      headers,
-      body: data ? JSON.stringify(data) : undefined,
-    });
+    if (DEBUG_API) {
+      console.log(`API PATCH Request to ${API_URL}${url}`);
+      console.log('Headers:', Object.fromEntries([...headers.entries()]));
+      console.log('Request Data:', data);
+    }
     
-    return parseResponse(response) as Promise<T>;
+    try {
+      const response = await fetch(`${API_URL}${url}`, {
+        ...options,
+        method: 'PATCH',
+        headers,
+        body: data ? JSON.stringify(data) : undefined,
+      });
+      
+      const result = await parseResponse(response);
+      
+      if (DEBUG_API) {
+        console.log('API Response:', result);
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('API PATCH Error:', error);
+      throw error;
+    }
   },
   
   // DELETE request

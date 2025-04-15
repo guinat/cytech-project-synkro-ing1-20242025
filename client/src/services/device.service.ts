@@ -1,4 +1,4 @@
-import api, { PaginatedResponse, ApiResponse } from './api';
+import api, { PaginatedResponse, ApiResponse, DEBUG_API } from './api';
 
 // Interfaces for device types
 export interface DeviceType {
@@ -80,16 +80,52 @@ class DeviceService {
     // Creating request parameters
     const params = new URLSearchParams();
     if (filters) {
-      if (filters.device_type) params.append('device_type', filters.device_type.toString());
-      if (filters.location) params.append('location', filters.location);
-      if (filters.status) params.append('status', filters.status);
-      if (filters.search) params.append('search', filters.search);
-      if (filters.room) params.append('room', filters.room.toString());
-      if (filters.home) params.append('home', filters.home.toString());
+      // Vérifier que les filtres ont des valeurs valides
+      if (filters.device_type && !isNaN(Number(filters.device_type))) {
+        params.append('device_type', filters.device_type.toString());
+      }
+      
+      if (filters.location && filters.location.trim()) {
+        params.append('location', filters.location.trim());
+      }
+      
+      if (filters.status && ['online', 'offline', 'error', 'maintenance'].includes(filters.status)) {
+        params.append('status', filters.status);
+      }
+      
+      if (filters.search && filters.search.trim()) {
+        params.append('search', filters.search.trim());
+      }
+      
+      if (filters.room && !isNaN(Number(filters.room))) {
+        params.append('room', filters.room.toString());
+      }
+      
+      if (filters.home && !isNaN(Number(filters.home))) {
+        params.append('home', filters.home.toString());
+      }
+    }
+    
+    if (DEBUG_API) {
+      console.log(`DeviceService.getDevices called with filters:`, filters);
+      console.log(`Final query parameters:`, params.toString());
     }
     
     const queryString = params.toString() ? `?${params.toString()}` : '';
-    return api.get<ApiResponse<Device[]>>(`/devices/devices/${queryString}`);
+    try {
+      return await api.get<ApiResponse<Device[]>>(`/devices/devices/${queryString}`);
+    } catch (error) {
+      console.error('Error fetching devices:', error);
+      // Si le filtre par pièce cause une erreur, réessayer avec seulement le filtre par maison
+      if (filters?.room && filters?.home && error instanceof Error) {
+        console.warn('Retrying device fetch with only home filter');
+        const homeParams = new URLSearchParams();
+        homeParams.append('home', filters.home.toString());
+        const homeQueryString = `?${homeParams.toString()}`;
+        return api.get<ApiResponse<Device[]>>(`/devices/devices/${homeQueryString}`);
+      }
+      throw error;
+    }
   }
 
   // Get a device by its ID
@@ -99,17 +135,100 @@ class DeviceService {
 
   // Create a new device
   async createDevice(deviceData: Partial<Device>): Promise<Device> {
-    return api.post<Device>('/devices/devices/', deviceData);
+    if (DEBUG_API) {
+      console.log("DeviceService.createDevice called with data:", deviceData);
+    }
+    
+    try {
+      const response = await api.post<ApiResponse<Device> | Device>('/devices/devices/', deviceData);
+      
+      if (DEBUG_API) {
+        console.log("DeviceService.createDevice received response:", response);
+      }
+      
+      // Handle both response formats (ApiResponse or direct Device object)
+      if (response && typeof response === 'object' && 'status' in response && 
+          response.status === 'success' && 'data' in response) {
+        return response.data as Device;
+      }
+      return response as Device;
+    } catch (error) {
+      console.error("DeviceService.createDevice error:", error);
+      throw error;
+    }
   }
 
   // Update a device
   async updateDevice(id: number, deviceData: Partial<Device>): Promise<Device> {
-    return api.patch<Device>(`/devices/devices/${id}/`, deviceData);
+    if (DEBUG_API) {
+      console.log(`DeviceService.updateDevice(${id}) called with data:`, deviceData);
+    }
+    
+    try {
+      const response = await api.patch<ApiResponse<Device> | Device>(`/devices/devices/${id}/`, deviceData);
+      
+      if (DEBUG_API) {
+        console.log(`DeviceService.updateDevice(${id}) received response:`, response);
+      }
+      
+      // Handle both response formats (ApiResponse or direct Device object)
+      if (response && typeof response === 'object' && 'status' in response && 
+          response.status === 'success' && 'data' in response) {
+        return response.data as Device;
+      }
+      return response as Device;
+    } catch (error) {
+      console.error(`DeviceService.updateDevice(${id}) error:`, error);
+      throw error;
+    }
   }
 
   // Delete a device
   async deleteDevice(id: number): Promise<void> {
-    return api.delete<void>(`/devices/devices/${id}/`);
+    if (DEBUG_API) {
+      console.log(`DeviceService.deleteDevice(${id}) called`);
+    }
+    
+    try {
+      const response = await api.delete<void>(`/devices/devices/${id}/`);
+      
+      if (DEBUG_API) {
+        console.log(`DeviceService.deleteDevice(${id}) successful`);
+      }
+      
+      return response;
+    } catch (error) {
+      console.error(`DeviceService.deleteDevice(${id}) error:`, error);
+      throw error;
+    }
+  }
+
+  // Update device status
+  async updateDeviceStatus(id: number, status: 'online' | 'offline' | 'error' | 'maintenance'): Promise<ApiResponse<Device> | Device> {
+    if (DEBUG_API) {
+      console.log(`DeviceService.updateDeviceStatus(${id}) called with status: ${status}`);
+    }
+    
+    try {
+      const response = await api.patch<ApiResponse<Device> | Device>(
+        `/devices/devices/${id}/update_status/`, 
+        { status }
+      );
+      
+      if (DEBUG_API) {
+        console.log(`DeviceService.updateDeviceStatus(${id}) received response:`, response);
+      }
+      
+      // Handle both response formats
+      if (response && typeof response === 'object' && 'status' in response && 
+          response.status === 'success' && 'data' in response) {
+        return response;
+      }
+      return response;
+    } catch (error) {
+      console.error(`DeviceService.updateDeviceStatus(${id}) error:`, error);
+      throw error;
+    }
   }
 
   // Toggle a device on/off (for lights, plugs, etc.)
