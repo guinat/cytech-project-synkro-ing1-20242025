@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import DeviceType, Device, DeviceDataPoint, DeviceCommand, Home, Room, HomeMembership
+from .models import DeviceType, Device, DeviceDataPoint, DeviceCommand, Home, Room, HomeMembership, Refrigerator, Thermostat, Light, EnvironmentalSensor, Camera, Blind, AudioSystem, SmartLock, WashingMachine, Oven, WaterDevice, TV, WeatherStation, MotionDetector, DeviceStat, Alert
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
@@ -305,3 +305,142 @@ class DeviceCommandSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         validated_data['created_by'] = user
         return super().create(validated_data) 
+    
+    """ SERIALIZER FOR DEVICES"""
+
+class LightSerializer(serializers.ModelSerializer):
+    device_name = serializers.CharField(source='device.name', read_only=True)
+    created_by_username = serializers.CharField(source='device.created_by.username', read_only=True)
+
+    class Meta:
+        model = Light
+        fields = ['id', 'device', 'device_name', 'created_by_username', 'brightness', 'color', 'color_temperature', 'is_on']
+
+
+class ThermostatSerializer(serializers.ModelSerializer):
+    device_name = serializers.CharField(source='device.name', read_only=True)
+    created_by_username = serializers.CharField(source='device.created_by.username', read_only=True)
+
+    class Meta:
+        model = Thermostat
+        fields = ['id', 'device', 'device_name', 'created_by_username', 'temperature', 'target_temperature', 'mode', 'is_on']
+
+class CameraSerializer(serializers.ModelSerializer):
+    device_name = serializers.CharField(source='device.name', read_only=True)
+    created_by_username = serializers.CharField(source='device.created_by.username', read_only=True)
+
+    class Meta:
+        model = Camera
+        fields = ['id', 'device', 'device_name', 'created_by_username', 'resolution', 'angle', 'is_recording', 'stream_url']
+
+
+class SmartLockSerializer(serializers.ModelSerializer):
+    device_name = serializers.CharField(source='device.name', read_only=True)
+    created_by_username = serializers.CharField(source='device.created_by.username', read_only=True)
+
+    class Meta:
+        model = SmartLock
+        fields = ['id', 'device', 'device_name', 'created_by_username', 'is_locked', 'battery_level', 'lock_code']
+
+
+class RefrigeratorSerializer(serializers.ModelSerializer):
+    device_name = serializers.CharField(source='device.name', read_only=True)
+    created_by_username = serializers.CharField(source='device.created_by.username', read_only=True)
+
+    class Meta:
+        model = Refrigerator
+        fields = ['id', 'device', 'device_name', 'created_by_username', 'temperature', 'mode', 'is_door_open']
+
+
+class WashingMachineSerializer(serializers.ModelSerializer):
+    device_name = serializers.CharField(source='device.name', read_only=True)
+    created_by_username = serializers.CharField(source='device.created_by.username', read_only=True)
+
+    class Meta:
+        model = WashingMachine
+        fields = ['id', 'device', 'device_name', 'created_by_username', 'program', 'is_running', 'time_remaining']
+
+
+class AudioSystemSerializer(serializers.ModelSerializer):
+    device_name = serializers.CharField(source='device.name', read_only=True)
+    created_by_username = serializers.CharField(source='device.created_by.username', read_only=True)
+
+    class Meta:
+        model = AudioSystem
+        fields = ['id', 'device', 'device_name', 'created_by_username', 'volume', 'is_playing', 'current_track']
+
+
+class EnvironmentalSensorSerializer(serializers.ModelSerializer):
+    device_name = serializers.CharField(source='device.name', read_only=True)
+    created_by_username = serializers.CharField(source='device.owner.username', read_only=True)
+
+    class Meta:
+        model = EnvironmentalSensor
+        fields = ['id', 'device', 'device_name', 'created_by_username', 'sensor_type', 'current_value', 'unit', 'last_reading', 'alert_threshold']
+
+
+class BlindSerializer(serializers.ModelSerializer):
+    device_name = serializers.CharField(source='device.name', read_only=True)
+    created_by_username = serializers.CharField(source='device.owner.username', read_only=True)
+
+    class Meta:
+        model = Blind
+        fields = ['id', 'device', 'device_name', 'created_by_username', 'position', 'is_automated', 'schedule']
+
+class OvenSerializer(serializers.ModelSerializer):
+    device_name = serializers.CharField(source='device.name', read_only=True)
+    created_by_username = serializers.CharField(source='device.owner.username', read_only=True)
+
+    class Meta:
+        model = Oven
+        fields = ['id', 'device', 'device_name', 'created_by_username', 'temperature', 'mode', 'is_preheating']
+
+class WaterDeviceSerializer(serializers.ModelSerializer):
+    device_name = serializers.CharField(source='device.name', read_only=True)
+    created_by_username = serializers.CharField(source='device.owner.username', read_only=True)
+
+    class Meta:
+        model = WaterDevice
+        fields = ['id', 'device', 'device_name', 'created_by_username', 'flow_rate', 'total_consumption', 'device_type', 'alert_threshold']
+
+class TVSerializer(serializers.ModelSerializer):
+    device_name = serializers.CharField(source='device.name', read_only=True)
+    created_by_username = serializers.CharField(source='device.owner.username', read_only=True)
+
+    class Meta:
+        model = TV
+        fields = ['id', 'device', 'device_name', 'created_by_username', 'channel', 'volume', 'is_on', 'smart_mode']
+
+class WeatherStationSerializer(serializers.ModelSerializer):
+    device_name = serializers.CharField(source='device.name', read_only=True)
+    created_by_username = serializers.CharField(source='device.owner.username', read_only=True)
+
+    class Meta:
+        model = WeatherStation
+        fields = ['id', 'device', 'device_name', 'created_by_username', 'temperature', 'humidity', 'pressure', 'wind_speed', 'rain_level']
+
+class MotionDetectorSerializer(serializers.ModelSerializer):
+    device_name = serializers.CharField(source='device.name', read_only=True)
+    created_by_username = serializers.CharField(source='device.owner.username', read_only=True)
+
+    class Meta:
+        model = MotionDetector
+        fields = ['id', 'device', 'device_name', 'created_by_username', 'sensitivity_level', 'is_armed', 'last_detection']
+
+class DeviceStatSerializer(serializers.ModelSerializer):
+    device_name = serializers.CharField(source='device.name', read_only=True)
+
+    class Meta:
+        model = DeviceStat
+        fields = ['id', 'device', 'device_name', 'stat_type', 'value', 'timestamp']
+        read_only_fields = ['timestamp']
+        
+class AlertSerializer(serializers.ModelSerializer):
+    device_name = serializers.CharField(source='device.name', read_only=True)
+
+    class Meta:
+        model = Alert
+        fields = ['id', 'device', 'device_name', 'alert_type', 'severity', 'message', 'created_at', 'resolved_at']
+        read_only_fields = ['created_at']
+
+

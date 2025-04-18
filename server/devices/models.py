@@ -173,3 +173,117 @@ class HomeMembership(models.Model):
             self.expires_at = timezone.now() + timezone.timedelta(minutes=15)
             
         super().save(*args, **kwargs)
+
+
+""" DEVICES TYPES"""
+
+class EnvironmentalSensor(models.Model):
+    device = models.OneToOneField(Device, on_delete=models.CASCADE) #lien direct avec la class devices donc théoriquement ça se connecte avec le front 
+    sensor_type = models.CharField(max_length=50)
+    current_value = models.FloatField()
+    unit = models.CharField(max_length=20)
+    last_reading = models.DateTimeField()
+    alert_threshold = models.DecimalField(max_digits=6, decimal_places=2)
+
+class Camera(models.Model):
+    device = models.OneToOneField(Device, on_delete=models.CASCADE)
+    resolution = models.CharField(max_length=20)
+    is_recording = models.BooleanField(default=False)
+    storage_path = models.TextField()
+    retention_days = models.IntegerField()
+
+class Blind(models.Model):
+    device = models.OneToOneField(Device, on_delete=models.CASCADE)
+    position = models.IntegerField()
+    is_automated = models.BooleanField(default=False)
+    schedule = models.JSONField(blank=True, null=True)
+
+class AudioSystem(models.Model):
+    device = models.OneToOneField(Device, on_delete=models.CASCADE)
+    volume = models.IntegerField()
+    input_source = models.CharField(max_length=50)
+    equalizer_settings = models.JSONField()
+
+class Light(models.Model):
+    device = models.OneToOneField(Device, on_delete=models.CASCADE)
+    brightness = models.IntegerField()
+    color = models.CharField(max_length=20)
+    color_temperature = models.IntegerField()
+    is_on = models.BooleanField(default=False)
+
+class SmartLock(models.Model):
+    device = models.OneToOneField(Device, on_delete=models.CASCADE)
+    is_locked = models.BooleanField(default=True)
+    battery_level = models.FloatField()
+    last_lock_change = models.DateTimeField()
+
+class WashingMachine(models.Model):
+    device = models.OneToOneField(Device, on_delete=models.CASCADE)
+    program = models.CharField(max_length=50)
+    status = models.CharField(max_length=20)
+    time_remaining = models.IntegerField()
+    temperature = models.IntegerField()
+    spin_speed = models.IntegerField()
+
+class Refrigerator(models.Model):
+    device = models.OneToOneField(Device, on_delete=models.CASCADE)
+    temperature = models.DecimalField(max_digits=5, decimal_places=2)
+    humidity_level = models.DecimalField(max_digits=5, decimal_places=2)
+    door_status = models.CharField(max_length=50)
+    energy_consumption = models.DecimalField(max_digits=10, decimal_places=2)
+
+class Oven(models.Model):
+    device = models.OneToOneField(Device, on_delete=models.CASCADE)
+    temperature = models.IntegerField()
+    mode = models.CharField(max_length=50)
+    is_preheating = models.BooleanField(default=False)
+
+class Thermostat(models.Model):
+    device = models.OneToOneField(Device, on_delete=models.CASCADE)
+    current_temp = models.DecimalField(max_digits=5, decimal_places=2)
+    target_temp = models.DecimalField(max_digits=5, decimal_places=2)
+    humidity_level = models.DecimalField(max_digits=5, decimal_places=2)
+    mode = models.CharField(max_length=20)
+    schedule = models.JSONField()
+
+class WaterDevice(models.Model):
+    device = models.OneToOneField(Device, on_delete=models.CASCADE)
+    flow_rate = models.DecimalField(max_digits=6, decimal_places=2)
+    total_consumption = models.DecimalField(max_digits=10, decimal_places=2)
+    device_type = models.CharField(max_length=50)
+    alert_threshold = models.DecimalField(max_digits=6, decimal_places=2)
+
+class TV(models.Model):
+    device = models.OneToOneField(Device, on_delete=models.CASCADE)
+    channel = models.CharField(max_length=50)
+    volume = models.IntegerField()
+    is_on = models.BooleanField(default=False)
+    smart_mode = models.CharField(max_length=50)
+
+class WeatherStation(models.Model):
+    device = models.OneToOneField(Device, on_delete=models.CASCADE)
+    temperature = models.FloatField()
+    humidity = models.FloatField()
+    pressure = models.FloatField()
+    wind_speed = models.FloatField()
+    rain_level = models.FloatField()
+
+class MotionDetector(models.Model):
+    device = models.OneToOneField(Device, on_delete=models.CASCADE)
+    sensitivity_level = models.IntegerField()
+    is_armed = models.BooleanField(default=False)
+    last_detection = models.DateTimeField(null=True, blank=True)
+
+class DeviceStat(models.Model):
+    device = models.ForeignKey(Device, on_delete=models.CASCADE)
+    stat_type = models.CharField(max_length=50)
+    value = models.DecimalField(max_digits=10, decimal_places=2)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+class Alert(models.Model):
+    device = models.ForeignKey(Device, on_delete=models.CASCADE)
+    alert_type = models.CharField(max_length=50)
+    severity = models.CharField(max_length=10)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)

@@ -1,6 +1,7 @@
 from rest_framework import permissions
 
 
+
 class IsAdminUser(permissions.BasePermission):
     """
     Permission allowing full access only to admin users.
@@ -187,6 +188,8 @@ class DeviceAccessPermission(permissions.BasePermission):
     - Device owners can update their own devices
     """
     def has_permission(self, request, view):
+        """return request.user.is_authenicated """ # Autorise tout utilisateur connecté, a supprimer après test
+
         # Ensure user is authenticated
         if not request.user or not request.user.is_authenticated:
             return False
