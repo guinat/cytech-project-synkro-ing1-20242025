@@ -9,6 +9,10 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
+from .models import Light
+from .serializers import LightSerializer
+from utils.paginations import StandardResultsPagination
+from utils.permissions import DeviceAccessPermission
 
 
 from django_filters.rest_framework import DjangoFilterBackend
@@ -985,3 +989,41 @@ class DeviceCommandViewSet(APIResponseMixin, viewsets.ReadOnlyModelViewSet):
         return DeviceCommand.objects.filter(
             Q(device__home__owner=user) | Q(device__home__members=user)
         ).distinct()
+    
+
+    """ Gestion requette back des objets connectés """
+
+class LightViewSet(viewsets.ModelViewSet):
+    queryset = Light.objects.select_related('device').all()
+    serializer_class = LightSerializer
+    permission_classes = [IsAuthenticated, DeviceAccessPermission]
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        user = self.request.user
+        # Admin peut tout voir
+        if user.role == 'admin':
+            return Light.objects.select_related('device').all()
+        # Autres : lumières liées à ses maisons
+        return Light.objects.filter(
+            device__home__in=user.owned_homes.all() | user.member_homes.all()
+        ).select_related('device')
+
+    def perform_create(self, serializer):
+        # Le device associé doit déjà exister (créé avant)
+        serializer.save()
+
+    @action(detail=True, methods=['post'])
+    def toggle(self, request, pk=None):
+        """Allumer ou éteindre la lampe"""
+        light = self.get_object()  #api/devices/light/{id}
+
+        # On inverse l’état actuel
+        light.is_on = not light.is_on
+        light.save()
+
+        return Response({
+            "id": light.id,
+            "new_state": light.is_on,
+            "message": f"Lumière {'allumée' if light.is_on else 'éteinte'} avec succès."
+        }, status=status.HTTP_200_OK)    
