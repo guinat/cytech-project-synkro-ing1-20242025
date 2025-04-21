@@ -996,7 +996,7 @@ class DeviceCommandViewSet(APIResponseMixin, viewsets.ReadOnlyModelViewSet):
 class LightViewSet(viewsets.ModelViewSet):
     queryset = Light.objects.select_related('device').all()
     serializer_class = LightSerializer
-    permission_classes = [IsAuthenticated, DeviceAccessPermission]
+    permission_classes = [] #IsAuthenticated, DeviceAccessPermission
     pagination_class = StandardResultsPagination
 
     def get_queryset(self):
