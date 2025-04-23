@@ -1,12 +1,15 @@
 from django.urls import path, include
-from . import views
-
+from .views import ApiRoot
 
 urlpatterns = [
-    # API root
-    path('', views.api_root, name='api-root'),
-    
-    path('users/', include('users.urls')),
-    path('devices/', include('devices.urls')),
+    path('', ApiRoot.as_view(), name='api-root'),
+]
 
+api_patterns = [
+    path('users/', include('users.urls')),
+    path('auth/', include('auth.urls')),
+    path('me/', include('users.me_urls')),
+    path('homes/', include('homes.urls')),
+    path('rooms/', include('rooms.urls')),
+    path('devices/', include('devices.urls')),
 ]
