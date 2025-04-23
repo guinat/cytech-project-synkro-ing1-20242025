@@ -1,1 +1,4 @@
-# Utils package for common functionality across apps 
+"""
+Utils package for the SmartHouse API.
+Contains reusable components, validators, and API response formatters.
+""" 
