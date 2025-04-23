@@ -1,4 +1,4 @@
-import { getToken } from './auth.service';
+import { getTokenService } from './auth.service';
 
 const API_BASE_URL = "http://localhost:8000";
 
@@ -63,7 +63,7 @@ export function extractErrorMessage(errorData: any, detailed: boolean = false, f
 }
 
 export async function apiFetch<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const token = getToken();
+  const token = getTokenService();
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),

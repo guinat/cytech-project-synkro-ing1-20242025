@@ -2,7 +2,7 @@ import React from 'react';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { sendDeviceCommand } from '@/services/device_commands.service';
+import { sendDeviceCommand } from '@/services/devices.service';
 
 interface DeviceDynamicControlsProps {
   device: any;

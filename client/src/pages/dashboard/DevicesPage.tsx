@@ -1,6 +1,6 @@
 import React from 'react';
-import { fetchPublicDeviceTypes, PublicDeviceType } from '@/services/devices.service';
-import { getDeviceCardComponent, BaseDeviceCard } from '@/components/5_device/cards';
+import { getPublicDeviceTypes, PublicDeviceType } from '@/services/devices.service';
+import { getDeviceCardComponent } from '@/components/5_device/cards';
 
 const DevicesPage: React.FC = () => {
   const [deviceTypes, setDeviceTypes] = React.useState<PublicDeviceType[]>([]);
@@ -8,7 +8,7 @@ const DevicesPage: React.FC = () => {
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    fetchPublicDeviceTypes()
+    getPublicDeviceTypes()
       .then(setDeviceTypes)
       .catch((e) => setError(e.message || 'Erreur de chargement'))
       .finally(() => setLoading(false));

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { removeToken } from '@/services/auth.service';
+import { removeTokenService } from '@/services/auth.service';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Logout: React.FC = () => {
@@ -9,7 +9,7 @@ const Logout: React.FC = () => {
 
   React.useEffect(() => {
     logout();
-    removeToken();
+    removeTokenService();
     navigate('/');
   }, [logout, navigate]);
 

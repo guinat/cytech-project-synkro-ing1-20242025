@@ -17,7 +17,7 @@ export type User = {
   last_login?: string;
 };
 
-export async function register(email: string, password: string, username?: string, password_confirm?: string) {
+export async function registerService(email: string, password: string, username?: string, password_confirm?: string) {
   try {
     const confirm = password_confirm || password;
     
@@ -33,7 +33,7 @@ export async function register(email: string, password: string, username?: strin
         }),
       }
     );
-    setToken(data.data.tokens.access);
+    setTokenService(data.data.tokens.access);
     toast.success(extractSuccessMessage(data));
     return data.data.user;
   } catch (error: any) {
@@ -48,7 +48,7 @@ export async function register(email: string, password: string, username?: strin
   }
 }
 
-export async function login(email: string, password: string) {
+export async function loginService(email: string, password: string) {
   try {
     const data = await apiFetch<any>(
       '/auth/login/',
@@ -57,7 +57,7 @@ export async function login(email: string, password: string) {
         body: JSON.stringify({ email, password }),
       }
     );
-    setToken(data.data?.tokens?.access);
+    setTokenService(data.data?.tokens?.access);
     toast.success(extractSuccessMessage(data));
     return data.data.user;
 
@@ -67,7 +67,7 @@ export async function login(email: string, password: string) {
   }
 }
 
-export async function emailVerify(token: string) {
+export async function emailVerifyService(token: string) {
   try {
     const data = await apiFetch(`/auth/email/verify/${token}/`, { method: 'GET' });
     toast.success(extractSuccessMessage(data));
@@ -78,7 +78,7 @@ export async function emailVerify(token: string) {
   }
 }
 
-export async function emailResend() {
+export async function emailResendService() {
   try {
     const data = await apiFetch('/auth/email/resend-verification/', { method: 'POST' });
     toast.success(extractSuccessMessage(data));
@@ -88,7 +88,7 @@ export async function emailResend() {
   }
 }
 
-export async function passwordResetRequest(email: string) {
+export async function passwordResetRequestService(email: string) {
   try {
     const data = await apiFetch('/auth/password/reset/request/', {
       method: 'POST',
@@ -101,7 +101,7 @@ export async function passwordResetRequest(email: string) {
   }
 }
 
-export async function passwordResetConfirm(token: string, password: string, passwordConfirm: string) {
+export async function passwordResetConfirmService(token: string, password: string, passwordConfirm: string) {
   try {
     const payload = { token, password, password_confirm: passwordConfirm };
     const data = await apiFetch('/auth/password/reset/confirm/', {
@@ -115,7 +115,7 @@ export async function passwordResetConfirm(token: string, password: string, pass
   }
 }
 
-export async function passwordChange(current_password: string, new_password: string, new_password_confirm: string) {
+export async function passwordChangeService(current_password: string, new_password: string, new_password_confirm: string) {
   try {
     const data = await apiFetch('/auth/password/change/', {
       method: 'POST',
@@ -129,15 +129,15 @@ export async function passwordChange(current_password: string, new_password: str
   }
 }
 
-export function setToken(token: string) {
+export function setTokenService(token: string) {
   localStorage.setItem(TOKEN_KEY, token);
 }
 
-export function getToken(): string | null {
+export function getTokenService(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
-export function removeToken() {
+export function removeTokenService() {
   localStorage.removeItem(TOKEN_KEY);
 }
 

@@ -15,7 +15,6 @@ export default function AcceptInvitationPage() {
   const { acceptInvitationByToken, rejectInvitationByToken } = useHomes();
   const [status, setStatus] = useState<'idle' | 'pending' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
-  // Décodage du token pour obtenir l'email invité (toujours avant tout return)
   const invitedEmail = React.useMemo(() => {
     if (token) {
       try {
@@ -31,10 +30,9 @@ export default function AcceptInvitationPage() {
   useEffect(() => {
     if (!token) {
       setStatus('error');
-      setMessage('Aucun token fourni.');
+      setMessage('No token provided.');
       return;
     }
-    // On ne fait plus rien automatiquement ici
   }, [token]);
 
   // Gestion des actions
@@ -45,10 +43,10 @@ export default function AcceptInvitationPage() {
     try {
       await acceptInvitationByToken(token);
       setStatus('success');
-      setMessage('Invitation acceptée avec succès !');
+      setMessage('Invitation accepted successfully!');
     } catch (err: any) {
       setStatus('error');
-      setMessage(err?.message || "Erreur lors de l'acceptation de l'invitation.");
+      setMessage(err?.message || "Error accepting invitation.");
     }
   };
 
@@ -59,10 +57,10 @@ export default function AcceptInvitationPage() {
     try {
       await rejectInvitationByToken(token);
       setStatus('success');
-      setMessage('Invitation déclinée.');
+      setMessage('Invitation declined successfully.');
     } catch (err: any) {
       setStatus('error');
-      setMessage(err?.message || "Erreur lors du refus de l'invitation.");
+      setMessage(err?.message || "Error declining invitation.");
     }
   };
 
@@ -70,10 +68,10 @@ export default function AcceptInvitationPage() {
     const nextUrl = encodeURIComponent(location.pathname + location.search);
     return (
       <div style={{ maxWidth: 500, margin: '80px auto', textAlign: 'center' }}>
-        <h2>Acceptation d'invitation</h2>
-        <p>Veuillez vous connecter avec l'adresse email invitée pour accepter cette invitation.</p>
+        <h2>Invitation Acceptance</h2>
+        <p>Please connect with the invited email address to accept this invitation.</p>
         <a href={`/auth/sign_in?next=${nextUrl}`}>
-          <button style={{ marginTop: 16, padding: '8px 24px', fontSize: 16 }}>Se connecter</button>
+          <button style={{ marginTop: 16, padding: '8px 24px', fontSize: 16 }}>Connect</button>
         </a>
       </div>
     );
@@ -82,10 +80,10 @@ export default function AcceptInvitationPage() {
   if (user && user.is_email_verified === false) {
     return (
       <div style={{ maxWidth: 500, margin: '80px auto', textAlign: 'center' }}>
-        <h2>Acceptation d'invitation</h2>
+        <h2>Invitation Acceptance</h2>
         <p style={{ color: 'red' }}>
-          Vous devez vérifier votre adresse email avant de pouvoir rejoindre une maison.<br/>
-          Consultez vos emails pour valider votre compte.
+          You must verify your email address before joining a house.<br/>
+          Check your emails to validate your account.
         </p>
       </div>
     );
@@ -94,9 +92,9 @@ export default function AcceptInvitationPage() {
   if (user && invitedEmail && user.email !== invitedEmail) {
     return (
       <div style={{ maxWidth: 500, margin: '80px auto', textAlign: 'center' }}>
-        <h2>Acceptation d'invitation</h2>
+        <h2>Invitation Acceptance</h2>
         <p style={{ color: 'red' }}>
-          Vous devez être connecté avec l'adresse invitée ({invitedEmail}) pour accepter cette invitation.
+          You must be connected with the invited email address ({invitedEmail}) to accept this invitation.
         </p>
       </div>
     );
@@ -104,13 +102,13 @@ export default function AcceptInvitationPage() {
 
   return (
     <div style={{ maxWidth: 500, margin: '80px auto', textAlign: 'center' }}>
-      <h2>Acceptation d'invitation</h2>
-      {status === 'pending' && <p>Traitement en cours...</p>}
+      <h2>Invitation Acceptance</h2>
+      {status === 'pending' && <p>Processing...</p>}
       {status === 'success' && (
         <>
           <p style={{ color: 'green' }}>{message}</p>
           <button onClick={() => navigate('/dashboard')} style={{ marginTop: 16, padding: '8px 24px', fontSize: 16 }}>
-            Aller au dashboard
+            Go to dashboard
           </button>
         </>
       )}
@@ -121,14 +119,14 @@ export default function AcceptInvitationPage() {
             onSubmit={handleAccept}
             loading={false}
             error={undefined}
-            label="Accepter l'invitation"
+            label="Accept Invitation"
             className="w-auto"
           />
           <HomeInvitationDeclineForm
             onSubmit={handleDecline}
             loading={false}
             error={undefined}
-            label="Décliner l'invitation"
+            label="Decline Invitation"
             className="w-auto"
           />
         </div>

@@ -12,7 +12,7 @@ export type Room = {
 };
 
 // --- ROOMS CRUD ---
-export async function listRooms(homeId: string): Promise<Room[]> {
+export async function listRoomsService(homeId: string): Promise<Room[]> {
   try {
     const data = await apiFetch<any>(`/homes/${homeId}/rooms/`, { method: 'GET' });
     // Supporte tous les formats : {data: [...]}, {results: [...]}, ou tableau brut
@@ -27,7 +27,7 @@ export async function listRooms(homeId: string): Promise<Room[]> {
   }
 }
 
-export async function getRoom(homeId: string, roomId: string): Promise<Room> {
+export async function getRoomService(homeId: string, roomId: string): Promise<Room> {
   try {
     const data = await apiFetch<{ data: Room }>(`/homes/${homeId}/rooms/${roomId}/`, { method: 'GET' });
     return data.data ?? data;
@@ -37,7 +37,7 @@ export async function getRoom(homeId: string, roomId: string): Promise<Room> {
   }
 }
 
-export async function createRoom(homeId: string, payload: Partial<Room>): Promise<Room> {
+export async function createRoomService(homeId: string, payload: Partial<Room>): Promise<Room> {
   try {
     const data = await apiFetch<{ data: Room }>(`/homes/${homeId}/rooms/`, {
       method: 'POST',
@@ -51,7 +51,7 @@ export async function createRoom(homeId: string, payload: Partial<Room>): Promis
   }
 }
 
-export async function updateRoom(homeId: string, roomId: string, payload: Partial<Room>): Promise<Room> {
+export async function updateRoomService(homeId: string, roomId: string, payload: Partial<Room>): Promise<Room> {
   try {
     const data = await apiFetch<{ data: Room }>(`/homes/${homeId}/rooms/${roomId}/`, {
       method: 'PATCH',
@@ -65,7 +65,7 @@ export async function updateRoom(homeId: string, roomId: string, payload: Partia
   }
 }
 
-export async function deleteRoom(homeId: string, roomId: string): Promise<void> {
+export async function deleteRoomService(homeId: string, roomId: string): Promise<void> {
   try {
     await apiFetch(`/homes/${homeId}/rooms/${roomId}/`, { method: 'DELETE' });
     toast.success('Pièce supprimée');

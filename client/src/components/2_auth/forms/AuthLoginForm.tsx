@@ -56,24 +56,6 @@ const AuthLoginForm: React.FC = () => {
   // Handle form submission
   const onSubmit = async (data: AuthLoginFormValues) => {
     await login(data.email, data.password);
-    const nextPath = sessionStorage.getItem('next_path');
-    
-    if (nextPath) {
-      sessionStorage.removeItem('next_path');
-      // Don't navigate if already on invitation page
-      if (
-        nextPath.startsWith('/invitations/accept/') &&
-        window.location.pathname.startsWith('/invitations/accept/')
-      ) {
-        return;
-      }
-      navigate(nextPath);
-    } else {
-      // Don't navigate to dashboard if already on invitation page
-      if (!window.location.pathname.startsWith('/invitations/accept/')) {
-        navigate('/dashboard', { replace: true });
-      }
-    }
   };
 
   return (

@@ -1,21 +1,18 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
-  listHomes,
-  
-  createHome,
-  updateHome,
-  deleteHome,
-  setPrimaryHome,
-  listInvitations,
-  createInvitation,
-  
-  
-  acceptInvitation,
-  rejectInvitation,
-  acceptInvitationByToken,
-  rejectInvitationByToken,
-  getHome,
+  listHomes as listHomesService,
+  createHome as createHomeService,
+  updateHome as updateHomeService,
+  deleteHome as deleteHomeService,
+  setPrimaryHome as setPrimaryHomeService,
+  listInvitations as listInvitationsService,
+  createInvitation as createInvitationService,
+  acceptInvitation as acceptInvitationService,
+  rejectInvitation as rejectInvitationService,
+  acceptInvitationByToken as acceptInvitationByTokenService,
+  rejectInvitationByToken as rejectInvitationByTokenService,
+  getHome as getHomeService,
   Home,
   HomeInvitation
 } from '@/services/homes.service';
@@ -47,8 +44,11 @@ export const HomesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const reloadHomes = async () => {
     setLoading(true);
     try {
-      const data = await listHomes();
+      const data = await listHomesService();
       setHomes(data);
+    } catch (error: any) {
+      setHomes([]);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -62,61 +62,141 @@ export const HomesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   }, [user]);
 
-  const handleCreateHome = async (payload: Partial<Home>) => {
-    const home = await createHome(payload);
-    await reloadHomes();
-    return home;
+  const createHomeContext = async (payload: Partial<Home>) => {
+    setLoading(true);
+    try {
+      const home = await createHomeService(payload);
+      await reloadHomes();
+      return home;
+    } catch (error: any) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleUpdateHome = async (id: string, payload: Partial<Home>) => {
-    const home = await updateHome(id, payload);
-    await reloadHomes();
-    return home;
+  const updateHomeContext = async (id: string, payload: Partial<Home>) => {
+    setLoading(true);
+    try {
+      const home = await updateHomeService(id, payload);
+      await reloadHomes();
+      return home;
+    } catch (error: any) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteHome = async (id: string) => {
-    await deleteHome(id);
-    await reloadHomes();
+  const deleteHomeContext = async (id: string) => {
+    setLoading(true);
+    try {
+      await deleteHomeService(id);
+      await reloadHomes();
+    } catch (error: any) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSetPrimaryHome = async (id: string) => {
-    const home = await setPrimaryHome(id);
-    await reloadHomes();
-    return home;
+  const setPrimaryHomeContext = async (id: string) => {
+    setLoading(true);
+    try {
+      const home = await setPrimaryHomeService(id);
+      await reloadHomes();
+      return home;
+    } catch (error: any) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Invitations
-  const handleListInvitations = async (homeId: string) => {
-    return await listInvitations(homeId);
+  const listInvitationsContext = async (homeId: string) => {
+    setLoading(true);
+    try {
+      const invitations = await listInvitationsService(homeId);
+      return invitations;
+    } catch (error: any) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCreateInvitation = async (homeId: string, email: string) => {
-    return await createInvitation(homeId, email);
+  const createInvitationContext = async (homeId: string, email: string) => {
+    setLoading(true);
+    try {
+      const invitation = await createInvitationService(homeId, email);
+      return invitation;
+    } catch (error: any) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAcceptInvitation = async (invitationId: string) => {
-    await acceptInvitation(invitationId);
-    await reloadHomes();
+  const acceptInvitationContext = async (invitationId: string) => {
+    setLoading(true);
+    try {
+      await acceptInvitationService(invitationId);
+      await reloadHomes();
+    } catch (error: any) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRejectInvitation = async (invitationId: string) => {
-    await rejectInvitation(invitationId);
-    await reloadHomes();
+  const rejectInvitationContext = async (invitationId: string) => {
+    setLoading(true);
+    try {
+      await rejectInvitationService(invitationId);
+      await reloadHomes();
+    } catch (error: any) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Fonctions token
-  const handleAcceptInvitationByToken = async (token: string) => {
-    await acceptInvitationByToken(token);
-    await reloadHomes();
+  const acceptInvitationByTokenContext = async (token: string) => {
+    setLoading(true);
+    try {
+      await acceptInvitationByTokenService(token);
+      await reloadHomes();
+    } catch (error: any) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
-  const handleRejectInvitationByToken = async (token: string) => {
-    await rejectInvitationByToken(token);
-    await reloadHomes();
+  const rejectInvitationByTokenContext = async (token: string) => {
+    setLoading(true);
+    try {
+      await rejectInvitationByTokenService(token);
+      await reloadHomes();
+    } catch (error: any) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Détail d'une maison (avec membres)
-  const handleGetHomeDetail = async (id: string) => {
-    return await getHome(id);
+  const getHomeDetailContext = async (id: string) => {
+    setLoading(true);
+    try {
+      const home = await getHomeService(id);
+      return home;
+    } catch (error: any) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -125,17 +205,18 @@ export const HomesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         homes,
         loading,
         reloadHomes,
-        createHome: handleCreateHome,
-        updateHome: handleUpdateHome,
-        deleteHome: handleDeleteHome,
-        setPrimaryHome: handleSetPrimaryHome,
-        listInvitations: handleListInvitations,
-        createInvitation: handleCreateInvitation,
-        acceptInvitation: handleAcceptInvitation,
-        rejectInvitation: handleRejectInvitation,
-        acceptInvitationByToken: handleAcceptInvitationByToken,
-        rejectInvitationByToken: handleRejectInvitationByToken,
-        getHomeDetail: handleGetHomeDetail,
+        createHome: createHomeContext,
+        updateHome: updateHomeContext,
+        deleteHome: deleteHomeContext,
+        setPrimaryHome: setPrimaryHomeContext,
+        // Invitations
+        listInvitations: listInvitationsContext,
+        createInvitation: createInvitationContext,
+        acceptInvitation: acceptInvitationContext,
+        rejectInvitation: rejectInvitationContext,
+        acceptInvitationByToken: acceptInvitationByTokenContext,
+        rejectInvitationByToken: rejectInvitationByTokenContext,
+        getHomeDetail: getHomeDetailContext,
       }}
     >
       {children}

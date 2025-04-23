@@ -1,10 +1,10 @@
 import React from 'react';
-import { fetchEnergyConsumption, EnergyConsumptionParams, EnergyConsumptionResponse } from '@/services/energy_consumption.service';
+import { getEnergyConsumption, EnergyConsumptionParams, EnergyConsumptionResponse } from '@/services/devices.service';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format, subDays, subHours, subMinutes, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { format, subDays, subHours, subMinutes, subMonths } from "date-fns";
 import { fr } from 'date-fns/locale';
 import { RefreshCw, PlayCircle, PauseCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -98,7 +98,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
         cumulative: cumulative.toString(),
       };
       
-      const res: EnergyConsumptionResponse = await fetchEnergyConsumption(params);
+      const res: EnergyConsumptionResponse = await getEnergyConsumption(params);
       
       // Utiliser la référence pour éviter la dépendance cyclique
       const currentHistoricalData = { ...historicalDataRef.current };
