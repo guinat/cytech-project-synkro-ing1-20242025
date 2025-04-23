@@ -40,14 +40,12 @@ export type HomeInvitation = {
 export async function listHomes(): Promise<Home[]> {
   try {
     const data = await apiFetch<any>('/homes/', { method: 'GET' });
-    // Supporte tous les formats : {data: [...]}, {results: [...]}, ou tableau brut
     if (Array.isArray(data)) return data;
     if (Array.isArray(data.data)) return data.data;
     if (Array.isArray(data.results)) return data.results;
-    // fallback : aucun format reconnu
     return [];
   } catch (error: any) {
-    toast.error(extractErrorMessage(error.raw, false, true));
+    toast.error(extractErrorMessage(error?.raw || error, false, true));
     throw error;
   }
 }
@@ -55,14 +53,13 @@ export async function listHomes(): Promise<Home[]> {
 export async function getHome(id: string): Promise<Home> {
   try {
     const data = await apiFetch<{ data: Home }>(`/homes/${id}/`, { method: 'GET' });
-    // Supporte les deux formats
     const home = data.data ?? data;
     return {
       ...home,
       owner_id: home.owner_id,
     };
   } catch (error: any) {
-    toast.error(extractErrorMessage(error.raw, false, true));
+    toast.error(extractErrorMessage(error?.raw || error, false, true));
     throw error;
   }
 }
@@ -76,7 +73,7 @@ export async function createHome(payload: Partial<Home>): Promise<Home> {
     toast.success(extractSuccessMessage(data));
     return data.data ?? data;
   } catch (error: any) {
-    toast.error(extractErrorMessage(error.raw, false, true));
+    toast.error(extractErrorMessage(error?.raw || error, false, true));
     throw error;
   }
 }
@@ -90,7 +87,7 @@ export async function updateHome(id: string, payload: Partial<Home>): Promise<Ho
     toast.success(extractSuccessMessage(data));
     return data.data ?? data;
   } catch (error: any) {
-    toast.error(extractErrorMessage(error.raw, false, true));
+    toast.error(extractErrorMessage(error?.raw || error, false, true));
     throw error;
   }
 }
@@ -98,9 +95,9 @@ export async function updateHome(id: string, payload: Partial<Home>): Promise<Ho
 export async function deleteHome(id: string): Promise<void> {
   try {
     await apiFetch(`/homes/${id}/`, { method: 'DELETE' });
-    toast.success('Home supprimée');
+    toast.success('Maison supprimée');
   } catch (error: any) {
-    toast.error(extractErrorMessage(error.raw, false, true));
+    toast.error(extractErrorMessage(error?.raw || error, false, true));
     throw error;
   }
 }
@@ -111,7 +108,7 @@ export async function setPrimaryHome(id: string): Promise<Home> {
     toast.success(extractSuccessMessage(data));
     return data.data ?? data;
   } catch (error: any) {
-    toast.error(extractErrorMessage(error.raw, false, true));
+    toast.error(extractErrorMessage(error?.raw || error, false, true));
     throw error;
   }
 }
@@ -124,9 +121,11 @@ export async function acceptInvitationByToken(token: string): Promise<any> {
       method: 'POST',
       body: JSON.stringify({ token }),
     });
+    toast.success('Invitation acceptée');
     return res;
   } catch (error: any) {
-    throw error?.raw || error;
+    toast.error(extractErrorMessage(error?.raw || error, false, true));
+    throw error;
   }
 }
 
@@ -136,9 +135,11 @@ export async function rejectInvitationByToken(token: string): Promise<any> {
       method: 'POST',
       body: JSON.stringify({ token }),
     });
+    toast.success('Invitation rejetée');
     return res;
   } catch (error: any) {
-    throw error?.raw || error;
+    toast.error(extractErrorMessage(error?.raw || error, false, true));
+    throw error;
   }
 }
 
@@ -150,24 +151,21 @@ export async function listInvitations(homeId: string): Promise<HomeInvitation[]>
     if (Array.isArray(data.results)) return data.results;
     return [];
   } catch (error: any) {
-    toast.error(extractErrorMessage(error.raw, false, true));
+    toast.error(extractErrorMessage(error?.raw || error, false, true));
     throw error;
   }
 }
 
 export async function createInvitation(homeId: string, email: string): Promise<HomeInvitation> {
   try {
-    console.debug('[createInvitation] homeId:', homeId, 'email:', email);
     const data = await apiFetch<{ data: HomeInvitation }>(`/homes/${homeId}/invitations/`, {
       method: 'POST',
       body: JSON.stringify({ email }),
     });
-    console.debug('[createInvitation] API response:', data);
     toast.success(extractSuccessMessage(data));
     return data.data ?? data;
   } catch (error: any) {
-    console.error('[createInvitation] API error:', error, error?.raw);
-    toast.error(extractErrorMessage(error.raw, false, true));
+    toast.error(extractErrorMessage(error?.raw || error, false, true));
     throw error;
   }
 }
@@ -177,7 +175,7 @@ export async function getInvitation(homeId: string, invitationId: string): Promi
     const data = await apiFetch<{ data: HomeInvitation }>(`/homes/${homeId}/invitations/${invitationId}/`, { method: 'GET' });
     return data.data ?? data;
   } catch (error: any) {
-    toast.error(extractErrorMessage(error.raw, false, true));
+    toast.error(extractErrorMessage(error?.raw || error, false, true));
     throw error;
   }
 }
@@ -187,7 +185,7 @@ export async function deleteInvitation(homeId: string, invitationId: string): Pr
     await apiFetch(`/homes/${homeId}/invitations/${invitationId}/`, { method: 'DELETE' });
     toast.success('Invitation supprimée');
   } catch (error: any) {
-    toast.error(extractErrorMessage(error.raw, false, true));
+    toast.error(extractErrorMessage(error?.raw || error, false, true));
     throw error;
   }
 }
@@ -197,7 +195,7 @@ export async function acceptInvitation(invitationId: string): Promise<void> {
     await apiFetch(`/homes/invitations/${invitationId}/accept/`, { method: 'POST' });
     toast.success('Invitation acceptée');
   } catch (error: any) {
-    toast.error(extractErrorMessage(error.raw, false, true));
+    toast.error(extractErrorMessage(error?.raw || error, false, true));
     throw error;
   }
 }
@@ -207,7 +205,7 @@ export async function rejectInvitation(invitationId: string): Promise<void> {
     await apiFetch(`/homes/invitations/${invitationId}/reject/`, { method: 'POST' });
     toast.success('Invitation rejetée');
   } catch (error: any) {
-    toast.error(extractErrorMessage(error.raw, false, true));
+    toast.error(extractErrorMessage(error?.raw || error, false, true));
     throw error;
   }
 }

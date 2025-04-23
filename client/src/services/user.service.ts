@@ -15,7 +15,13 @@ export type UserProfile = {
 };
 
 // GET
-export async function getMe(): Promise<UserProfile> {
+import { getTokenService } from './auth.service';
+
+export async function getMeService(): Promise<UserProfile> {
+  const token = getTokenService();
+  if (!token) {
+    throw new Error('No authentication token found');
+  }
   try {
     const res = await apiFetch<{ data: UserProfile }>('/me/', { method: 'GET' });
     return res.data ?? res;
@@ -32,7 +38,7 @@ export function getGlobalOtpCurrentPassword() { return globalOtpCurrentPassword;
 export function clearGlobalOtpCurrentPassword() { globalOtpCurrentPassword = ''; }
 
 // PATCH
-export async function updateMe(data: Partial<UserProfile> & {
+export async function updateMeService(data: Partial<UserProfile> & {
   current_password: string;
   new_password?: string;
   new_password_confirm?: string;
@@ -58,7 +64,7 @@ export async function updateMe(data: Partial<UserProfile> & {
 }
 
 // DELETE
-export async function deleteMe(): Promise<void> {
+export async function deleteMeService(): Promise<void> {
   try {
     const data = await apiFetch('/me/', { method: 'DELETE' });
     toast.success(extractSuccessMessage(data));
@@ -71,7 +77,7 @@ export async function deleteMe(): Promise<void> {
 // Admin only
 type UserListParams = { search?: string; ordering?: string; role?: string; level?: string; is_email_verified?: boolean };
 
-export async function listUsers(params?: UserListParams): Promise<UserProfile[]> {
+export async function listUsersService(params?: UserListParams): Promise<UserProfile[]> {
   let url = '/users/';
   if (params) {
     const query = new URLSearchParams(params as any).toString();
@@ -92,7 +98,7 @@ export async function listUsers(params?: UserListParams): Promise<UserProfile[]>
   }
 }
 
-export async function getUser(id: string): Promise<UserProfile> {
+export async function getUserService(id: string): Promise<UserProfile> {
   try {
     const res = await apiFetch<{ data: UserProfile }>(`/users/${id}/`, { method: 'GET' });
     return res.data ?? res;
@@ -108,7 +114,7 @@ export async function getUser(id: string): Promise<UserProfile> {
   }
 }
 
-export async function createUser(data: Partial<UserProfile>): Promise<UserProfile> {
+export async function createUserService(data: Partial<UserProfile>): Promise<UserProfile> {
   try {
     const res = await apiFetch<{ data: UserProfile }>(`/users/`, {
       method: 'POST',
@@ -128,7 +134,7 @@ export async function createUser(data: Partial<UserProfile>): Promise<UserProfil
   }
 }
 
-export async function updateUser(id: string, data: Partial<UserProfile>): Promise<UserProfile> {
+export async function updateUserService(id: string, data: Partial<UserProfile>): Promise<UserProfile> {
   const res = await apiFetch<{ data: UserProfile }>(`/users/${id}/`, {
     method: 'PUT',
     body: JSON.stringify(data),
@@ -136,6 +142,6 @@ export async function updateUser(id: string, data: Partial<UserProfile>): Promis
   return res.data ?? res;
 }
 
-export async function deleteUser(id: string): Promise<void> {
+export async function deleteUserService(id: string): Promise<void> {
   await apiFetch(`/users/${id}/`, { method: 'DELETE' });
 }

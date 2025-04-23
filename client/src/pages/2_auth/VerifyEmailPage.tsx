@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,39 +9,25 @@ import { useAuth } from '@/contexts/AuthContext';
 const EmailVerificationPage: React.FC = () => {
   const { emailVerify } = useAuth();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [errorMessage, setErrorMessage] = useState<string>('');
   const navigate = useNavigate();
   const { token } = useParams<{ token: string }>();
-  const verificationAttemptedRef = useRef(false);
 
   useEffect(() => {
     if (!token) {
       setStatus('error');
-      setErrorMessage('No verification token provided in URL.');
       return;
     }
-
-    const verifyEmailToken = async () => {
-      if (verificationAttemptedRef.current) {
-        return;
-      }
-      verificationAttemptedRef.current = true;
-      
+  
+    (async () => {
       try {
         await emailVerify(token);
         setStatus('success');
-        setTimeout(() => navigate('/auth/sign_in'), 1200);
       } catch (err) {
         setStatus('error');
-        if (err instanceof Error) {
-          setErrorMessage(err.message);
-        }
       }
-    };
-    
-    verifyEmailToken();
-  }, [location.search]);
-  
+    })();
+  }, [token]);
+
   const renderContent = () => {
     switch (status) {
       case 'loading':
@@ -76,7 +62,7 @@ const EmailVerificationPage: React.FC = () => {
             </CardContent>
             <CardFooter>
               <Button 
-                onClick={() => navigate('/login')} 
+                onClick={() => navigate('/auth/sign_in')} 
                 className="w-full rounded-md"
               >
                 Proceed to Login
@@ -95,12 +81,6 @@ const EmailVerificationPage: React.FC = () => {
               <div className="flex justify-center">
                 <XCircle className="h-16 w-16 text-red-500" />
               </div>
-              <Alert variant="destructive">
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>
-                  {errorMessage || 'An error occurred during email verification. The link may be invalid or expired.'}
-                </AlertDescription>
-              </Alert>
             </CardContent>
             <CardFooter className="flex flex-col space-y-2">
               <Button 

@@ -9,7 +9,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { MoreVertical, User2, Trash2 } from 'lucide-react';
-import { deleteMe } from '@/services/user.service';
+import { deleteMeService } from '@/services/user.service';
 import { UserDeleteForm } from '@/components/1_user/forms/UserDeleteForm';
 interface ProfileActionsDropdownProps {
   onEdit?: () => void;
@@ -26,7 +26,7 @@ const ProfileActionsDropdown: React.FC<ProfileActionsDropdownProps> = ({ onEdit,
     setLoading(true);
     setDeleteError(null);
     try {
-      await deleteMe();
+      await deleteMeService();
       setConfirmOpen(false);
       window.location.replace('/auth/sign_in');
     } catch (e: any) {

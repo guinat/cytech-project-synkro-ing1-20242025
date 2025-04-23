@@ -1,20 +1,22 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import {
-  listRooms,
-  // getRoom,
-  createRoom,
-  updateRoom,
-  deleteRoom,
+  listRoomsService,
+  getRoomService,
+  createRoomService,
+  updateRoomService,
+  deleteRoomService,
   Room
 } from '@/services/rooms.service';
 
 interface RoomsContextType {
   rooms: Room[];
   loading: boolean;
-  reloadRooms: (homeId: string) => Promise<void>;
-  createRoom: (homeId: string, payload: Partial<Room>) => Promise<Room>;
-  updateRoom: (homeId: string, roomId: string, payload: Partial<Room>) => Promise<Room>;
-  deleteRoom: (homeId: string, roomId: string) => Promise<void>;
+  reloadRoomsContext: (homeId: string) => Promise<void>;
+  getRoomContext: (homeId: string, roomId: string) => Promise<Room>;
+  listRoomsContext: (homeId: string) => Promise<Room[]>;
+  createRoomContext: (homeId: string, payload: Partial<Room>) => Promise<Room>;
+  updateRoomContext: (homeId: string, roomId: string, payload: Partial<Room>) => Promise<Room>;
+  deleteRoomContext: (homeId: string, roomId: string) => Promise<void>;
 }
 
 const RoomsContext = createContext<RoomsContextType | undefined>(undefined);
@@ -23,10 +25,10 @@ export const RoomsProvider: React.FC<{ children: ReactNode; homeId: string }> = 
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const reloadRooms = async (hId: string = homeId) => {
+  const reloadRoomsContext = async (hId: string = homeId) => {
     setLoading(true);
     try {
-      const data = await listRooms(hId);
+      const data = await listRoomsService(hId);
       setRooms(data);
     } finally {
       setLoading(false);
@@ -34,25 +36,47 @@ export const RoomsProvider: React.FC<{ children: ReactNode; homeId: string }> = 
   };
 
   useEffect(() => {
-    if (homeId) reloadRooms(homeId);
+    if (homeId) reloadRoomsContext(homeId);
   }, [homeId]);
   
 
-  const handleCreateRoom = async (hId: string, payload: Partial<Room>) => {
-    const room = await createRoom(hId, payload);
-    await reloadRooms(hId);
+  const createRoomContext = async (hId: string, payload: Partial<Room>) => {
+    const room = await createRoomService(hId, payload);
+    await reloadRoomsContext(hId);
     return room;
   };
 
-  const handleUpdateRoom = async (hId: string, roomId: string, payload: Partial<Room>) => {
-    const room = await updateRoom(hId, roomId, payload);
-    await reloadRooms(hId);
+  const updateRoomContext = async (hId: string, roomId: string, payload: Partial<Room>) => {
+    const room = await updateRoomService(hId, roomId, payload);
+    await reloadRoomsContext(hId);
     return room;
   };
 
-  const handleDeleteRoom = async (hId: string, roomId: string) => {
-    await deleteRoom(hId, roomId);
-    await reloadRooms(hId);
+  const deleteRoomContext = async (hId: string, roomId: string) => {
+    await deleteRoomService(hId, roomId);
+    await reloadRoomsContext(hId);
+  };
+
+  const getRoomContext = async (homeId: string, roomId: string) => {
+    setLoading(true);
+    try {
+      return await getRoomService(homeId, roomId);
+    } catch (error) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const listRoomsContext = async (homeId: string) => {
+    setLoading(true);
+    try {
+      return await listRoomsService(homeId);
+    } catch (error) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -60,10 +84,12 @@ export const RoomsProvider: React.FC<{ children: ReactNode; homeId: string }> = 
       value={{
         rooms,
         loading,
-        reloadRooms,
-        createRoom: handleCreateRoom,
-        updateRoom: handleUpdateRoom,
-        deleteRoom: handleDeleteRoom,
+        reloadRoomsContext,
+        getRoomContext,
+        listRoomsContext,
+        createRoomContext,
+        updateRoomContext,
+        deleteRoomContext,
       }}
     >
       {children}

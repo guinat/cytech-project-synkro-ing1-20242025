@@ -54,7 +54,7 @@ const AddDeviceDialog: React.FC<AddDeviceDialogProps> = ({ open, onOpenChange, o
     let mounted = true;
     setIsDeviceTypesLoading(true);
     setDeviceTypesError(null);
-    import('@/services/devices.service').then(m => m.fetchPublicDeviceTypes())
+    import('@/services/devices.service').then(m => m.getPublicDeviceTypes())
       .then((types) => {
         if (mounted) {
           // On filtre les types sans id (corruption API possible)

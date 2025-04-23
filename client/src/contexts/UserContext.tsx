@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { getMe, updateMe, deleteMe, UserProfile } from '@/services/user.service';
+import { getMeService, updateMeService, deleteMeService, listUsersService, getUserService, createUserService, updateUserService, deleteUserService, UserProfile } from '@/services/user.service';
 import { useNavigate } from 'react-router-dom';
 
 interface UserContextType {
@@ -15,6 +15,14 @@ interface UserContextType {
     otp_code?: string;
   }) => Promise<any>;
   deleteProfile: () => Promise<void>;
+  getMeContext: () => Promise<UserProfile>;
+  updateMeContext: (data: Partial<UserProfile> & { current_password: string; new_password?: string; new_password_confirm?: string; otp_code?: string; }) => Promise<any>;
+  deleteMeContext: () => Promise<void>;
+  listUsersContext: (params?: any) => Promise<UserProfile[]>;
+  getUserContext: (id: string) => Promise<UserProfile>;
+  createUserContext: (data: Partial<UserProfile>) => Promise<UserProfile>;
+  updateUserContext: (id: string, data: Partial<UserProfile>) => Promise<UserProfile>;
+  deleteUserContext: (id: string) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -27,7 +35,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const getProfile = useCallback(async () => {
     setLoading(true);
     try {
-      const me = await getMe();
+      const me = await getMeService();
       setProfile(me);
     } finally {
       setLoading(false);
@@ -51,7 +59,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!data.current_password) {
         throw new Error('Le mot de passe actuel est requis pour toute modification.');
       }
-      const res = await updateMe(data);
+      const res = await updateMeService(data);
       const otpRequired = res?.otp_required || res?.data?.otp_required;
       if (otpRequired) {
         return res;
@@ -74,15 +82,117 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const deleteProfile = useCallback(async () => {
     setLoading(true);
     try {
-      await deleteMe();
+      await deleteMeService();
       setProfile(null);
     } finally {
       setLoading(false);
     }
   }, []); 
 
+  const getMeContext = async () => {
+    setLoading(true);
+    try {
+      return await getMeService();
+    } catch (error) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateMeContext = async (data: Partial<UserProfile> & { current_password: string; new_password?: string; new_password_confirm?: string; otp_code?: string; }) => {
+    setLoading(true);
+    try {
+      return await updateMeService(data);
+    } catch (error) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteMeContext = async () => {
+    setLoading(true);
+    try {
+      return await deleteMeService();
+    } catch (error) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const listUsersContext = async (params?: any) => {
+    setLoading(true);
+    try {
+      return await listUsersService(params);
+    } catch (error) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getUserContext = async (id: string) => {
+    setLoading(true);
+    try {
+      return await getUserService(id);
+    } catch (error) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createUserContext = async (data: Partial<UserProfile>) => {
+    setLoading(true);
+    try {
+      return await createUserService(data);
+    } catch (error) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateUserContext = async (id: string, data: Partial<UserProfile>) => {
+    setLoading(true);
+    try {
+      return await updateUserService(id, data);
+    } catch (error) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteUserContext = async (id: string) => {
+    setLoading(true);
+    try {
+      return await deleteUserService(id);
+    } catch (error) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <UserContext.Provider value={{ profile, loading, getProfile, updateProfile, deleteProfile }}>
+    <UserContext.Provider value={{
+      profile,
+      loading,
+      getProfile,
+      updateProfile,
+      deleteProfile,
+      getMeContext,
+      updateMeContext,
+      deleteMeContext,
+      listUsersContext,
+      getUserContext,
+      createUserContext,
+      updateUserContext,
+      deleteUserContext,
+    }}>
       {children}
     </UserContext.Provider>
   );
