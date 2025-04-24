@@ -13,7 +13,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Button } from "@/components/ui/button";
 import { Input } from '@/components/ui/input';
 
-// Login form schema with client-side validation
 const authLoginFormSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(8, { 
@@ -23,7 +22,6 @@ const authLoginFormSchema = z.object({
   }),
 });
 
-// Type for login form values
 type AuthLoginFormValues = z.infer<typeof authLoginFormSchema>;
 
 const AuthLoginForm: React.FC = () => {
@@ -31,13 +29,11 @@ const AuthLoginForm: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Initialize form with react-hook-form
   const form = useForm<AuthLoginFormValues>({
     resolver: zodResolver(authLoginFormSchema),
     defaultValues: { email: "", password: "" },
   });
 
-  // Store the 'next' path from URL in sessionStorage
   React.useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const next = searchParams.get('next');
@@ -46,14 +42,12 @@ const AuthLoginForm: React.FC = () => {
     }
   }, [location.search]);
 
-  // Handle redirect if user is already logged in
   const searchParams = new URLSearchParams(location.search);
   const next = searchParams.get('next');
   if (user && next) {
     return <Navigate to={next} replace />;
   }
 
-  // Handle form submission
   const onSubmit = async (data: AuthLoginFormValues) => {
     await login(data.email, data.password);
   };

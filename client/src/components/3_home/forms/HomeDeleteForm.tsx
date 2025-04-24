@@ -12,10 +12,8 @@ interface HomeDeleteFormProps {
 }
 
 export const HomeDeleteForm: React.FC<HomeDeleteFormProps> = ({ onSubmit, loading, error }) => {
-  // Initialize form with react-hook-form
   const form = useForm();
 
-  // Handle form submission
   const handleDelete = async () => {
     await onSubmit();
   };

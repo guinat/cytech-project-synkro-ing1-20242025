@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from '@/components/ui/input';
 
 
-// Registration form schema with client-side validation
 const authRegisterFormSchema = z.object({
   username: z.string().min(3, { message: "Username must be at least 3 characters" }),
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -29,7 +28,6 @@ const authRegisterFormSchema = z.object({
   path: ["confirmPassword"],
 });
 
-// Type for registration form values
 type AuthRegisterFormValues = z.infer<typeof authRegisterFormSchema>;
 
 
@@ -37,7 +35,6 @@ const AuthRegisterForm: React.FC = () => {
 
   const { register } = useAuth();
 
-  // Initialize form with react-hook-form
   const form = useForm<AuthRegisterFormValues>({
     resolver: zodResolver(authRegisterFormSchema),
     defaultValues: {
@@ -48,7 +45,6 @@ const AuthRegisterForm: React.FC = () => {
     },
   });
 
-  // Handle form submission
   const onSubmit = async (data: AuthRegisterFormValues) => {
     await register(data.email, data.password, data.username, data.confirmPassword);
   };

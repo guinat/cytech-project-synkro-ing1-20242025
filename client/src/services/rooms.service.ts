@@ -7,19 +7,15 @@ export type Room = {
   home: string;
   created_at?: string;
   updated_at?: string;
-  // Optionnel : liste des devices dans la room
   devices?: any[];
 };
 
-// --- ROOMS CRUD ---
 export async function listRoomsService(homeId: string): Promise<Room[]> {
   try {
     const data = await apiFetch<any>(`/homes/${homeId}/rooms/`, { method: 'GET' });
-    // Supporte tous les formats : {data: [...]}, {results: [...]}, ou tableau brut
     if (Array.isArray(data)) return data;
     if (Array.isArray(data.data)) return data.data;
     if (Array.isArray(data.results)) return data.results;
-    // fallback : aucun format reconnu
     return [];
   } catch (error: any) {
     toast.error(extractErrorMessage(error.raw, false, true));

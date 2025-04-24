@@ -12,10 +12,8 @@ interface UserDeleteFormProps {
 }
 
 export const UserDeleteForm: React.FC<UserDeleteFormProps> = ({ onSubmit, loading, error }) => {
-  // Initialize form with react-hook-form
   const form = useForm();
 
-  // Handle form submission
   const handleDelete = async () => {
     await onSubmit();
   };

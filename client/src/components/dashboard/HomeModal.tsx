@@ -50,7 +50,6 @@ const HomeModal: React.FC<HomeModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   
 
-  // Fetch home detail on open/home change
   useEffect(() => {
     if (open && home?.id) {
       setLoadingHomeDetail(true);
@@ -66,7 +65,6 @@ const HomeModal: React.FC<HomeModalProps> = ({
     }
   }, [open, home?.id, getHomeDetail]);
 
-  // Sync members
   useEffect(() => {
     if (!open || !homeDetail?.id) return;
     setLoadingMembers(true);
@@ -77,7 +75,6 @@ const HomeModal: React.FC<HomeModalProps> = ({
       .finally(() => setLoadingMembers(false));
   }, [open, homeDetail?.id, getHomeDetail]);
 
-  // Handlers supprimés, la logique est désormais dans les formulaires.
 
   if (loadingHomeDetail || !homeDetail) {
     return (

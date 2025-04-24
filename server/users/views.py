@@ -69,7 +69,6 @@ def me(request):
         new_email = data.get('email')
         otp_code = data.get('otp_code')
 
-        # --- 1. If OTP provided (validate email change + other fields) ---
         if otp_code:
             session_code = request.session.get('email_change_otp')
             session_new_email = request.session.get('email_change_new_email')
@@ -108,11 +107,9 @@ def me(request):
                     status_code=400,
                 )
 
-        # --- 2. If email change detected, prepare OTP and store payload ---
         if new_email and new_email != user.email:
             import random
             code = f"{random.randint(100000, 999999)}"
-            # Store OTP and payload in session
             payload_to_store = {k: v for k, v in data.items() if k != 'otp_code'}
             request.session['email_change_otp'] = code
             request.session['email_change_new_email'] = new_email
@@ -123,7 +120,6 @@ def me(request):
                 message="A one-time code has been sent to your current email address."
             )
 
-        # --- 3. If password change detected, update password ---
         new_password = data.get('new_password')
         new_password_confirm = data.get('new_password_confirm')
         current_password = data.get('current_password')
@@ -138,7 +134,6 @@ def me(request):
                 status_code=400,
             )
 
-        # 1. Password change if requested
         if new_password or new_password_confirm:
             if not new_password or not new_password_confirm:
                 errors['new_password'] = "Please provide the new password and its confirmation."
@@ -152,7 +147,6 @@ def me(request):
                 password_changed = True
                 success_messages.append("Password changed successfully.")
         
-        # 2. Profile modification (other than password)
         profile_fields = {k: v for k, v in data.items() if k not in ['new_password', 'new_password_confirm', 'current_password']}
         if profile_fields:
             serializer = UserUpdateSerializer(user, data=profile_fields, partial=True)

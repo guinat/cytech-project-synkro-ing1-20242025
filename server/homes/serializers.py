@@ -15,7 +15,6 @@ class HomeSerializerMixin:
 
     def validate(self, attrs):
         user = self.context['request'].user
-        # Skip validation for updates (only check on create)
         if getattr(self, 'instance', None) is not None:
             return attrs
         if hasattr(user, 'can_add_home') and not user.can_add_home():
@@ -69,7 +68,6 @@ class HomeDetailSerializer(HomeSerializer):
     
     def get_members(self, obj):
         members_data = []
-        # Add owner first
         owner = obj.owner
         members_data.append({
             'id': owner.id,
@@ -79,7 +77,6 @@ class HomeDetailSerializer(HomeSerializer):
             'avatar_url': getattr(owner, 'avatar_url', None),
             'is_owner': True,
         })
-        # Then all members (avoiding duplicates)
         for member in obj.members.exclude(id=owner.id):
             members_data.append({
                 'id': member.id,

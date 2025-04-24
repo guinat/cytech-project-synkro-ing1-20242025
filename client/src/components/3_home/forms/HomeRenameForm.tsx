@@ -8,12 +8,10 @@ import { Form, FormItem, FormLabel, FormControl, FormMessage, FormField } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-// Home rename form schema with client-side validation
 const homeRenameSchema = z.object({
   name: z.string().min(1, "The name is required."),
 });
 
-// Type for home rename form values
 type HomeRenameFormValues = z.infer<typeof homeRenameSchema>;
 
 interface HomeRenameFormProps {
@@ -24,7 +22,6 @@ interface HomeRenameFormProps {
 }
 
 export const HomeRenameForm: React.FC<HomeRenameFormProps> = ({ onSubmit, loading, error, currentName }) => {
-  // Initialize form with react-hook-form
   const form = useForm<HomeRenameFormValues>({
     resolver: zodResolver(homeRenameSchema),
     defaultValues: {
@@ -32,7 +29,6 @@ export const HomeRenameForm: React.FC<HomeRenameFormProps> = ({ onSubmit, loadin
     },
   });
 
-  // Handle form submission
   const submit = async (data: HomeRenameFormValues) => {
     await onSubmit(data);
     form.reset();

@@ -27,14 +27,11 @@ interface DeviceCardProps {
 const DeviceCard: React.FC<DeviceCardProps> = ({ device, onOpenDetail }) => {
   const [localState, setLocalState] = useState(device.state || {});
   const [isHovered, setIsHovered] = useState(false);
-  // device.home et device.room sont requis pour l'API
   const homeId = device.home;
   const roomId = device.room;
   
-  // Détermine si l'appareil est allumé basé sur l'état
   const isDeviceOn = localState.power === 'on' || localState.isOn === true || device.isOn === true;
 
-  // Map des couleurs selon le type d'appareil
   const deviceColors: Record<string, string> = {
     light: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
     thermostat: 'bg-red-500/10 text-red-500 border-red-500/20',
@@ -44,7 +41,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onOpenDetail }) => {
     default: 'bg-secondary text-secondary-foreground'
   };
   
-  // Sélectionne la couleur appropriée ou utilise la couleur par défaut
   const deviceColorClass = deviceColors[device.type.toLowerCase()] || deviceColors.default;
 
   return (

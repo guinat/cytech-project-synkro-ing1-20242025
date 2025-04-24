@@ -12,10 +12,8 @@ interface DeleteDeviceFormProps {
 }
 
 export const DeleteDeviceForm: React.FC<DeleteDeviceFormProps> = ({ onSubmit, loading, error }) => {
-  // Initialize form with react-hook-form
   const form = useForm();
 
-  // Handle form submission
   const handleDelete = async () => {
     await onSubmit();
   };

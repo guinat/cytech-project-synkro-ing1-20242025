@@ -8,19 +8,17 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-// Home quick create form schema with client-side validation
 const homeQuickCreateSchema = z.object({
   name: z.string().min(2, "The name must be at least 2 characters.")
 });
 
-// Type for home quick create form values
 type HomeQuickCreateFormValues = z.infer<typeof homeQuickCreateSchema>;
 
 interface HomeQuickCreateFormProps {
   onSubmit: (data: HomeQuickCreateFormValues) => Promise<void>;
   loading?: boolean;
   error?: string | null;
-  horizontal?: boolean; // Whether to display form fields horizontally
+  horizontal?: boolean;
 }
 
 export const HomeQuickCreateForm: React.FC<HomeQuickCreateFormProps> = ({ 
@@ -29,13 +27,11 @@ export const HomeQuickCreateForm: React.FC<HomeQuickCreateFormProps> = ({
   error,
   horizontal = true 
 }) => {
-  // Initialize form with react-hook-form
   const form = useForm<HomeQuickCreateFormValues>({
     resolver: zodResolver(homeQuickCreateSchema),
     defaultValues: { name: "" },
   });
 
-  // Handle form submission
   const submit = async (data: HomeQuickCreateFormValues) => {
     await onSubmit(data);
     form.reset();
@@ -85,12 +81,10 @@ export const HomeQuickCreateForm: React.FC<HomeQuickCreateFormProps> = ({
     </Form>
   );
 
-  // If horizontal layout (inline form), return without Card wrapper
   if (horizontal) {
     return formContent;
   }
 
-  // Default view with Card wrapper for vertical layout
   return (
     <Card>
       <CardContent>

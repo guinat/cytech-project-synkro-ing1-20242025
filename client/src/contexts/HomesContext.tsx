@@ -25,7 +25,6 @@ interface HomesContextType {
   updateHome: (id: string, payload: Partial<Home>) => Promise<Home>;
   deleteHome: (id: string) => Promise<void>;
   setPrimaryHome: (id: string) => Promise<Home>;
-  // Invitations
   listInvitations: (homeId: string) => Promise<HomeInvitation[]>;
   createInvitation: (homeId: string, email: string) => Promise<HomeInvitation>;
   acceptInvitation: (invitationId: string) => Promise<void>;
@@ -113,7 +112,6 @@ export const HomesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
-  // Invitations
   const listInvitationsContext = async (homeId: string) => {
     setLoading(true);
     try {
@@ -162,7 +160,6 @@ export const HomesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
-  // Fonctions token
   const acceptInvitationByTokenContext = async (token: string) => {
     setLoading(true);
     try {
@@ -186,7 +183,6 @@ export const HomesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
-  // Détail d'une maison (avec membres)
   const getHomeDetailContext = async (id: string) => {
     setLoading(true);
     try {

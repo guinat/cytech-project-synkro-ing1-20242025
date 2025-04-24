@@ -16,7 +16,6 @@ export {
   BaseDeviceCard
 };
 
-// Helper function to get the appropriate card component based on device name
 export const getDeviceCardComponent = (deviceName: string) => {
   switch (deviceName) {
     case 'Smart Bulb':

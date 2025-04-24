@@ -140,7 +140,7 @@ const Header: React.FC = () => {
 
   const AuthActions = () => {
     if (isAuthenticated()) {
-      return null; // Authenticated users use the dropdown instead
+      return null; 
     }
     
     return (
@@ -166,7 +166,6 @@ const Header: React.FC = () => {
     <>
       <header className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md flex items-center h-16 px-4 md:px-8 z-40 border-b border-gray-200 shadow-sm">
         <div className="container mx-auto flex items-center justify-between">
-          {/* Logo - Left section */}
           <div className="flex items-center group">
             <Link to="/">
               <div className="flex items-center gap-2">
@@ -177,7 +176,6 @@ const Header: React.FC = () => {
             </Link>
           </div>
           
-          {/* Navigation - Center section */}
           <nav className="hidden md:flex items-center">
             {filteredNavLinks.map((link) => (
               <Link 
@@ -194,18 +192,14 @@ const Header: React.FC = () => {
             ))}
           </nav>
           
-          {/* Right side - Actions and User Profile */}
           <div className="flex items-center gap-4">
-            {/* Authentication actions - visible on desktop */}
             <div className="hidden md:block">
               <AuthActions />
             </div>
-            {/* User profile dropdown - only for authenticated users */}
             <div className="hidden md:block">
               <UserProfileDropdown />
             </div>
             
-            {/* Mobile menu button */}
             <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
               <SheetTrigger asChild>
                 <Button 
@@ -220,7 +214,6 @@ const Header: React.FC = () => {
               <SheetContent side="right" className="w-[90%] max-w-[350px] p-0">
                 <div className="flex flex-col h-full">
                   <div className="p-4 border-b">
-                    {/* Mobile user profile info */}
                     {isAuthenticated() && user ? (
                       <div className="flex flex-row gap-2">
                       <div className="flex items-center gap-3 p-2">
@@ -252,7 +245,6 @@ const Header: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Mobile navigation links */}
                   <div className="flex-1 overflow-auto p-4">
                     <nav className="flex flex-col space-y-1">
                       {filteredNavLinks.map((link) => (
@@ -271,7 +263,6 @@ const Header: React.FC = () => {
                     </nav>
                   </div>
 
-                  {/* Mobile footer actions */}
                   {isAuthenticated() ? (
                     <div className="p-4 border-t mt-auto">
                       <p className="text-sm font-medium mb-4 italic">Quick Actions</p>
@@ -325,7 +316,6 @@ const Header: React.FC = () => {
         </div>
       </header>
       
-      {/* Spacer to push content below the fixed header */}
       <div className="h-16"></div>
     </>
   );

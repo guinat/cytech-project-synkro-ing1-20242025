@@ -18,7 +18,6 @@ const InvitationsSection: React.FC<InvitationsSectionProps> = ({ homeId, refresh
   const [error, setError] = useState<string|null>(null);
   const [homeOwner, setHomeOwner] = useState<string|null>(null);
 
-  // Gets the home owner (to know if user is owner)
   useEffect(() => {
     (async () => {
       try {
@@ -61,12 +60,10 @@ const InvitationsSection: React.FC<InvitationsSectionProps> = ({ homeId, refresh
     }
   };
 
-  // Deletion by owner (DELETE)
   const handleDelete = async (invitationId: string) => {
     setLoading(true);
     setError(null);
     try {
-      // @ts-ignore
       const { deleteInvitation } = await import('@/services/homes.service');
       await deleteInvitation(homeId, invitationId);
       await fetchInvitations();
@@ -77,7 +74,6 @@ const InvitationsSection: React.FC<InvitationsSectionProps> = ({ homeId, refresh
     }
   };
 
-  // Rejection by recipient (POST reject)
   const handleReject = async (invitationId: string) => {
     setLoading(true);
     setError(null);
@@ -99,7 +95,6 @@ const InvitationsSection: React.FC<InvitationsSectionProps> = ({ homeId, refresh
   }
 
   if (!homeOwner) {
-    // Display a shadcn skeleton during loading
     return (
       <div className="space-y-2 mt-4">
         <Skeleton className="h-8 w-full" />
@@ -135,11 +130,9 @@ const InvitationsSection: React.FC<InvitationsSectionProps> = ({ homeId, refresh
                 </span>
               </span>
               <div className="flex gap-2">
-                {/* Accept: if recipient */}
                 {inv.status === 'pending' && user && user.email === inv.email && (
                   <Button size="sm" variant="default" onClick={() => handleAccept(inv.id)} disabled={loading}>Accept</Button>
                 )}
-                {/* Delete button for the owner on any non-accepted invitation */}
                 {homeOwner === user.id && inv.status !== 'accepted' && (
                   <HomeInvitationDeleteForm
                     onSubmit={async () => await handleDelete(inv.id)}
@@ -147,7 +140,6 @@ const InvitationsSection: React.FC<InvitationsSectionProps> = ({ homeId, refresh
                     className="p-0"
                   />
                 )}
-                {/* Reject button for the recipient if invitation is pending */}
                 {inv.status === 'pending' && user.email === inv.email && homeOwner !== user.email && (
                   <Button size="sm" variant="destructive" onClick={() => handleReject(inv.id)} disabled={loading}>
                     Reject

@@ -84,7 +84,6 @@ const MembersTab: React.FC<MembersTabProps> = ({
           </Table>
         )}
       </div>
-      {/* Invitations Section */}
       <InvitationsSection homeId={homeId} refreshKey={refreshInvitations} />
     </div>
   );

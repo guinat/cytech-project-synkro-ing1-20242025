@@ -50,7 +50,7 @@ class RegisterSerializer(serializers.Serializer):
             level=level
         )
         if profile_photo:
-            user.profile_photo = profile_photo  # base64 string
+            user.profile_photo = profile_photo 
             user.save()
         return user
 

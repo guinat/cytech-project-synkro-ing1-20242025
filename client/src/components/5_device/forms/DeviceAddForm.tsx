@@ -8,13 +8,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-// Device addition form schema with client-side validation
 const deviceAddSchema = z.object({
   name: z.string().min(2, "The name must be at least 2 characters."),
   serial: z.string().min(2, "The serial number is required.")
 });
 
-// Type for device addition form values
 type DeviceAddFormValues = z.infer<typeof deviceAddSchema>;
 
 interface DeviceAddFormProps {
@@ -24,13 +22,11 @@ interface DeviceAddFormProps {
 }
 
 export const DeviceAddForm: React.FC<DeviceAddFormProps> = ({ onSubmit, loading, error }) => {
-  // Initialize form with react-hook-form
   const form = useForm<DeviceAddFormValues>({
     resolver: zodResolver(deviceAddSchema),
     defaultValues: { name: "", serial: "" },
   });
 
-  // Handle form submission
   const submit = async (data: DeviceAddFormValues) => {
     await onSubmit(data);
     form.reset();

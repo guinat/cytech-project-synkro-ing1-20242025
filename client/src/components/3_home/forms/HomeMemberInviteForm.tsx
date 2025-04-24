@@ -8,19 +8,17 @@ import { Form, FormItem, FormLabel, FormControl, FormMessage, FormField } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-// Member invitation form schema with client-side validation
 const homeMemberInviteSchema = z.object({
   email: z.string().email("Invalid email"),
 });
 
-// Type for member invitation form values
 type HomeMemberInviteFormValues = z.infer<typeof homeMemberInviteSchema>;
 
 interface HomeMemberInviteFormProps {
   onSubmit: (data: HomeMemberInviteFormValues) => Promise<void>;
   loading?: boolean;
   error?: string | null;
-  horizontal?: boolean; // Whether to display form fields horizontally
+  horizontal?: boolean;
 }
 
 export const HomeMemberInviteForm: React.FC<HomeMemberInviteFormProps> = ({ 
@@ -29,13 +27,10 @@ export const HomeMemberInviteForm: React.FC<HomeMemberInviteFormProps> = ({
   error,
   horizontal = true 
 }) => {
-  // Initialize form with react-hook-form
   const form = useForm<HomeMemberInviteFormValues>({
     resolver: zodResolver(homeMemberInviteSchema),
     defaultValues: { email: "" },
   });
-
-  // Handle form submission
   const submit = async (data: HomeMemberInviteFormValues) => {
     await onSubmit(data);
     form.reset();
@@ -78,12 +73,10 @@ export const HomeMemberInviteForm: React.FC<HomeMemberInviteFormProps> = ({
     </Form>
   );
 
-  // If horizontal layout (inline form), return without Card wrapper
   if (horizontal) {
     return formContent;
   }
 
-  // Default view with Card wrapper for vertical layout
   return (
     <Card>
       <CardContent>

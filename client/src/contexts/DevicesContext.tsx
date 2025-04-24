@@ -97,8 +97,6 @@ export const DevicesProvider: React.FC<{ children: ReactNode; homeId: string; ro
 
 
 
-  // --- Only one definition for each context method ---
-  // --- Only one definition for each context method ---
   const createDeviceContext = async (homeId: string, roomId: string, payload: Partial<Device>) => {
     setLoading(true);
     try {

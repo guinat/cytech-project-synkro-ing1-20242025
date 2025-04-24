@@ -4,16 +4,13 @@ const API_BASE_URL = "http://localhost:8000";
 
 export function extractSuccessMessage(data: any): string {
   if (!data) return 'Operation successful';
-  // Format ApiResponse : { status: 'success', message: '...', data: ... }
   if (typeof data === 'object') {
     if (typeof data.message === 'string' && data.message.trim()) {
       return data.message;
     }
-    // Sometimes the message is nested in data.message
     if (data.data && typeof data.data.message === 'string') {
       return data.data.message;
     }
-    // If the backend returns a detail or error field
     if (typeof data.detail === 'string') {
       return data.detail;
     }
@@ -73,7 +70,7 @@ export async function apiFetch<T>(url: string, options: RequestInit = {}): Promi
   const res = await fetch(`${API_BASE_URL}${url}`, {
     ...options,
     headers,
-    credentials: 'include', // Always
+    credentials: 'include'
   });
   if (!res.ok) {
     let errorMessage = 'Unknown error';
@@ -90,7 +87,6 @@ export async function apiFetch<T>(url: string, options: RequestInit = {}): Promi
     (error as any).raw = errorData;
     throw error;
   }
-  // Success but no content or no JSON
   const contentType = res.headers.get('content-type');
   if (res.status === 204 || !contentType || !contentType.includes('application/json')) {
     return undefined as any;

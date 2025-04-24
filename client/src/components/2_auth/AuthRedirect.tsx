@@ -20,12 +20,10 @@ const AuthRedirect: React.FC<AuthRedirectProps> = ({
 }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
-  // Bloquer la redirection automatique sur /invitations/accept/:token
 
   if (loading) return <Loading />;
 
-  // Si connecté et redirectIfAuthenticated défini, redirige vers 'next' si présent dans l'URL, sinon vers redirectIfAuthenticated
-  // DEBUG
+
 
   if (
     user &&
@@ -48,7 +46,6 @@ const AuthRedirect: React.FC<AuthRedirectProps> = ({
   }
 
   if (requireAuth && !user) {
-    // Ajoute le paramètre next sauf si déjà sur la page de login
     const next = encodeURIComponent(location.pathname + location.search);
     if (!location.pathname.startsWith('/auth/sign_in')) {
       return <Navigate to={`/auth/sign_in?next=${next}`} replace />;

@@ -38,7 +38,6 @@ const HomeTabs: React.FC<HomeTabsProps> = ({ homes, activeHome, onHomeChange, on
     }
   };
 
-  // Trouve l'objet Home actif
   const activeHomeObj = homes.find((h) => h.id === activeHome) as Home | undefined;
 
   return (
@@ -97,7 +96,6 @@ const HomeTabs: React.FC<HomeTabsProps> = ({ homes, activeHome, onHomeChange, on
         </TooltipProvider>
       </div>
       
-      {/* HomeModal pour les paramètres du home */}
       {activeHomeObj && (
         <HomeModal
           open={isHomeModalOpen}

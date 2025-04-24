@@ -7,14 +7,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 
-// Member role change form schema with client-side validation
 const homeMemberRoleChangeSchema = z.object({
   role: z.enum(["owner", "admin", "member"], {
     required_error: "The role is required."
   })
 });
 
-// Type for member role change form values
 type HomeMemberRoleChangeFormValues = z.infer<typeof homeMemberRoleChangeSchema>;
 
 interface HomeMemberRoleChangeFormProps {
@@ -22,7 +20,7 @@ interface HomeMemberRoleChangeFormProps {
   onSubmit: (data: HomeMemberRoleChangeFormValues) => Promise<void>;
   loading?: boolean;
   error?: string | null;
-  horizontal?: boolean; // Whether to display form fields horizontally
+  horizontal?: boolean; 
 }
 
 export const HomeMemberRoleChangeForm: React.FC<HomeMemberRoleChangeFormProps> = ({ 
@@ -32,13 +30,11 @@ export const HomeMemberRoleChangeForm: React.FC<HomeMemberRoleChangeFormProps> =
   error,
   horizontal = true 
 }) => {
-  // Initialize form with react-hook-form
   const form = useForm<HomeMemberRoleChangeFormValues>({
     resolver: zodResolver(homeMemberRoleChangeSchema),
     defaultValues: { role: initialRole },
   });
 
-  // Handle form submission
   const submit = async (data: HomeMemberRoleChangeFormValues) => {
     await onSubmit(data);
   };
@@ -95,12 +91,10 @@ export const HomeMemberRoleChangeForm: React.FC<HomeMemberRoleChangeFormProps> =
     </Form>
   );
 
-  // If horizontal layout (inline form), return without Card wrapper
   if (horizontal) {
     return formContent;
   }
 
-  // Default view with Card wrapper for vertical layout
   return (
     <Card>
       <CardContent>

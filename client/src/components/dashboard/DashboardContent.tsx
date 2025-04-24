@@ -74,12 +74,10 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
   return (
     <div className="min-h-screen p-6 bg-background text-foreground max-w-7xl mx-auto">
       <div className="space-y-6">
-        {/* Background gradient effect */}
         <div className="fixed inset-0 -z-10 bg-background">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/5 opacity-50" />
         </div>
         
-        {/* Home selection tabs */}
         <HomeTabs 
           homes={homes}
           activeHome={selectedHomeId}
@@ -108,7 +106,6 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
           }}
         />
         
-        {/* Room navigation tabs */}
         <RoomTabs 
           rooms={rooms}
           activeRoom={selectedRoomId}
@@ -116,7 +113,6 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
           onAddRoom={() => onAddRoomDialogChange(true)}
         />
         
-        {/* Energy Consumption Chart - only visible in overview */}
         {selectedRoomId === 'overview' && filteredDevices.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -136,7 +132,6 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
           </Card>
         )}
         
-        {/* My Devices section */}
         <DevicesList 
           devices={filteredDevices}
           isLoading={isDevicesLoading}
@@ -146,7 +141,6 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
         />
       </div>
       
-      {/* Dialogs */}
       <AddRoomDialog 
         open={isAddRoomDialogOpen}
         onOpenChange={onAddRoomDialogChange}

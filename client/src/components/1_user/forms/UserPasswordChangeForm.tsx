@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from '@/components/ui/input';
 
 
-// Change password form schema with client-side validation
 const passwordChangeFormSchema = z.object({
   newPassword: z.string().min(8, { 
     message: "Password must be at least 8 characters" 
@@ -28,7 +27,6 @@ const passwordChangeFormSchema = z.object({
   path: ["newPasswordConfirm"],
 });
 
-// Type for change password form values
 type PasswordChangeFormValues = z.infer<typeof passwordChangeFormSchema>;
 
 interface UserPasswordChangeFormProps {
@@ -46,7 +44,6 @@ const UserPasswordChangeForm: React.FC<UserPasswordChangeFormProps> = ({
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
 
-  // Initialize form with react-hook-form
   const form = useForm<PasswordChangeFormValues>({
     resolver: zodResolver(passwordChangeFormSchema),
     defaultValues: {
@@ -55,7 +52,6 @@ const UserPasswordChangeForm: React.FC<UserPasswordChangeFormProps> = ({
     },
   });
 
-  // Handle form submission
   const onSubmit = async (data: PasswordChangeFormValues) => {
     setError(null);
     setLoading(true);
@@ -108,12 +104,10 @@ const UserPasswordChangeForm: React.FC<UserPasswordChangeFormProps> = ({
     </Form>
   );
 
-  // If className is provided, assume custom container and return form only
   if (className) {
     return formContent;
   }
 
-  // Default view with Card wrapper
   return (
     <Card>
       <CardContent>

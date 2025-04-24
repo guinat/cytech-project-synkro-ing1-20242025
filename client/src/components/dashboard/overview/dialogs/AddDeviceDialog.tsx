@@ -14,14 +14,6 @@ interface AddDeviceDialogProps {
   selectedHomeId: string;
 }
 
-/**
- * AddDeviceDialog
- *
- * Ce composant passe le champ device_type au backend via la prop onAddDevice.
- * Le backend attend device_type (et non type) dans le payload.
- *
- * onAddDevice(name, deviceType, roomId) => handleAddDevice(name, deviceType, roomId) => createDevice(..., { name, device_type: deviceType })
- */
 const AddDeviceDialog: React.FC<AddDeviceDialogProps> = ({ open, onOpenChange, onAddDevice, rooms, onAddRoom, selectedHomeId }) => {
   const [deviceName, setDeviceName] = useState("");
   const [deviceType, setDeviceType] = useState("");
@@ -30,9 +22,7 @@ const AddDeviceDialog: React.FC<AddDeviceDialogProps> = ({ open, onOpenChange, o
   const [isDeviceTypesLoading, setIsDeviceTypesLoading] = useState(false);
   const [deviceTypesError, setDeviceTypesError] = useState<string | null>(null);
 
-  // Dès que deviceTypes est chargé, sélectionne la première valeur par défaut si rien n'est choisi
   useEffect(() => {
-    // Si deviceType n'est pas dans la liste, reset (robuste si la data API change)
     if (deviceTypes.length > 0) {
       const found = deviceTypes.find(dt => dt.id === deviceType);
       if (!deviceType || !found) {
@@ -57,7 +47,6 @@ const AddDeviceDialog: React.FC<AddDeviceDialogProps> = ({ open, onOpenChange, o
     import('@/services/devices.service').then(m => m.getPublicDeviceTypes())
       .then((types) => {
         if (mounted) {
-          // On filtre les types sans id (corruption API possible)
          setDeviceTypes(types.filter(t => !!t.id).map(t => ({ id: t.id, name: t.name })));
         }
       })
@@ -74,31 +63,26 @@ const AddDeviceDialog: React.FC<AddDeviceDialogProps> = ({ open, onOpenChange, o
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!deviceName.trim() || !selectedRoomId || !deviceType) return;
-    // LOGS DEBUG
-    // deviceType doit être l'id technique (ex: 'smart_bulb_x'), pas le nom affiché
     const selectedType = deviceTypes.find(dt => dt.id === deviceType);
     if (!deviceType || !selectedType) {
       toast.error("Le type d'appareil sélectionné est invalide ou n'existe plus. Veuillez réessayer.");
       return;
     }
-    // Le backend attend device_type, product_code et state (au minimum)
     const debugPayload = {
       name: deviceName,
-      type: selectedType.id,         // clé attendue côté backend
-      product_code: productCode,     // valeur saisie par l'utilisateur
-      state: {},                     // objet vide par défaut
-      room: selectedRoomId,          // clé attendue côté backend
+      type: selectedType.id,
+      product_code: productCode,
+      state: {},
+      room: selectedRoomId,
     };
 
     setIsCreating(true);
     try {
-      // Passe le payload complet à la prop onAddDevice
       await onAddDevice(debugPayload, selectedRoomId, selectedHomeId);
       setDeviceName("");
       onOpenChange(false);
       toast.success(`Device "${deviceName}" added successfully`);
     } catch (error) {
-      // Affichage détaillé de l'erreur backend si dispo
       if (error && typeof error === 'object' && 'raw' in error) {
         try {
           const raw = (error as any).raw;

@@ -19,19 +19,16 @@ const DashboardPage: React.FC = (): ReactNode => {
   const [selectedHomeId, setSelectedHomeId] = useState<string>("");
   const [selectedRoomId, setSelectedRoomId] = useState<string>("overview");
   
-  // État local pour les pièces et appareils (sera mis à jour via les contexts)
   const [rooms, setRooms] = useState<Room[]>([]);
   const [devices, setDevices] = useState<EnhancedDevice[]>([]);
   const [isRoomsLoading, setIsRoomsLoading] = useState(false);
   const [isDevicesLoading, setIsDevicesLoading] = useState(false);
   
-  // Dialog state
   const [isAddRoomDialogOpen, setIsAddRoomDialogOpen] = useState(false);
   const [isAddDeviceDialogOpen, setIsAddDeviceDialogOpen] = useState(false);
   const [isDeviceDetailDialogOpen, setIsDeviceDetailDialogOpen] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<EnhancedDevice | null>(null);
   
-  // Charger le homeId initial quand la liste des maisons est chargée
   useEffect(() => {
     try {
       if (homes.length > 0 && !selectedHomeId) {
@@ -42,13 +39,11 @@ const DashboardPage: React.FC = (): ReactNode => {
     }
   }, [homes, selectedHomeId]);
   
-  // Fonction pour charger les pièces via le contexte
   const loadRoomsWithContext = async () => {
     if (!selectedHomeId) return;
     
     setIsRoomsLoading(true);
     try {
-      // Utilisation dynamique du service jusqu'à ce que nous puissions utiliser le contexte complet
       const roomsData = await import('@/services/rooms.service')
         .then(m => m.listRoomsService(selectedHomeId));
       setRooms(roomsData);
@@ -60,17 +55,14 @@ const DashboardPage: React.FC = (): ReactNode => {
     }
   };
   
-  // Fonction pour charger les appareils via le contexte
   const loadDevicesWithContext = async () => {
     if (!selectedHomeId) return;
     
     setIsDevicesLoading(true);
     try {
-      // Chargement des appareils selon que nous sommes dans une vue d'ensemble ou une pièce spécifique
       const devicesData = await import('@/services/devices.service')
         .then(m => m.listDevices(selectedHomeId, selectedRoomId === 'overview' ? undefined : selectedRoomId));
       
-      // Mapper les appareils pour ajouter les propriétés nécessaires
       setDevices(devicesData.map(device => ({
         ...device,
         home: selectedHomeId,
@@ -85,17 +77,14 @@ const DashboardPage: React.FC = (): ReactNode => {
     }
   };
   
-  // Charger les pièces quand le homeId change
   useEffect(() => {
     loadRoomsWithContext();
   }, [selectedHomeId]);
   
-  // Charger les appareils quand le homeId ou roomId change
   useEffect(() => {
     loadDevicesWithContext();
   }, [selectedHomeId, selectedRoomId]);
   
-  // Charger les détails d'une pièce spécifique
   useEffect(() => {
     if (!selectedHomeId || selectedRoomId === 'overview') return;
     
@@ -133,7 +122,6 @@ const DashboardPage: React.FC = (): ReactNode => {
     try {
       await import('@/services/rooms.service')
         .then(m => m.createRoomService(selectedHomeId, { name }));
-      // Recharger les pièces après ajout
       loadRoomsWithContext();
     } catch (error) {
       toast.error('Erreur lors de la création de la pièce');
@@ -146,7 +134,6 @@ const DashboardPage: React.FC = (): ReactNode => {
     try {
       await import('@/services/devices.service')
         .then(m => m.createDevice(homeId, roomId, payload));
-      // Recharger les appareils après ajout
       loadDevicesWithContext();
       toast.success('Device added successfully');
     } catch (error) {
@@ -166,7 +153,6 @@ const DashboardPage: React.FC = (): ReactNode => {
     try {
       await import('@/services/devices.service')
         .then(m => m.updateDevice(selectedHomeId, selectedDevice.room, deviceId, { name }));
-      // Mettre à jour l'état local
       setDevices(
         devices.map((device: EnhancedDevice) => 
           device.id === deviceId ? { ...device, name } : device
@@ -184,7 +170,6 @@ const DashboardPage: React.FC = (): ReactNode => {
     try {
       await import('@/services/devices.service')
         .then(m => m.deleteDevice(selectedHomeId, selectedDevice.room, deviceId));
-      // Mettre à jour l'état local
       setDevices(devices.filter((device: EnhancedDevice) => device.id !== deviceId));
       setIsDeviceDetailDialogOpen(false);
     } catch (error) {
@@ -192,12 +177,10 @@ const DashboardPage: React.FC = (): ReactNode => {
     }
   };
   
-  // Filter devices based on selected room
   const filteredDevices = selectedRoomId === 'overview' 
     ? devices 
     : devices.filter((device: EnhancedDevice) => device.room === selectedRoomId);
   
-  // Affichage des erreurs
   if (error) {
     return (
       <div className="min-h-screen p-6 flex flex-col items-center justify-center bg-red-50 dark:bg-red-950">
@@ -250,7 +233,6 @@ const DashboardPage: React.FC = (): ReactNode => {
     );
   }
   
-  // Composant pour injecter les providers avec les IDs sélectionnés
   const RoomsWithSelectedHome = ({ children }: { children: ReactNode }) => {
     if (!selectedHomeId) return null;
     return (

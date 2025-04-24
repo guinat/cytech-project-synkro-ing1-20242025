@@ -53,7 +53,6 @@ class UserSerializerMixin:
         return user
 
 class UserSerializer(UserSerializerMixin, serializers.ModelSerializer):
-    """Serializer for the User model."""
     password = serializers.CharField(write_only=True, required=False)
     profile_photo = serializers.CharField(required=False, allow_blank=True, allow_null=True, help_text="Base64 encoded profile photo")
     points = serializers.IntegerField(read_only=True)
@@ -69,7 +68,6 @@ class UserSerializer(UserSerializerMixin, serializers.ModelSerializer):
 
 
 class UserMeSerializer(UserSerializer):
-    """Serializer for the current authenticated user."""
     owned_homes_count = serializers.SerializerMethodField()
     member_homes_count = serializers.SerializerMethodField()
     points = serializers.IntegerField(read_only=True)
@@ -85,7 +83,6 @@ class UserMeSerializer(UserSerializer):
 
 
 class UserCreateSerializer(UserSerializerMixin, serializers.ModelSerializer):
-    """Serializer for creating a new user."""
     password = serializers.CharField(write_only=True, required=True)
     password_confirm = serializers.CharField(write_only=True, required=True)
     points = serializers.IntegerField(read_only=True)
@@ -104,7 +101,6 @@ class UserCreateSerializer(UserSerializerMixin, serializers.ModelSerializer):
 
 
 class UserUpdateSerializer(UserSerializerMixin, serializers.ModelSerializer):
-    """Serializer for updating an existing user."""
     current_password = serializers.CharField(write_only=True, required=False)
     points = serializers.IntegerField(read_only=True)
     

@@ -61,14 +61,12 @@ const DashboardSidebar: React.FC = () => {
 
       <div className="flex-1 overflow-y-auto py-2">
 
-        {/* Navigation menus */}
         <SidebarNavigationMenu
           showFullWidth={showFullWidth}
           userRole={user?.role}
         />
       </div>
 
-      {/* User profile section */}
       <SidebarUserProfile
         user={user}
         showFullWidth={showFullWidth}

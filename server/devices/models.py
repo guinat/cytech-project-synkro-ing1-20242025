@@ -5,7 +5,6 @@ from django.conf import settings
 from rooms.models import Room
 
 
-# DeviceType supprimé : les types sont hardcodés dans device_catalogue.py
 
 
 from .device_catalogue import DEVICE_TYPE_MAP
@@ -18,9 +17,9 @@ class Device(models.Model):
         on_delete=models.CASCADE, 
         related_name='devices'
     )
-    type = models.CharField(max_length=50)  # ex: 'smart_bulb_x'
+    type = models.CharField(max_length=50) 
     product_code = models.CharField(max_length=6)
-    state = models.JSONField(default=dict, blank=True)  # stocke brightness, temperature, etc.
+    state = models.JSONField(default=dict, blank=True)  
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -54,7 +53,7 @@ class DeviceCommand(models.Model):
         on_delete=models.CASCADE, 
         related_name='commands'
     )
-    capability = models.CharField(max_length=50)  # ex: 'on_off', 'brightness', etc.
+    capability = models.CharField(max_length=50) 
     parameters = models.JSONField(default=dict, blank=True)
     status = models.CharField(
         max_length=20, 

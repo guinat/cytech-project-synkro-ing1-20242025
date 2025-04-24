@@ -16,10 +16,8 @@ const UserEmailVerificationResendForm: React.FC<UserEmailVerificationResendFormP
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Initialize form with react-hook-form
   const form = useForm();
 
-  // Handle form submission
   const handleResend = async () => {
     setLoading(true);
     setSuccess(false);
@@ -51,12 +49,10 @@ const UserEmailVerificationResendForm: React.FC<UserEmailVerificationResendFormP
     </Form>
   );
 
-  // If className is provided, assume custom container and return form only
   if (className) {
     return formContent;
   }
 
-  // Default view with Card wrapper
   return (
     <Card>
       <CardContent>

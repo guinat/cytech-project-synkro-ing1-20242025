@@ -8,12 +8,10 @@ import { Form, FormItem, FormLabel, FormControl, FormMessage, FormField } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-// Home color change form schema with client-side validation
 const homeColorChangeSchema = z.object({
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/i, "Invalid hexadecimal color"),
 });
 
-// Type for home color change form values
 type HomeColorChangeFormValues = z.infer<typeof homeColorChangeSchema>;
 
 interface HomeColorChangeFormProps {
@@ -25,19 +23,16 @@ interface HomeColorChangeFormProps {
 }
 
 export const HomeColorChangeForm: React.FC<HomeColorChangeFormProps> = ({ color, onSubmit, loading, error, children }) => {
-  // Initialize form with react-hook-form
   const form = useForm<HomeColorChangeFormValues>({
     resolver: zodResolver(homeColorChangeSchema),
     defaultValues: { color },
   });
 
-  // Handle form submission
   const submit = async (data: HomeColorChangeFormValues) => {
     await onSubmit(data);
     form.reset();
   };
 
-  // If children is provided, use palette mode (custom button)
   if (children) {
     return (
       <form onSubmit={form.handleSubmit(submit)} style={{ display: 'inline' }}>
@@ -57,7 +52,6 @@ export const HomeColorChangeForm: React.FC<HomeColorChangeFormProps> = ({ color,
     );
   }
 
-  // Modern input mode with shadcn UI components
   return (
     <Card>
       <CardContent>

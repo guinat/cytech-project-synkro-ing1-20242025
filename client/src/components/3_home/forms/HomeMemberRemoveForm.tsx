@@ -18,15 +18,12 @@ export const HomeMemberRemoveForm: React.FC<HomeMemberRemoveFormProps> = ({
   error,
   className
 }) => {
-  // Initialize form with react-hook-form
   const form = useForm();
 
-  // Handle form submission
   const handleRemove = async () => {
     await onSubmit();
   };
 
-  // Allow for flexible rendering with or without card wrapper
   const formContent = (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleRemove)} className={`space-y-4 ${className || ''}`}>
@@ -43,12 +40,10 @@ export const HomeMemberRemoveForm: React.FC<HomeMemberRemoveFormProps> = ({
     </Form>
   );
 
-  // If className is provided, assume custom container and return form only
   if (className) {
     return formContent;
   }
 
-  // Default view with Card wrapper
   return (
     <Card>
       <CardContent>

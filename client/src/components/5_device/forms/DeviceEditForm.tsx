@@ -8,13 +8,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-// Device edit form schema with client-side validation
 const editDeviceSchema = z.object({
   name: z.string().min(2, "The name must be at least 2 characters."),
   serial: z.string().min(2, "The serial number is required.")
 });
 
-// Type for device edit form values
 export type EditDeviceFormValues = z.infer<typeof editDeviceSchema>;
 
 interface EditDeviceFormProps {
@@ -25,13 +23,11 @@ interface EditDeviceFormProps {
 }
 
 export const EditDeviceForm: React.FC<EditDeviceFormProps> = ({ initialValues, onSubmit, loading, error }) => {
-  // Initialize form with react-hook-form
   const form = useForm<EditDeviceFormValues>({
     resolver: zodResolver(editDeviceSchema),
     defaultValues: initialValues,
   });
 
-  // Handle form submission
   const submit = async (data: EditDeviceFormValues) => {
     await onSubmit(data);
   };

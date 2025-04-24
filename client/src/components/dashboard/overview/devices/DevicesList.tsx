@@ -7,7 +7,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import DeviceCard from './DeviceCard';
 import { EnhancedDevice } from '@/types/device';
 
-// Animation variants
 const containerVariants = {
   hidden: { opacity: 0 },
   show: {

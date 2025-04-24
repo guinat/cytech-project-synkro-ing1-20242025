@@ -21,15 +21,12 @@ export const HomeInvitationDeleteForm: React.FC<HomeInvitationDeleteFormProps> =
   className,
   iconOnly = true
 }) => {
-  // Initialize form with react-hook-form
   const form = useForm();
 
-  // Handle form submission
   const handleDelete = async () => {
     await onSubmit();
   };
 
-  // Icon-only version for inline usage
   if (iconOnly) {
     return (
       <Form {...form}>
@@ -51,7 +48,6 @@ export const HomeInvitationDeleteForm: React.FC<HomeInvitationDeleteFormProps> =
     );
   }
 
-  // Standard button version with card wrapper
   const formContent = (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleDelete)} className={`space-y-4 ${className || ''}`}>
@@ -68,12 +64,10 @@ export const HomeInvitationDeleteForm: React.FC<HomeInvitationDeleteFormProps> =
     </Form>
   );
 
-  // If className is provided, assume custom container and return form only
   if (className) {
     return formContent;
   }
 
-  // Default view with Card wrapper
   return (
     <Card>
       <CardContent>

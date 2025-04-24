@@ -8,12 +8,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Button } from "@/components/ui/button";
 import { Input } from '@/components/ui/input';
 
-// Home creation form schema with client-side validation
 const homeCreateSchema = z.object({
   name: z.string().min(1, "Home name is required"),
 });
 
-// Type for home creation form values
 type HomeCreateFormValues = z.infer<typeof homeCreateSchema>;
 
 interface HomeCreateFormProps {
@@ -23,7 +21,6 @@ interface HomeCreateFormProps {
 }
 
 export const HomeCreateForm: React.FC<HomeCreateFormProps> = ({ onSubmit, loading, error }) => {
-  // Initialize form with react-hook-form
   const form = useForm<HomeCreateFormValues>({
     resolver: zodResolver(homeCreateSchema),
     defaultValues: {
@@ -31,7 +28,6 @@ export const HomeCreateForm: React.FC<HomeCreateFormProps> = ({ onSubmit, loadin
     },
   });
 
-  // Handle form submission
   const submit = async (data: HomeCreateFormValues) => {
     await onSubmit(data);
     form.reset();

@@ -12,7 +12,7 @@ export type Home = {
   id: string;
   name: string;
   address?: string;
-  color?: string; // couleur personnalisée pour la card
+  color?: string;
   is_primary?: boolean;
   created_at?: string;
   updated_at?: string;
@@ -24,7 +24,6 @@ export type Home = {
     can_invite?: boolean;
     [key: string]: boolean | undefined;
   };
-  // Ajoute d'autres champs selon ton modèle backend
 };
 
 export type HomeInvitation = {
@@ -33,10 +32,8 @@ export type HomeInvitation = {
   email: string;
   status: string;
   created_at?: string;
-  // Ajoute d'autres champs selon ton modèle backend
 };
 
-// --- HOMES CRUD ---
 export async function listHomes(): Promise<Home[]> {
   try {
     const data = await apiFetch<any>('/homes/', { method: 'GET' });
@@ -112,8 +109,6 @@ export async function setPrimaryHome(id: string): Promise<Home> {
     throw error;
   }
 }
-
-// --- INVITATIONS ---
 
 export async function acceptInvitationByToken(token: string): Promise<any> {
   try {

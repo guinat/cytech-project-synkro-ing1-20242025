@@ -12,12 +12,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Button } from "@/components/ui/button";
 import { Input } from '@/components/ui/input';
 
-// Password reset request form schema with client-side validation
 const authPasswordResetRequestFormSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
 });
 
-// Type for password reset request form values
 type AuthPasswordResetRequestFormValues = z.infer<typeof authPasswordResetRequestFormSchema>;
 
 interface AuthPasswordResetRequestFormProps {
@@ -30,7 +28,6 @@ const AuthPasswordResetRequestForm: React.FC<AuthPasswordResetRequestFormProps> 
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState(false);
 
-  // Initialize form with react-hook-form
   const form = useForm<AuthPasswordResetRequestFormValues>({
     resolver: zodResolver(authPasswordResetRequestFormSchema),
     defaultValues: {
@@ -38,7 +35,6 @@ const AuthPasswordResetRequestForm: React.FC<AuthPasswordResetRequestFormProps> 
     },
   });
 
-  // Handle form submission
   const onSubmit = async (data: AuthPasswordResetRequestFormValues) => {
     setLoading(true);
     setError(null);
@@ -81,12 +77,10 @@ const AuthPasswordResetRequestForm: React.FC<AuthPasswordResetRequestFormProps> 
     </Form>
   );
 
-  // If className is provided, assume custom container and return form only
   if (className) {
     return formContent;
   }
 
-  // Default view with Card wrapper
   return (
     <Card>
       <CardContent>

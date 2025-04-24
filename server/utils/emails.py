@@ -19,7 +19,6 @@ def send_email(user, mail_type, context=None, request=None):
         subject = "Password Reset"
         message = f"You requested a password reset. Click here: {link}"
     elif mail_type == 'invitation':
-        # context doit contenir home_id, email, role
         if not context or not all(k in context for k in ('home_id', 'email', 'role')):
             raise ValueError('context must contain home_id, email, and role for invitation')
         token = TokenGenerator.generate_home_invitation_token(
@@ -33,7 +32,6 @@ def send_email(user, mail_type, context=None, request=None):
         message = f"You have been invited to join a home. Accept here: {link}"
         recipient = context['email']
     elif mail_type == 'email_change_otp':
-        # context doit contenir otp_code
         if not context or 'otp_code' not in context:
             raise ValueError('context must contain otp_code for email_change_otp')
         subject = "Code for email change"

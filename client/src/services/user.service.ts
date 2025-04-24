@@ -14,7 +14,6 @@ export type UserProfile = {
   last_login?: string;
 };
 
-// GET
 import { getTokenService } from './auth.service';
 
 export async function getMeService(): Promise<UserProfile> {
@@ -31,13 +30,11 @@ export async function getMeService(): Promise<UserProfile> {
   }
 }
 
-// Global state for OTP
 let globalOtpCurrentPassword: string = '';
 export function setGlobalOtpCurrentPassword(pwd: string) { globalOtpCurrentPassword = pwd; }
 export function getGlobalOtpCurrentPassword() { return globalOtpCurrentPassword; }
 export function clearGlobalOtpCurrentPassword() { globalOtpCurrentPassword = ''; }
 
-// PATCH
 export async function updateMeService(data: Partial<UserProfile> & {
   current_password: string;
   new_password?: string;
@@ -63,7 +60,6 @@ export async function updateMeService(data: Partial<UserProfile> & {
   }
 }
 
-// DELETE
 export async function deleteMeService(): Promise<void> {
   try {
     const data = await apiFetch('/me/', { method: 'DELETE' });
@@ -74,7 +70,6 @@ export async function deleteMeService(): Promise<void> {
   }
 }
 
-// Admin only
 type UserListParams = { search?: string; ordering?: string; role?: string; level?: string; is_email_verified?: boolean };
 
 export async function listUsersService(params?: UserListParams): Promise<UserProfile[]> {

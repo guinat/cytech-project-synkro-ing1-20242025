@@ -33,12 +33,11 @@ const granularities = [
   { label: 'Mois', value: 'month' },
 ];
 
-// Intervalle de rafraîchissement en ms selon la granularité
 const refreshIntervals = {
-  minute: 60000, // 1 minute
-  hour: 3600000, // 1 heure
-  day: 86400000, // 1 jour
-  month: 2592000000, // 30 jours
+  minute: 60000,
+  hour: 3600000,
+  day: 86400000,
+  month: 2592000000, 
 };
 
 const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId, roomId, deviceId }) => {
@@ -54,37 +53,34 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
   const refreshTimerRef = React.useRef<NodeJS.Timeout | null>(null);
   const historicalDataRef = React.useRef<Record<string, Record<string, number>>>({});
 
-  // Garder une référence synchronisée avec historicalData
   React.useEffect(() => {
     historicalDataRef.current = historicalData;
   }, [historicalData]);
 
   const loadData = React.useCallback(async () => {
-    if (loading) return; // Éviter les appels simultanés
+    if (loading) return;
     
     setLoading(true);
     setError(null);
     try {
-      // Calculer les dates pour récupérer les 10 derniers points, selon la granularité
       const now = new Date();
       let dateStart;
       
       switch (granularity) {
         case 'minute':
-          dateStart = subMinutes(now, 10); // 10 dernières minutes
+          dateStart = subMinutes(now, 10);
           break;
         case 'hour':
-          dateStart = subHours(now, 10); // 10 dernières heures
+          dateStart = subHours(now, 10);
           break;
         case 'day':
-          dateStart = subDays(now, 10); // 10 derniers jours
+          dateStart = subDays(now, 10);
           break;
         case 'month':
-          dateStart = subMonths(now, 10); // 10 derniers mois
+          dateStart = subMonths(now, 10);
           break;
       }
 
-      // Format des dates pour l'API (ISO string ou format approprié)
       const formattedDateStart = dateStart.toISOString();
       const formattedDateEnd = now.toISOString();
 
@@ -100,20 +96,16 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
       
       const res: EnergyConsumptionResponse = await getEnergyConsumption(params);
       
-      // Utiliser la référence pour éviter la dépendance cyclique
       const currentHistoricalData = { ...historicalDataRef.current };
       
-      // Mettre à jour l'historique avec les nouvelles données
       if (res.devices && res.devices.length > 0) {
         res.devices.forEach(device => {
           if (!currentHistoricalData[device.device_id]) {
             currentHistoricalData[device.device_id] = {};
           }
           
-          // Mise à jour des périodes pour ce device
           if (device.consumption) {
             Object.keys(device.consumption).forEach(period => {
-              // Ne mettre à jour que si la valeur est non nulle ou si elle n'existe pas déjà dans l'historique
               if (device.consumption[period] > 0 || !currentHistoricalData[device.device_id][period]) {
                 currentHistoricalData[device.device_id][period] = device.consumption[period];
               }
@@ -122,21 +114,15 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
         });
       }
       
-      // Mettre à jour l'état historique
       setHistoricalData(currentHistoricalData);
       
-      // Créer une copie profonde des devices pour préserver les données
       const devicesWithHistory = res.devices?.map(device => {
         const deviceCopy = { ...device };
         
-        // Si l'appareil existe dans notre historique, utiliser les données historiques
         if (currentHistoricalData[device.device_id]) {
-          // Créer une nouvelle copie de consumption pour éviter toute mutation
           deviceCopy.consumption = { ...device.consumption };
           
-          // Pour chaque période, s'assurer que nous avons une valeur
           Object.keys(currentHistoricalData[device.device_id]).forEach(period => {
-            // Si la consommation actuelle est 0 mais qu'il y a une valeur historique, utiliser la valeur historique
             if ((!deviceCopy.consumption[period] || deviceCopy.consumption[period] === 0) && 
                 currentHistoricalData[device.device_id][period] > 0) {
               deviceCopy.consumption[period] = currentHistoricalData[device.device_id][period];
@@ -149,21 +135,16 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
       
       setDevices(devicesWithHistory);
       
-      // Format data for chart
       if (devicesWithHistory.length > 0) {
-        // Get all unique time periods from all devices
         const allKeys = Array.from(
           new Set(devicesWithHistory.flatMap(d => Object.keys(d.consumption || {})))
         ).sort();
         
-        // Limiter à 10 derniers points
         const limitedKeys = allKeys.slice(-10);
         
-        // Format data for the chart
         const chartData = limitedKeys.map(key => {
           const entry: any = { period: key };
           devicesWithHistory.forEach(d => {
-            // Make sure the device name exists in each data point
             if (d.device_name) {
               entry[d.device_name] = d.consumption?.[key] || 0;
             }
@@ -171,15 +152,12 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
           return entry;
         });
         
-        // Formatage des périodes pour un affichage plus convivial
         if (granularity === 'minute') {
           chartData.forEach(entry => {
             const date = entry.period;
             if (date && date.includes(' ')) {
-              // Extraire juste l'heure et les minutes
               entry.displayPeriod = date.split(' ')[1];
             } else if (date && date.includes('T')) {
-              // Format ISO
               const dateObj = new Date(date);
               entry.displayPeriod = format(dateObj, 'HH:mm');
             } else {
@@ -190,10 +168,8 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
           chartData.forEach(entry => {
             const date = entry.period;
             if (date && date.includes(' ')) {
-              // Extraire juste l'heure
               entry.displayPeriod = date.split(' ')[1].substring(0, 2) + 'h';
             } else if (date && date.includes('T')) {
-              // Format ISO
               const dateObj = new Date(date);
               entry.displayPeriod = format(dateObj, 'HH') + 'h';
             } else {
@@ -204,7 +180,6 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
           chartData.forEach(entry => {
             const date = entry.period;
             if (date && date.includes('T')) {
-              // Format ISO
               const dateObj = new Date(date);
               entry.displayPeriod = format(dateObj, 'dd MMM', { locale: fr });
             } else {
@@ -215,11 +190,9 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
           chartData.forEach(entry => {
             const date = entry.period;
             if (date && date.includes('-') && !date.includes('T')) {
-              // Format YYYY-MM-DD
               const [year, month] = date.split('-');
               entry.displayPeriod = format(new Date(parseInt(year), parseInt(month) - 1, 1), 'MMM yyyy', { locale: fr });
             } else if (date && date.includes('T')) {
-              // Format ISO
               const dateObj = new Date(date);
               entry.displayPeriod = format(dateObj, 'MMM yyyy', { locale: fr });
             } else {
@@ -234,7 +207,6 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
         
         setData(chartData);
       } else {
-        // Handle case when no devices are available
         setData([]);
       }
     } catch (e: any) {
@@ -244,29 +216,23 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
     } finally {
       setLoading(false);
     }
-  }, [homeId, roomId, deviceId, selectedDevice, granularity, cumulative]); // Retiré historicalData des dépendances
+  }, [homeId, roomId, deviceId, selectedDevice, granularity, cumulative]);
 
-  // Effet pour charger les données initiales
   React.useEffect(() => {
     loadData();
   }, [loadData]);
-
-  // Effet pour gérer le rafraîchissement automatique
   React.useEffect(() => {
-    // Nettoyer tout timer existant
     if (refreshTimerRef.current) {
       clearInterval(refreshTimerRef.current);
       refreshTimerRef.current = null;
     }
 
-    // Si le rafraîchissement auto est activé, créer un nouveau timer
     if (autoRefresh) {
       refreshTimerRef.current = setInterval(() => {
         loadData();
       }, refreshIntervals[granularity]);
     }
 
-    // Nettoyage au démontage ou à la modification de la granularité
     return () => {
       if (refreshTimerRef.current) {
         clearInterval(refreshTimerRef.current);
@@ -274,7 +240,6 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
     };
   }, [autoRefresh, granularity, loadData]);
 
-  // Effet pour arrêter le rafraîchissement si le composant est démonté
   React.useEffect(() => {
     return () => {
       if (refreshTimerRef.current) {
@@ -283,21 +248,19 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
     };
   }, []);
 
-  // Generate colors for each device line
   const getDeviceColor = (index: number) => {
     const colors = [
-      '#3b82f6', // Bleu
-      '#10b981', // Vert
-      '#ef4444', // Rouge
-      '#f59e0b', // Orange
-      '#8b5cf6', // Violet
-      '#ec4899', // Rose
-      '#06b6d4'  // Cyan
+      '#3b82f6', 
+      '#10b981', 
+      '#ef4444', 
+      '#f59e0b', 
+      '#8b5cf6', 
+      '#ec4899',
+      '#06b6d4' 
     ];
     return colors[index % colors.length];
   };
 
-  // Fonction pour formater l'étiquette du mode de rafraîchissement
   const getRefreshLabel = () => {
     const interval = refreshIntervals[granularity];
     if (interval === 60000) return "1 minute";

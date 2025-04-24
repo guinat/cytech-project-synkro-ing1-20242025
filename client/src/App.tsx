@@ -1,13 +1,11 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 
-// Utilities
 import Header from '@/components/common/Header';
 import NotFoundPage from '@/pages/NotFoundPage';
 import LandingPage from '@/pages/LandingPage';
 import AcceptInvitationPage from '@/pages/dashboard/AcceptInvitationPage';
 
 
-// Auth 
 import { AuthProvider } from '@/contexts/AuthContext.tsx';
 import { HomesProvider, useHomes } from '@/contexts/HomesContext';
 import { RoomsProvider } from '@/contexts/RoomsContext';
@@ -15,7 +13,6 @@ import { RoomsProvider } from '@/contexts/RoomsContext';
 const DashboardWithRoomsProvider = ({ children }: { children: React.ReactNode }) => {
   const { homes, loading } = useHomes();
   
-  // Si loading, affiche un message de chargement
   if (loading) {
     return (
       <div className="min-h-screen p-6 flex flex-col items-center justify-center">
@@ -23,14 +20,11 @@ const DashboardWithRoomsProvider = ({ children }: { children: React.ReactNode })
       </div>
     );
   }
-  
-  // Si aucune maison disponible, on laisse passer quand même
-  // DashboardPage gère ce cas en affichant le formulaire de création
+
   if (homes.length === 0) {
     return <>{children}</>;
   }
   
-  // Avec au moins une maison, on utilise RoomsProvider
   const selectedHome = homes[0];
   
   return (
@@ -48,7 +42,6 @@ import PasswordResetRequestPage from '@/pages/2_auth/PasswordResetRequestPage';
 import PasswordResetPage from '@/pages/2_auth/PasswordResetPage';
 import AuthRoute from '@/components/2_auth/AuthRedirect';
 
-// Dashboard
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import DevicesPage from '@/pages/dashboard/DevicesPage';
 import ProfilePage from '@/pages/dashboard/profile/ProfilePage';
@@ -72,7 +65,6 @@ function App() {
         <HomesProvider>
           <ConditionalHeader />
           <Routes>
-            {/* Toutes les routes, y compris l'acceptation d'invitation, sont dans les providers. */}
             <Route path="/invitations/accept/:token" element={
               <AuthRoute requireAuth>
                 <AcceptInvitationPage />

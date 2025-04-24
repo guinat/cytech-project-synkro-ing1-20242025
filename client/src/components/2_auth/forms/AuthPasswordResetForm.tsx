@@ -14,7 +14,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Button } from "@/components/ui/button";
 import { Input } from '@/components/ui/input';
 
-// Password reset form schema with client-side validation
 const authPasswordResetFormSchema = z.object({
   password: z.string().min(8, { 
     message: "Password must be at least 8 characters" 
@@ -27,7 +26,6 @@ const authPasswordResetFormSchema = z.object({
   path: ["confirmPassword"],
 });
 
-// Type for password reset form values
 type AuthPasswordResetFormValues = z.infer<typeof authPasswordResetFormSchema>;
 
 interface AuthPasswordResetFormProps {
@@ -40,7 +38,6 @@ const AuthPasswordResetForm: React.FC<AuthPasswordResetFormProps> = ({ className
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  // Initialize form with react-hook-form
   const form = useForm<AuthPasswordResetFormValues>({
     resolver: zodResolver(authPasswordResetFormSchema),
     defaultValues: {
@@ -49,7 +46,6 @@ const AuthPasswordResetForm: React.FC<AuthPasswordResetFormProps> = ({ className
     },
   });
 
-  // Handle form submission
   const onSubmit = async (data: AuthPasswordResetFormValues) => {
     if (!token) {
       toast.error("Token not found");
@@ -106,12 +102,10 @@ const AuthPasswordResetForm: React.FC<AuthPasswordResetFormProps> = ({ className
     </Form>
   );
 
-  // If className is provided, assume custom container and return form only
   if (className) {
     return formContent;
   }
 
-  // Default view with Card wrapper
   return (
     <Card>
       <CardContent>

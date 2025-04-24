@@ -21,12 +21,10 @@ export const capabilityLabels: Record<string, string> = {
 const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, homeId, roomId, onStateUpdate }) => {
   const { id, state = {}, capabilities = [] } = device;
 
-  // Local state for sliders
   const [localBrightness, setLocalBrightness] = React.useState<number>(state.brightness ?? 0);
   const [localTemperature, setLocalTemperature] = React.useState<number>(state.temperature ?? 20);
   const [localColor, setLocalColor] = React.useState<string>(state.color || '#ffffff');
 
-  // Sync local state with device state if device changes
   React.useEffect(() => {
     setLocalBrightness(state.brightness ?? 0);
   }, [state.brightness]);

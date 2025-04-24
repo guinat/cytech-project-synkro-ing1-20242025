@@ -20,15 +20,12 @@ export const HomeInvitationDeclineForm: React.FC<HomeInvitationDeclineFormProps>
   className,
   label 
 }) => {
-  // Initialize form with react-hook-form
   const form = useForm();
 
-  // Handle form submission
   const handleDecline = async () => {
     await onSubmit();
   };
 
-  // Allow for flexible rendering with or without card wrapper
   const formContent = (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleDecline)} className={`space-y-4 ${className || ''}`}>
@@ -46,12 +43,10 @@ export const HomeInvitationDeclineForm: React.FC<HomeInvitationDeclineFormProps>
     </Form>
   );
 
-  // If className is provided, assume custom container and return form only
   if (className) {
     return formContent;
   }
 
-  // Default view with Card wrapper
   return (
     <Card>
       <CardContent>
