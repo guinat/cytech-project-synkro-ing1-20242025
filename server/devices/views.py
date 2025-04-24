@@ -107,6 +107,8 @@ class EnergyConsumptionView(APIView): #TODO?: Check logics & data
         date_end = request.GET.get('date_end')
         granularity = request.GET.get('granularity', 'day')
         cumulative = request.GET.get('cumulative', 'false').lower() == 'true'
+    
+        
 
         tz = pytz.UTC
 
