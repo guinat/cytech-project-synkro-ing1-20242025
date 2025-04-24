@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import SynkroLogo from '@/assets/synkro.svg';
 import { Menu, LogOut, User as UserIcon, Settings, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -22,7 +21,7 @@ import {
 type NavLink = {
   path: string;
   label: string;
-  requiredRole?: 'user' | 'admin';
+  requiredRole?: 'USER' | 'ADMIN';
 };
 
 const Header: React.FC = () => {
@@ -51,24 +50,20 @@ const Header: React.FC = () => {
 
   const navLinks: NavLink[] = [
     {
-      path: '/',
-      label: 'Home',
-    },
-    {
       path: '/dashboard',
       label: 'Dashboard',
-      requiredRole: 'user'
+      requiredRole: 'USER'
     },
     {
       path: '/admin',
       label: 'Administration',
-      requiredRole: 'admin'
+      requiredRole: 'ADMIN'
     },
   ];
 
   const filteredNavLinks = navLinks.filter(link => {
     if (!link.requiredRole) return true;
-    if (link.requiredRole === 'user' && isAuthenticated) return true;
+    if (link.requiredRole === 'USER' && isAuthenticated()) return true;
     return user?.role === link.requiredRole;
   });
 
@@ -78,11 +73,11 @@ const Header: React.FC = () => {
   };
 
   const handleLogin = () => {
-    navigate('/login');
+    navigate('/auth/sign_in');
   };
 
   const handleRegister = () => {
-    navigate('/register');
+    navigate('/auth/sign_up');
   };
 
   const UserProfileDropdown = () => {
@@ -93,13 +88,13 @@ const Header: React.FC = () => {
         <DropdownMenuTrigger asChild>
           <button className="flex items-center gap-2 outline-none">
             <Avatar className="h-8 w-8 ring-2 ring-primary-foreground">
-              <AvatarImage src={user?.avatar_url || undefined} alt={user?.username} />
+              <AvatarImage src={undefined} alt={user?.username} />
               <AvatarFallback className="bg-primary text-primary-foreground">
-                {user?.first_name?.[0]}{user?.last_name?.[0] || user?.username?.[0] || 'U'}
+                {user?.username?.[0] || 'U'}
               </AvatarFallback>
             </Avatar>
             <span className="hidden md:block text-sm font-medium overflow-hidden text-ellipsis max-w-[100px]">
-              {user.first_name || user.username}
+              {user?.username}
             </span>
             <ChevronDown className="h-4 w-4 hidden md:block text-muted-foreground" />
           </button>
@@ -107,8 +102,8 @@ const Header: React.FC = () => {
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuLabel>
             <div className="flex flex-col">
-              <span>{user.first_name} {user.last_name}</span>
-              <span className="text-xs text-muted-foreground truncate">{user.email}</span>
+              <span>{user?.username}</span>
+              <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -144,8 +139,8 @@ const Header: React.FC = () => {
   };
 
   const AuthActions = () => {
-    if (isAuthenticated) {
-      return null; // Authenticated users use the dropdown instead
+    if (isAuthenticated()) {
+      return null; 
     }
     
     return (
@@ -171,19 +166,16 @@ const Header: React.FC = () => {
     <>
       <header className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md flex items-center h-16 px-4 md:px-8 z-40 border-b border-gray-200 shadow-sm">
         <div className="container mx-auto flex items-center justify-between">
-          {/* Logo - Left section */}
           <div className="flex items-center group">
             <Link to="/">
               <div className="flex items-center gap-2">
-                <img src={SynkroLogo} alt="Synkro Logo" className="h-8 w-8 mr-2 transition-transform duration-300 group-hover:rotate-12"/>
-                <span className="text-logo">
+                <span className="text-xl font-bold">
                   Synkro
                 </span>
               </div>
             </Link>
           </div>
           
-          {/* Navigation - Center section */}
           <nav className="hidden md:flex items-center">
             {filteredNavLinks.map((link) => (
               <Link 
@@ -200,18 +192,14 @@ const Header: React.FC = () => {
             ))}
           </nav>
           
-          {/* Right side - Actions and User Profile */}
           <div className="flex items-center gap-4">
-            {/* Authentication actions - visible on desktop */}
             <div className="hidden md:block">
               <AuthActions />
             </div>
-            {/* User profile dropdown - only for authenticated users */}
             <div className="hidden md:block">
               <UserProfileDropdown />
             </div>
             
-            {/* Mobile menu button */}
             <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
               <SheetTrigger asChild>
                 <Button 
@@ -226,19 +214,18 @@ const Header: React.FC = () => {
               <SheetContent side="right" className="w-[90%] max-w-[350px] p-0">
                 <div className="flex flex-col h-full">
                   <div className="p-4 border-b">
-                    {/* Mobile user profile info */}
-                    {isAuthenticated && user ? (
+                    {isAuthenticated() && user ? (
                       <div className="flex flex-row gap-2">
                       <div className="flex items-center gap-3 p-2">
                         <Avatar className="h-10 w-10">
-                          <AvatarImage src={user?.avatar_url || undefined} alt={user?.username} />
+                          <AvatarImage src={undefined} alt={user?.username} />
                           <AvatarFallback className="bg-primary text-primary-foreground">
-                            {user?.first_name?.[0]}{user?.last_name?.[0] || user?.username?.[0] || 'U'}
+                            {user?.username?.[0] || 'U'}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium">{user.first_name} {user.last_name}</p>
-                          <p className="text-xs text-muted-foreground truncate max-w-[200px]">{user.email}</p>
+                          <p className="font-medium">{user?.username}</p>
+                          <p className="text-xs text-muted-foreground truncate max-w-[200px]">{user?.email}</p>
                         </div>
                       </div>
                       <div className="flex items-center justify-center ml-4">
@@ -253,13 +240,11 @@ const Header: React.FC = () => {
                       </div>
                     ) : (
                       <div className="flex items-center justify-center gap-3 p-2">
-                        <img src={SynkroLogo} alt="Synkro Logo" className="h-8 w-8" />
-                        <span className="font-bold text-xl">Synkro</span>
+                        <span className="text-xl font-bold">Synkro</span>
                       </div>
                     )}
                   </div>
 
-                  {/* Mobile navigation links */}
                   <div className="flex-1 overflow-auto p-4">
                     <nav className="flex flex-col space-y-1">
                       {filteredNavLinks.map((link) => (
@@ -278,8 +263,7 @@ const Header: React.FC = () => {
                     </nav>
                   </div>
 
-                  {/* Mobile footer actions */}
-                  {isAuthenticated ? (
+                  {isAuthenticated() ? (
                     <div className="p-4 border-t mt-auto">
                       <p className="text-sm font-medium mb-4 italic">Quick Actions</p>
                       <div className="flex flex-col gap-2">
@@ -332,7 +316,6 @@ const Header: React.FC = () => {
         </div>
       </header>
       
-      {/* Spacer to push content below the fixed header */}
       <div className="h-16"></div>
     </>
   );
