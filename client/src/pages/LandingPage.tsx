@@ -7,6 +7,8 @@ const scrollToSection = (id: string) => {
   }
 };
 
+
+
 const LandingPage = () => {
   return (
     <div className="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen w-full font-sans">
@@ -16,12 +18,13 @@ const LandingPage = () => {
         <p className="text-lg md:text-2xl text-indigo-600 mb-10 animate-fade-in-up delay-150 text-center max-w-xl">
           Gérez, surveillez et optimisez votre maison connectée en toute simplicité.
         </p>
-        <button
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg transition-all duration-300 animate-bounce"
-          onClick={() => {}}
-        >
-          Essayer la démo
-        </button>
+
+            <button
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg transition-all duration-300 animate-bounce"
+              onClick={() => window.location.href = '/discover'}
+            >
+              Découvrez nos fonctionnalités
+            </button>
         <button
           className="mt-8 text-indigo-500 hover:text-indigo-700 text-xl animate-fade-in-up delay-300 flex flex-col items-center"
           onClick={() => scrollToSection("features")}
