@@ -104,6 +104,10 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
             if (!selectedHomeId) return;
             await onCreateInvitation(selectedHomeId, email);
           }}
+
+          //je recupere les devices de la home actuelle depuis filteredDevices depuis le fichier DashboardPage.tsx
+          devices={filteredDevices} //ne contient les objets que de la maison/pièce active (overview pour toute la maison)
+          onOpenDeviceDetail={onOpenDeviceDetail}
         />
         
         <RoomTabs 
