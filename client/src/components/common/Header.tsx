@@ -159,6 +159,7 @@ const Header: React.FC = () => {
           Register
         </Button>
       </div>
+      
     );
   };
 
@@ -291,6 +292,9 @@ const Header: React.FC = () => {
                     </div>
                     ) : (
                       <div className="p-4 border-t mt-auto">
+                       
+
+
                       <div className="flex flex-col gap-2">
                         <Button 
                           variant="outline"

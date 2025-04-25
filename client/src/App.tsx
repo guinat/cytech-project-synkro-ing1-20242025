@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import Header from '@/components/common/Header';
 import NotFoundPage from '@/pages/NotFoundPage';
 import LandingPage from '@/pages/LandingPage';
+import DiscoverPage from '@/pages/DiscoverPage';
 import AcceptInvitationPage from '@/pages/dashboard/AcceptInvitationPage';
 
 
@@ -75,6 +76,7 @@ function App() {
 
             {/* Landing page */}
             <Route path="/" element={<LandingPage />} />
+            <Route path="/discover" element={<DiscoverPage />} />
 
             {/* Auth routes */}
             <Route path="/auth/sign_in" element={<LoginPage />} />
