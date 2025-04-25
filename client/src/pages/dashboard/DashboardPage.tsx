@@ -20,6 +20,8 @@ const DashboardPage: React.FC = (): ReactNode => {
   const [selectedRoomId, setSelectedRoomId] = useState<string>("overview");
   
   const [rooms, setRooms] = useState<Room[]>([]);
+
+  //c'est ici qu'on récupère les devices (localement) de la home actuelle
   const [devices, setDevices] = useState<EnhancedDevice[]>([]);
   const [isRoomsLoading, setIsRoomsLoading] = useState(false);
   const [isDevicesLoading, setIsDevicesLoading] = useState(false);
@@ -56,6 +58,7 @@ const DashboardPage: React.FC = (): ReactNode => {
     }
   };
   
+  //on vient ici load les devices via la méthode listDevices du service device associé
   const loadDevicesWithContext = async () => {
     if (!selectedHomeId) return;
     
