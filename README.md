@@ -90,7 +90,9 @@ Follow the steps below to run Synkro locally for development and testing purpose
 ---
 
 #### Server · Terminal 1
-
+```bash
+cd server   # path: <repo_root>/server
+```
 Choose **one** of the following setups:
 
 <details>
