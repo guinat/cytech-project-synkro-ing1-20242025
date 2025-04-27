@@ -31,6 +31,7 @@ const SidebarNavigationMenu: React.FC<NavigationMenuProps> = ({
   const mainNavigation = [
     { icon: Gauge, label: 'Dashboard', href: '/dashboard' },
     { icon: Lightbulb, label: 'Devices', href: '/dashboard/devices' },
+    { icon: User, label: 'Invités', href: '/dashboard/guests' },
   ];
 
   const secondaryNavigation = [
@@ -60,7 +61,7 @@ const SidebarNavigationMenu: React.FC<NavigationMenuProps> = ({
         <div className="h-px bg-border" />
       </div>
 
-      <NavSection title="Account" showTitle={showFullWidth}>
+      <NavSection title="Compte" showTitle={showFullWidth}>
         {secondaryNavigation.map((item) => (
           <NavItem 
             key={item.href}

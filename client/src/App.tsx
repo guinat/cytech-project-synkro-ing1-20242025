@@ -45,6 +45,7 @@ import AuthRoute from '@/components/2_auth/AuthRedirect';
 
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import DevicesPage from '@/pages/dashboard/DevicesPage';
+import GuestsPage from '@/pages/dashboard/GuestsPage';
 import ProfilePage from '@/pages/dashboard/profile/ProfilePage';
 import SettingsPage from '@/pages/dashboard/profile/SettingsPage';
 import RequireEmailVerificationPage from '@/pages/dashboard/RequireEmailVerificationPage';
@@ -105,6 +106,7 @@ function App() {
           }>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/dashboard/devices" element={<DevicesPage />} />
+<Route path="/dashboard/guests" element={<GuestsPage />} />
             <Route path="/dashboard/profile" element={<ProfilePage />} />
             <Route path="/dashboard/settings" element={<SettingsPage />} />
           </Route>
