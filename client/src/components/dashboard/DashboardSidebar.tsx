@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import InviteGuestModal from './InviteGuestModal';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -11,7 +10,6 @@ import SidebarNavigationMenu from '@/components/dashboard/DashboardSidebarNaviga
 
 const DashboardSidebar: React.FC = () => {
   const { user, logout } = useAuth();
-  const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const navigate = useNavigate();
   const { isSidebarOpen, toggleSidebar, isMobile } = useNavigation();
 
@@ -67,20 +65,6 @@ const DashboardSidebar: React.FC = () => {
           showFullWidth={showFullWidth}
           userRole={user?.role}
         />
-        {/* Bouton + Invité sous le menu */}
-        {showFullWidth && (
-          <div className="flex flex-col items-center mt-6">
-            <Button
-              variant="outline"
-              className="w-11 h-11 rounded-full flex items-center justify-center mb-1"
-              onClick={() => setInviteModalOpen(true)}
-              aria-label="Inviter un invité"
-            >
-              <span className="text-2xl font-bold">+</span>
-            </Button>
-            <span className="text-xs text-muted-foreground">Invité</span>
-          </div>
-        )}
       </div>
 
       <SidebarUserProfile
@@ -88,8 +72,6 @@ const DashboardSidebar: React.FC = () => {
         showFullWidth={showFullWidth}
         onLogout={handleLogout}
       />
-      {/* Modale d'invitation */}
-      <InviteGuestModal open={inviteModalOpen} onOpenChange={setInviteModalOpen} />
     </aside>
   );
 };

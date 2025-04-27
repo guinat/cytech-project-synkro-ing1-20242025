@@ -10,7 +10,6 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 
 User = get_user_model()
-from .models import User
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -41,11 +40,6 @@ class UserViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        # Only admins can update role or guest_permissions
-        if (('role' in request.data and request.data['role'] != instance.role) or
-            ('guest_permissions' in request.data and request.data['guest_permissions'] != getattr(instance, 'guest_permissions', {}))):
-            if not (request.user.is_superuser or request.user.role == 'ADMIN'):
-                return ApiResponse.error(message="Only admins can update user roles or permissions.", status_code=403)
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
@@ -61,8 +55,6 @@ class UserViewSet(viewsets.ModelViewSet):
             message="User deleted successfully",
             status_code=status.HTTP_204_NO_CONTENT
         )
-
-
 
 @api_view(['GET', 'PATCH', 'DELETE'])
 @permission_classes([IsAuthenticated])

@@ -67,12 +67,6 @@ class DeviceViewSet(viewsets.ModelViewSet):
         return context
 
     def create(self, request, *args, **kwargs):
-        user = request.user
-        # Restrict guests from adding devices if not allowed
-        if getattr(user, 'role', None) == 'INVITE':
-            perms = getattr(user, 'guest_permissions', {}) or {}
-            if not perms.get('can_add', False):
-                return ApiResponse.error(message="Permission denied: Guest users cannot add devices.", status_code=403)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         device = serializer.save()
@@ -83,11 +77,6 @@ class DeviceViewSet(viewsets.ModelViewSet):
         )
 
     def update(self, request, *args, **kwargs):
-        user = request.user
-        if getattr(user, 'role', None) == 'INVITE':
-            perms = getattr(user, 'guest_permissions', {}) or {}
-            if not perms.get('can_add', False):
-                return ApiResponse.error(message="Permission denied: Guest users cannot update devices.", status_code=403)
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
@@ -99,11 +88,6 @@ class DeviceViewSet(viewsets.ModelViewSet):
         )
 
     def destroy(self, request, *args, **kwargs):
-        user = request.user
-        if getattr(user, 'role', None) == 'INVITE':
-            perms = getattr(user, 'guest_permissions', {}) or {}
-            if not perms.get('can_add', False):
-                return ApiResponse.error(message="Permission denied: Guest users cannot delete devices.", status_code=403)
         instance = self.get_object()
         self.perform_destroy(instance)
         return ApiResponse.success(
@@ -288,11 +272,6 @@ class DeviceCommandViewSet(viewsets.ModelViewSet):
         return context
 
     def create(self, request, *args, **kwargs):
-        user = request.user
-        if getattr(user, 'role', None) == 'INVITE':
-            perms = getattr(user, 'guest_permissions', {}) or {}
-            if not perms.get('can_control', False):
-                return ApiResponse.error(message="Permission denied: Guest users cannot control devices.", status_code=403)
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
             return ApiResponse.error(
