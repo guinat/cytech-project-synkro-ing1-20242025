@@ -52,6 +52,14 @@ class User(AbstractUser):
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # Rôle de l'utilisateur (VISITOR = invité, USER, ADMIN)
+    # Rôle de l'utilisateur (VISITOR = invité, USER = membre, ADMIN = admin)
+    role = models.CharField(max_length=16, choices=ROLES, default='VISITOR')
+    # Permissions spécifiques pour les invités, ex: {"can_view": true, "can_control": false, "can_add": false}
+    guest_permissions = models.JSONField(default=dict, blank=True)
+
+    def is_guest(self):
+        return self.role == 'VISITOR'
 
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=150, null=True, blank=True)
@@ -59,8 +67,6 @@ class User(AbstractUser):
     profile_photo = models.TextField(null=True, blank=True)
 
     is_email_verified = models.BooleanField(default=False)
-
-    role = models.CharField(max_length=50, choices=ROLES, default='VISITOR')
     points = models.IntegerField(default=0)
     level = models.CharField(max_length=50, choices=LEVELS, default='BEGINNER')
 
