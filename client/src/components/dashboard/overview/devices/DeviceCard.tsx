@@ -18,6 +18,9 @@ interface EnhancedDevice {
   energyConsumption?: string;
   activeTime?: string;
   state?: any;
+  cycle?: string; 
+  delayStart?: number; 
+  spinSpeed?: number; 
 }
 
 interface DeviceCardProps {

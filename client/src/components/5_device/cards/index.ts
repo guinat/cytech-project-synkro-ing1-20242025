@@ -5,6 +5,8 @@ import SmartPlugCard from './SmartPlugCard';
 import DoorSensorCard from './DoorSensorCard';
 import SmokeDetectorCard from './SmokeDetectorCard';
 import BaseDeviceCard from './BaseDeviceCard';
+import DishWasherCard from './DishWasherCard';
+import WhashingMachineCard from './WhashingMachineCard';
 
 export {
   SmartBulbCard,
@@ -13,6 +15,8 @@ export {
   SmartPlugCard,
   DoorSensorCard,
   SmokeDetectorCard,
+  DishWasherCard,
+  WhashingMachineCard,
   BaseDeviceCard
 };
 
@@ -30,6 +34,10 @@ export const getDeviceCardComponent = (deviceName: string) => {
       return DoorSensorCard;
     case 'Smoke Detector':
       return SmokeDetectorCard;
+    case 'Smart Dish Washer':
+      return DishWasherCard;
+    case 'Smart Washing MAchine':
+      return WhashingMachineCard;
     default:
       return BaseDeviceCard;
   }
