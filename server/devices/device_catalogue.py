@@ -18,7 +18,27 @@ DEVICE_TYPES = [
         "description": "Monitor your home",
         "capabilities": ["on_off", "video_stream", "motion_detection"],
     },
-
+    {
+        "type": "dish_washer",
+        "name": "Dish Washer",
+        "description": "A high-efficiency dishwasher with customizable settings.",
+        "capabilities": [
+            "on_off", 
+            "cycle_selection",
+            "temperature",    
+        ]
+    },
+    {
+        "type": "washing_machine",
+        "name": "Washing Machine",
+        "description": "A high-performance washing machine with customizable cycles.",
+        "capabilities": [
+            "on_off", 
+            "cycle_selection",
+            "temperature",
+            "spin_speed_control",
+        ]
+    },
 ]
 
 DEVICE_TYPE_MAP = {d["type"]: d for d in DEVICE_TYPES}
