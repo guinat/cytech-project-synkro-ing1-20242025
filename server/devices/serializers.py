@@ -8,13 +8,10 @@ class DeviceSerializerMixin:
             raise serializers.ValidationError("Device name must be less than 100 characters.")
         return value
 
-    def validate(self, attrs): #TODO?:
+    def validate(self, attrs):
         if getattr(self, 'instance', None) is not None:
             return attrs
         return attrs
-
-
-
 
 class DeviceSerializer(serializers.ModelSerializer):
     capabilities = serializers.SerializerMethodField(read_only=True)
@@ -22,7 +19,7 @@ class DeviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Device
         fields = [
-            'id', 'name', 'type', 'product_code', 'room', 'state', 'capabilities', 'created_at', 'updated_at'
+            'id', 'name', 'type', 'product_code', 'brand', 'room', 'state', 'capabilities', 'created_at', 'updated_at'  # <<< AJOUT brand ici
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'capabilities']
 
@@ -52,9 +49,6 @@ class DeviceSerializer(serializers.ModelSerializer):
         room = self.context['room']
         validated_data['room'] = room
         return super().create(validated_data)
-
-
-
 
 class DeviceCommandSerializer(serializers.ModelSerializer):
     device = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -87,4 +81,3 @@ class DeviceCommandSerializer(serializers.ModelSerializer):
         validated_data['device'] = device
         validated_data['status'] = DeviceCommand.Status.PENDING
         return super().create(validated_data)
-

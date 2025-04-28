@@ -1,11 +1,7 @@
-
 import uuid
 from django.db import models
 from django.conf import settings
 from rooms.models import Room
-
-
-
 
 from .device_catalogue import DEVICE_TYPE_MAP
 
@@ -19,6 +15,7 @@ class Device(models.Model):
     )
     type = models.CharField(max_length=50) 
     product_code = models.CharField(max_length=6)
+    brand = models.CharField(max_length=100, null=True, blank=True)  # <<< AJOUT
     state = models.JSONField(default=dict, blank=True)  
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -39,7 +36,6 @@ class Device(models.Model):
         verbose_name_plural = 'Devices'
         ordering = ['room', 'name']
         unique_together = ('room', 'name')
-
 
 class DeviceCommand(models.Model):
     class Status(models.TextChoices):
@@ -79,4 +75,3 @@ class DeviceCommand(models.Model):
         verbose_name = 'Device Command'
         verbose_name_plural = 'Device Commands'
         ordering = ['-created_at']
-
