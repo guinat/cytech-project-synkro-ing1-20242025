@@ -67,6 +67,9 @@ class User(AbstractUser):
     profile_photo = models.TextField(null=True, blank=True)
 
     is_email_verified = models.BooleanField(default=False)
+
+    role = models.CharField(max_length=50, choices=ROLES, default='VISITOR')
+    #guest_permissions = models.JSONField(null=True, blank=True, help_text="Permissions personnalisées pour les invités (ex: { 'can_view': True, 'can_control': False, 'can_add': False })")
     points = models.IntegerField(default=0)
     level = models.CharField(max_length=50, choices=LEVELS, default='BEGINNER')
 

@@ -20,9 +20,6 @@ export const InviteGuestModal: React.FC<InviteGuestModalProps> = ({ open, onOpen
     password_confirm: '',
     display_name: '',
     guest_detail: '',
-    can_view: true,
-    can_control: false,
-    can_add: false,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,9 +33,6 @@ export const InviteGuestModal: React.FC<InviteGuestModalProps> = ({ open, onOpen
         password_confirm: '',
         display_name: guestToEdit.display_name || '',
         guest_detail: guestToEdit.guest_detail || '',
-        can_view: guestToEdit.guest_permissions?.can_view ?? true,
-        can_control: guestToEdit.guest_permissions?.can_control ?? false,
-        can_add: guestToEdit.guest_permissions?.can_add ?? false,
       });
     } else {
       setForm({
@@ -47,9 +41,6 @@ export const InviteGuestModal: React.FC<InviteGuestModalProps> = ({ open, onOpen
         password_confirm: '',
         display_name: '',
         guest_detail: '',
-        can_view: true,
-        can_control: false,
-        can_add: false,
       });
     }
   }, [guestToEdit, open]);
@@ -58,18 +49,20 @@ export const InviteGuestModal: React.FC<InviteGuestModalProps> = ({ open, onOpen
     const { name, value, type, checked } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: value,
     }));
   };
 
-  const handleSwitchChange = (name: string, value: boolean) => {
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
+  // Plus de handleSwitchChange, droits supprimés
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+    if (!guestToEdit && form.password !== form.password_confirm) {
+      setError("Les mots de passe ne correspondent pas.");
+      return;
+    }
+    setLoading(true);
     try {
       if (guestToEdit) {
         await apiFetch(`/users/${guestToEdit.id}/`, {
@@ -77,11 +70,6 @@ export const InviteGuestModal: React.FC<InviteGuestModalProps> = ({ open, onOpen
           body: JSON.stringify({
             display_name: form.display_name,
             guest_detail: form.guest_detail,
-            guest_permissions: {
-              can_view: form.can_view,
-              can_control: form.can_control,
-              can_add: form.can_add,
-            },
           }),
         });
       } else {
@@ -89,15 +77,11 @@ export const InviteGuestModal: React.FC<InviteGuestModalProps> = ({ open, onOpen
           method: 'POST',
           body: JSON.stringify({
             email: form.email,
+            username: form.email, // Ajout du champ username obligatoire
             password: form.password,
             password_confirm: form.password_confirm,
             display_name: form.display_name,
             guest_detail: form.guest_detail,
-            guest_permissions: {
-              can_view: form.can_view,
-              can_control: form.can_control,
-              can_add: form.can_add,
-            },
           }),
         });
       }
@@ -105,7 +89,8 @@ export const InviteGuestModal: React.FC<InviteGuestModalProps> = ({ open, onOpen
       if (onSuccess) onSuccess();
       onOpenChange(false);
     } catch (e: any) {
-      setError(e.message || 'Erreur inconnue');
+      // Affiche le message d'erreur détaillé du backend
+      setError(e.message + (e.raw ? ' : ' + JSON.stringify(e.raw) : '') || 'Erreur inconnue');
     } finally {
       setLoading(false);
     }
@@ -143,19 +128,8 @@ export const InviteGuestModal: React.FC<InviteGuestModalProps> = ({ open, onOpen
               <Label htmlFor="guest_detail">Catégorie / Détail</Label>
               <Input id="guest_detail" name="guest_detail" value={form.guest_detail} onChange={handleChange} placeholder="ex: enfant, voisin, cousin..." />
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Switch checked={form.can_view} onCheckedChange={v => handleSwitchChange('can_view', v)} />
-                <Label>Peut voir</Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={form.can_control} onCheckedChange={v => handleSwitchChange('can_control', v)} />
-                <Label>Peut contrôler</Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={form.can_add} onCheckedChange={v => handleSwitchChange('can_add', v)} />
-                <Label>Peut ajouter</Label>
-              </div>
+            <div className="text-xs text-muted-foreground mb-2">
+              Les invités créés auront le droit <b>VISITOR</b> par défaut.
             </div>
             {error && <div className="text-red-500 text-sm">{error}</div>}
             <DialogFooter>

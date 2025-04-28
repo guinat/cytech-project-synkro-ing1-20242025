@@ -76,6 +76,7 @@ const HomeModal: React.FC<HomeModalProps> = ({
   }, [open, homeDetail?.id, getHomeDetail]);
 
 
+  console.log("[HomeModal] open:", open, "home:", home);
   if (loadingHomeDetail || !homeDetail) {
     return (
       <Dialog open={open} onOpenChange={onClose}>

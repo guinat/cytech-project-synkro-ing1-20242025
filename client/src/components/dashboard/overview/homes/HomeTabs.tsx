@@ -73,6 +73,8 @@ const HomeTabs: React.FC<HomeTabsProps> = ({ homes, activeHome, onHomeChange, on
     device.name.toLowerCase().includes(deviceSearch.toLowerCase())
   );
 
+  console.log("[HomeTabs] isHomeModalOpen:", isHomeModalOpen, "activeHomeObj:", activeHomeObj);
+
   return (
     <div className="flex items-center justify-between mb-6 border-b border-border pb-3">
       <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar">
@@ -174,7 +176,10 @@ const HomeTabs: React.FC<HomeTabsProps> = ({ homes, activeHome, onHomeChange, on
                 variant="outline" 
                 size="icon" 
                 className="h-8 w-8 rounded-full"
-                onClick={() => setIsHomeModalOpen(true)}
+                onClick={() => {
+                  console.log('[HomeTabs] CLICK SETTINGS BTN - ouverture du modal Home Settings');
+                  setIsHomeModalOpen(true);
+                }}
               >
                 <Settings className="h-4 w-4" />
               </Button>
@@ -221,15 +226,19 @@ const HomeTabs: React.FC<HomeTabsProps> = ({ homes, activeHome, onHomeChange, on
       )}
       
       {activeHomeObj && (
-        <HomeModal
-          open={isHomeModalOpen}
-          onClose={() => setIsHomeModalOpen(false)}
-          home={activeHomeObj}
-          onRename={onRename}
-          onColorChange={onColorChange}
-          onDelete={onDelete}
-          onInvite={onInvite}
-        />
+        <>
+          {console.log("open modal", isHomeModalOpen, activeHomeObj)}
+          <HomeModal
+            key={activeHomeObj.id}
+            open={isHomeModalOpen}
+            onClose={() => setIsHomeModalOpen(false)}
+            home={activeHomeObj}
+            onRename={onRename}
+            onColorChange={onColorChange}
+            onDelete={onDelete}
+            onInvite={onInvite}
+          />
+        </>
       )}
     </div>
   );
