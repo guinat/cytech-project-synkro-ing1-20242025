@@ -33,7 +33,8 @@ const DashboardPage: React.FC = (): ReactNode => {
   
   useEffect(() => {
     try {
-      //Si une liste de maisons est disponible mais aucune maison n'est sélectionnée, la première maison est automatiquement sélectionnée.
+      console.log('[DashboardPage] selectedHomeId:', selectedHomeId, 'homes:', homes);
+      // Si une liste de maisons est disponible mais aucune maison n'est sélectionnée, la première maison est automatiquement sélectionnée.
       if (homes.length > 0 && !selectedHomeId) {
         setSelectedHomeId(homes[0].id);
       }

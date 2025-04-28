@@ -62,7 +62,6 @@ class UserSerializer(UserSerializerMixin, serializers.ModelSerializer):
         fields = [
             'id', 'email', 'username', 'profile_photo',
             'is_email_verified', 'role', 'level', 'points', 'date_joined', 'last_login',
-            'guest_permissions',
             'password'
         ]
         read_only_fields = ['id', 'date_joined', 'last_login', 'is_email_verified', 'points']
@@ -89,19 +88,13 @@ class UserCreateSerializer(UserSerializerMixin, serializers.ModelSerializer):
     points = serializers.IntegerField(read_only=True)
     role = serializers.CharField(required=False)
     guest_permissions = serializers.DictField(required=False)
-    
-    class Meta:
-        model = User
+
+    class Meta(UserSerializer.Meta):
         fields = UserSerializer.Meta.fields + ['password_confirm', 'points', 'role', 'guest_permissions']
 
     def validate(self, data):
-        """
-        Validation stricte pour la création d'un invité :
-        - Le rôle est toujours forcé à VISITOR.
-        - guest_permissions doit être un dict avec uniquement les clés can_view, can_control, can_add (booléens).
-        """
-        if data['password'] != data['password_confirm']:
-            raise serializers.ValidationError({'password_confirm': "Passwords don't match."})
+        if data.get('password') != data.get('password_confirm'):
+            raise serializers.ValidationError({'password_confirm': 'Passwords do not match.'})
         # Forcer le rôle à VISITOR pour un invité
         data['role'] = 'VISITOR'
         # Vérifier que les permissions invité sont bien un dict de booléens
@@ -116,14 +109,9 @@ class UserCreateSerializer(UserSerializerMixin, serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop('password_confirm', None)
+        # Forcer le rôle à VISITOR pour un invité
         validated_data['role'] = 'VISITOR'
-        user = super().create(validated_data)
-        # Génère un token JWT pour l'utilisateur invité et l'affiche en console
-        from rest_framework_simplejwt.tokens import RefreshToken
-        refresh = RefreshToken.for_user(user)
-        print(f"[TEST] Invité créé: {user.email}\nToken JWT: {str(refresh.access_token)}\n")
-        return user
-
+        return super().create(validated_data)
 
 
 class UserUpdateSerializer(UserSerializerMixin, serializers.ModelSerializer):
