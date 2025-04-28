@@ -9,6 +9,7 @@ import {
     SelectTrigger,
     SelectValue,
   } from "@/components/ui/select"
+import FeatureServiceCard from '@/components/dashboard/FeatureServiceCard';
 
 const DiscoverPage = () => {
     const [deviceTypes, setDeviceTypes] = React.useState<PublicDeviceType[]>([]);
@@ -16,6 +17,7 @@ const DiscoverPage = () => {
     const [error, setError] = React.useState<string | null>(null);
     const [search, setSearch] = React.useState('');
     const [selectedType, setSelectedType] = React.useState('all');
+    const [selectedBrand, setSelectedBrand] = React.useState('all');
 
     // Catégories fixes pour le select
     const categoryOptions = [
@@ -26,33 +28,139 @@ const DiscoverPage = () => {
         { value: 'gestion', label: 'Gestion de la maison' },
     ];
 
+    const brandOptions = [
+        { value: 'all', label: 'Toutes les marques' },
+        { value: 'Philips', label: 'Philips' },
+        { value: 'Apple', label: 'Apple' },
+        { value: 'Nest', label: 'Nest' },
+        { value: 'Amazon', label: 'Amazon' },
+        { value: 'Google', label: 'Google' },
+        { value: 'Samsung', label: 'Samsung' },
+        { value: 'Bosch', label: 'Bosch' }
+    ];
+
     // 
     const categorizedDevices = React.useMemo((): Record<string, PublicDeviceType[]> => ({
         lumiere: deviceTypes.filter(dt => dt.name.toLowerCase().includes('bulb')), // plus souple pour le nom
                                         //dt.name.toLowerCase().includes('bulb') || dt.name.toLowerCase().includes('lamp')
         securite: deviceTypes.filter(dt => dt.name.toLowerCase().includes('camera')), // plus souple
         divertissement: [],
-        gestion: deviceTypes.filter(dt => dt.name.toLowerCase().includes('thermostat')),
+        gestion: deviceTypes.filter(dt =>
+            dt.name.toLowerCase().includes('thermostat') ||
+            dt.name.toLowerCase().includes('washing machine') ||
+            dt.name.toLowerCase().includes('dish washer')
+        ),
     }), [deviceTypes]);
 
-    // Filtrage selon la catégorie sélectionnée (pas de bug closure)
+    // Filtrage selon la catégorie ET la marque sélectionnées
     const filteredDeviceTypes = React.useMemo(() => {
+        let result: PublicDeviceType[] = [];
         if (selectedType === 'all') {
-            return deviceTypes.filter((deviceType: PublicDeviceType) => {
-                const matchSearch = deviceType.name.toLowerCase().includes(search.toLowerCase()) ||
-                    (deviceType.description && deviceType.description.toLowerCase().includes(search.toLowerCase()));
-                return matchSearch;
-            });
+            result = deviceTypes;
+        } else if (selectedType in categorizedDevices) {
+            result = categorizedDevices[selectedType];
         }
-        if (selectedType in categorizedDevices) {
-            return categorizedDevices[selectedType].filter((deviceType: PublicDeviceType) => {
-                const matchSearch = deviceType.name.toLowerCase().includes(search.toLowerCase()) ||
-                    (deviceType.description && deviceType.description.toLowerCase().includes(search.toLowerCase()));
-                return matchSearch;
-            });
+        if (selectedBrand !== 'all') {
+            result = result.filter(dt => dt.brand === selectedBrand);
         }
-        return [];
-    }, [deviceTypes, selectedType, search]);
+        return result.filter((deviceType: PublicDeviceType) => {
+            const matchSearch = deviceType.name.toLowerCase().includes(search.toLowerCase()) ||
+                (deviceType.description && deviceType.description.toLowerCase().includes(search.toLowerCase()));
+            return matchSearch;
+        });
+    }, [deviceTypes, categorizedDevices, selectedType, selectedBrand, search]);
+
+    // --- Données de fonctionnalités/services proposés ---
+    const featureServices = [
+        {
+            title: 'Contrôler ses objets connectés',
+            description: 'Prenez le contrôle de tous vos appareils connectés depuis une seule interface intuitive.',
+            icon: '🕹️',
+            category: 'Gestion',
+            taskType: 'Contrôler',
+        },
+        {
+            title: 'Automatiser sa maison',
+            description: 'Créez des scénarios pour automatiser l’éclairage, le chauffage, la sécurité et plus encore.',
+            icon: '🤖',
+            category: 'Automatisation',
+            taskType: 'Programmer',
+        },
+        {
+            title: 'Surveiller à distance',
+            description: 'Gardez un œil sur votre maison grâce aux caméras et capteurs, même en déplacement.',
+            icon: '📹',
+            category: 'Sécurité',
+            taskType: 'Surveiller',
+        },
+        {
+            title: 'Recevoir des alertes intelligentes',
+            description: 'Soyez averti instantanément en cas de détection d’intrusion, de fuite ou d’anomalie.',
+            icon: '🔔',
+            category: 'Sécurité',
+            taskType: 'Être alerté',
+        },
+        {
+            title: 'Optimiser la consommation',
+            description: 'Analysez et réduisez votre consommation d’énergie grâce à des rapports détaillés.',
+            icon: '⚡',
+            category: 'Énergie',
+            taskType: 'Analyser',
+        },
+        {
+            title: 'Commander à la voix',
+            description: 'Pilotez vos équipements par la voix grâce à l’intégration avec les assistants vocaux.',
+            icon: '🎤',
+            category: 'Confort',
+            taskType: 'Contrôler',
+        },
+        {
+            title: 'Gérer les accès',
+            description: 'Ouvrez, fermez et surveillez vos accès à distance pour plus de sécurité.',
+            icon: '🚪',
+            category: 'Sécurité',
+            taskType: 'Gérer',
+        },
+        {
+            title: 'Créer des routines personnalisées',
+            description: 'Définissez vos propres routines quotidiennes pour une maison qui s’adapte à vos besoins.',
+            icon: '🗓️',
+            category: 'Automatisation',
+            taskType: 'Programmer',
+        },
+    ];
+
+    const featureCategories = [
+        { value: 'all', label: 'Toutes les catégories' },
+        { value: 'Gestion', label: 'Gestion' },
+        { value: 'Automatisation', label: 'Automatisation' },
+        { value: 'Sécurité', label: 'Sécurité' },
+        { value: 'Énergie', label: 'Énergie' },
+        { value: 'Confort', label: 'Confort' },
+    ];
+    const featureTaskTypes = [
+        { value: 'all', label: 'Tous les types de tâche' },
+        { value: 'Contrôler', label: 'Contrôler' },
+        { value: 'Programmer', label: 'Programmer' },
+        { value: 'Surveiller', label: 'Surveiller' },
+        { value: 'Être alerté', label: 'Être alerté' },
+        { value: 'Analyser', label: 'Analyser' },
+        { value: 'Gérer', label: 'Gérer' },
+    ];
+    const [selectedFeatureCategory, setSelectedFeatureCategory] = React.useState('all');
+    const [selectedFeatureTaskType, setSelectedFeatureTaskType] = React.useState('all');
+    const [featureServiceSearch, setFeatureServiceSearch] = React.useState('');
+
+    const filteredFeatureServices = React.useMemo(() => {
+        return featureServices.filter(fs => {
+            const matchCategory = selectedFeatureCategory === 'all' || fs.category === selectedFeatureCategory;
+            const matchTask = selectedFeatureTaskType === 'all' || fs.taskType === selectedFeatureTaskType;
+            const matchSearch =
+                fs.title.toLowerCase().includes(featureServiceSearch.toLowerCase()) ||
+                fs.description.toLowerCase().includes(featureServiceSearch.toLowerCase());
+            return matchCategory && matchTask && matchSearch;
+        });
+    }, [selectedFeatureCategory, selectedFeatureTaskType, featureServiceSearch]);
 
     React.useEffect(() => {
         getPublicDeviceTypes()
@@ -107,6 +215,17 @@ const DiscoverPage = () => {
                                         ))}
                                     </SelectContent>
                                 </Select>
+                                {/* Select pour la marque */}
+                                <Select value={selectedBrand} onValueChange={setSelectedBrand}>
+                                    <SelectTrigger className="w-full max-w-xs border rounded-md px-4 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        <SelectValue placeholder="Marque" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {brandOptions.map(opt => (
+                                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                                 {filteredDeviceTypes.map((deviceType) => {
@@ -117,6 +236,52 @@ const DiscoverPage = () => {
                                         </div>
                                     );
                                 })}
+                            </div>
+                        </div>
+                    </TabsContent>
+
+                    <TabsContent value="fonctionnality">
+                        <div className="w-full max-w-7xl mx-auto py-10 px-4">
+                            <div className="flex flex-col md:flex-row justify-center gap-4 mb-8 w-full max-w-3xl mx-auto">
+                                <input
+                                    type="text"
+                                    placeholder="Rechercher une fonctionnalité ou un service..."
+                                    value={featureServiceSearch}
+                                    onChange={e => setFeatureServiceSearch(e.target.value)}
+                                    className="border rounded-md px-4 py-2 w-full max-w-md text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                />
+                                <Select value={selectedFeatureCategory} onValueChange={setSelectedFeatureCategory}>
+                                    <SelectTrigger className="w-full max-w-xs border rounded-md px-4 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        <SelectValue placeholder="Catégorie" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {featureCategories.map(opt => (
+                                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <Select value={selectedFeatureTaskType} onValueChange={setSelectedFeatureTaskType}>
+                                    <SelectTrigger className="w-full max-w-xs border rounded-md px-4 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        <SelectValue placeholder="Type de tâche" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {featureTaskTypes.map(opt => (
+                                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {filteredFeatureServices.map((fs, idx) => (
+                                    <FeatureServiceCard
+                                        key={fs.title + idx}
+                                        title={fs.title}
+                                        description={fs.description}
+                                        icon={fs.icon}
+                                        category={fs.category}
+                                        taskType={fs.taskType}
+                                    />
+                                ))}
                             </div>
                         </div>
                     </TabsContent>

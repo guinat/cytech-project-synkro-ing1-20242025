@@ -46,6 +46,8 @@ export type PublicDeviceType = {
   devices_count: number;
   created_at: string;
   updated_at: string;
+  brand?: string;
+  type?: string; // Ajout du champ type pour filtrer dans DiscoverPage
 };
 
 export type Device = {
@@ -78,7 +80,7 @@ export async function getEnergyConsumption(params: EnergyConsumptionParams): Pro
     const url = `/devices/energy/consumption/?${searchParams.toString()}`;
   
     const response = await apiFetch(url) as EnergyConsumptionResponse;
-    toast.success(extractSuccessMessage(response));
+    //toast.success(extractSuccessMessage(response));
     return response;
   } catch (error: any) {
     toast.error(extractErrorMessage(error.raw, false, true));
@@ -89,7 +91,7 @@ export async function getEnergyConsumption(params: EnergyConsumptionParams): Pro
 export async function getPublicDeviceTypes(): Promise<PublicDeviceType[]> {
   try {
     const data = await apiFetch<any>('/devices/device-types/', { method: 'GET' });
-    toast.success(extractSuccessMessage(data));
+    //toast.success(extractSuccessMessage(data));
     if (Array.isArray(data)) {
       return data;
     } else if (data && data.data && Array.isArray(data.data)) {
