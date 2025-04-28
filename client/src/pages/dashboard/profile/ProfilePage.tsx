@@ -9,6 +9,15 @@ import ProfileActionsDropdown from './ProfileActionsDropdown';
 import { StatusBadge } from '@/components/ui/status-badge';
 import UserEditForm from '@/components/1_user/forms/UserEditForm';
 
+// Fonction utilitaire pour déterminer le niveau selon les points
+function getUserLevel(points?: number) {
+  //note de matias : il faut mettre le systeme de points à jour, là je l'ai fais pour evoluer vite devant la prof le jour J
+  if (typeof points !== 'number') return '-';
+  if (points <= 10) return 'beginner';
+  if (points <= 20) return 'intermediate';
+  if (points <= 30) return 'expert';
+  return 'expert'; 
+}
 
 const ProfilePage: React.FC = () => {
   const { profile: user, loading } = useUser();
@@ -117,7 +126,7 @@ const ProfilePage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground">Level</h3>
-                    <p className="mt-1 capitalize">{user?.level}</p>
+                    <p className="mt-1 capitalize">{getUserLevel(user?.points)}</p>
                   </div>
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground">Points</h3>

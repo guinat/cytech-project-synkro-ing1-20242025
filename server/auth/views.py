@@ -14,6 +14,7 @@ from .serializers import (
     PasswordChangeSerializer
 )
 from utils.responses import ApiResponse
+from users.models_login_history import LoginHistory
 
 User = get_user_model()
 
@@ -69,6 +70,24 @@ class LoginView(views.APIView):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data['user']
+
+            # Log login event for any login (API or admin)
+            ip = None
+            if request:
+                x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+                if x_forwarded_for:
+                    ip = x_forwarded_for.split(',')[0]
+                else:
+                    ip = request.META.get('REMOTE_ADDR')
+                user_agent = request.META.get('HTTP_USER_AGENT', '')
+            else:
+                user_agent = ''
+            LoginHistory.objects.create(
+                user=user,
+                login_datetime=timezone.now(),
+                ip_address=ip,
+                user_agent=user_agent
+            )
 
             user.last_login = timezone.now()
             user.points += 10

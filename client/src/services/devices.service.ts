@@ -58,6 +58,7 @@ export type Device = {
   brand: string;
   created_at?: string;
   updated_at?: string;
+  capabilities?: string[];
 };
 
 export async function getEnergyConsumption(params: EnergyConsumptionParams): Promise<EnergyConsumptionResponse> {

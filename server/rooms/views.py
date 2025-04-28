@@ -7,6 +7,7 @@ from utils.responses import ApiResponse
 from utils.permissions import IsHomeOwnerOrMember
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
+from users.models_action_history import ActionHistory
 
 
 class RoomViewSet(viewsets.ModelViewSet):
@@ -46,6 +47,19 @@ class RoomViewSet(viewsets.ModelViewSet):
                     status_code=status.HTTP_400_BAD_REQUEST
                 )
             room = serializer.save()
+            # Historique action utilisateur
+            user = request.user if request.user.is_authenticated else None
+            ip = request.META.get('HTTP_X_FORWARDED_FOR', '').split(',')[0] or request.META.get('REMOTE_ADDR')
+            user_agent = request.META.get('HTTP_USER_AGENT', '')
+            if user:
+                ActionHistory.objects.create(
+                    user=user,
+                    action_type="CREATE_ROOM",
+                    target_id=str(room.id),
+                    target_repr=str(room),
+                    ip_address=ip,
+                    user_agent=user_agent
+                )
             return ApiResponse.success(
                 RoomSerializer(room).data,
                 message="Room created successfully",
