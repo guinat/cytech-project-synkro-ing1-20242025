@@ -26,12 +26,15 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
   const [localMotionDetection, setLocalMotionDetection] = React.useState<string>(state.motion_detection ?? "Regular");
   const [localCycle, setLocalCycle] = React.useState<string>(cycle ?? 'Normal'); 
   const [localDelayStart, setLocalDelayStart] = React.useState<number>(delayStart ?? 0); 
-  const [localSpinSpeed, setLocalSpinSpeed] = React.useState<number>(spinSpeed ?? 1000); 
+  const [localSpinSpeed, setLocalSpinSpeed] = React.useState<number>(state.spin_speed_control ?? 1000); 
   const [localOnOffTemps, setLocalOnOffTemps] = React.useState<number>(onOffTemps ?? 0);  // Temps de délai
 
   React.useEffect(() => {
     setLocalBrightness(state.brightness ?? 0);
   }, [state.brightness]);
+  React.useEffect(() => {
+    setLocalSpinSpeed(state.spin_speed_control ?? 1000);
+  }, [state.spin_speed_control]);
   React.useEffect(() => {
     setLocalTemperature(state.temperature ?? 20);
   }, [state.temperature]);
@@ -121,6 +124,45 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
             onValueCommit={([v]) => handleSendCommand('spin_speed_control', v)}
           />
           <div className="text-center text-sm mt-2">Spin Speed: {localSpinSpeed} RPM</div>
+        </div>
+      )}
+      
+      {capabilities.includes('brightness') && (
+        <div>
+          <span>Brightness</span>
+          <div className="flex justify-between text-xs">
+            <span>0</span>
+            <span>50</span>
+            <span>100</span>
+          </div>
+          <Slider
+            min={0}
+            max={100}
+            value={[localBrightness]}
+            onValueChange={([v]) => setLocalBrightness(v)}
+            onValueCommit={([v]) => handleSendCommand('brightness', v)}
+          />
+          <div className="text-center text-sm mt-2">Brightness: {localBrightness}%</div>
+        </div>
+      )}
+
+      {/* Spin Speed Control */}
+      {capabilities.includes('temperature') && (
+        <div>
+          <span>Temperature</span>
+          <div className="flex justify-between text-xs">
+            <span>0</span>
+            <span>100</span>
+    
+          </div>
+          <Slider
+            min={0}
+            max={100}
+            value={[localTemperature]}
+            onValueChange={([v]) => setLocalTemperature(v)}
+            onValueCommit={([v]) => handleSendCommand('temperature', v)}
+          />
+          <div className="text-center text-sm mt-2">Temperature: {localTemperature} °C</div>
         </div>
       )}
 

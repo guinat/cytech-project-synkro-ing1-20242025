@@ -2,6 +2,8 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 
+# from .models_login_history import LoginHistory
+
 
 class UserManager(BaseUserManager):
     def create_user(self, email, username, password=None, **extra_fields):
@@ -52,7 +54,6 @@ class User(AbstractUser):
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    # Rôle de l'utilisateur (VISITOR = invité, USER, ADMIN)
     # Rôle de l'utilisateur (VISITOR = invité, USER = membre, ADMIN = admin)
     role = models.CharField(max_length=16, choices=ROLES, default='VISITOR')
     # Permissions spécifiques pour les invités, ex: {"can_view": true, "can_control": false, "can_add": false}
