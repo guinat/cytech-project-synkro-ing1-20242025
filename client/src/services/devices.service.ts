@@ -55,6 +55,7 @@ export type Device = {
   home: string;
   room: string;
   isOn?: boolean;
+  brand: string;
   created_at?: string;
   updated_at?: string;
 };
@@ -106,6 +107,18 @@ export async function getPublicDeviceTypes(): Promise<PublicDeviceType[]> {
   }
 }
 
+export async function getHomes(): Promise<any[]> {
+  try {
+    const data = await apiFetch('/homes/', { method: 'GET' });  // Assurez-vous que l'URL est correcte
+    if (Array.isArray(data)) {
+      return data;
+    }
+    return [];
+  } catch (error: any) {
+    throw new Error('Erreur de récupération des maisons');
+  }
+}
+
 export async function listDevices(homeId: string, roomId?: string): Promise<Device[]> {
   try {
     let url: string;
@@ -128,14 +141,15 @@ export async function listDevices(homeId: string, roomId?: string): Promise<Devi
 
 export async function getDevice(homeId: string, roomId: string, deviceId: string): Promise<Device> {
   try {
-    const data = await apiFetch<{ data: Device }>(`/homes/${homeId}/rooms/${roomId}/devices/${deviceId}/`, { method: 'GET' });
-    toast.success(extractSuccessMessage(data));
-    return data.data ?? data;
+    const data = await apiFetch<Device>(`/homes/${homeId}/rooms/${roomId}/devices/${deviceId}/`, { method: 'GET' });
+    toast.success('Détails du device récupérés');
+    return data; // <<< PAS data.data
   } catch (error: any) {
     toast.error(extractErrorMessage(error.raw, false, true));
     throw error;
   }
 }
+
 
 export async function createDevice(homeId: string, roomId: string, payload: Partial<Device>): Promise<Device> {
   try {
