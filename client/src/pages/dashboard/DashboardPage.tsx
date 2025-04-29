@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { HomeQuickCreateForm } from '@/components/3_home/forms/HomeQuickCreateForm';
 import DashboardContent from '@/components/dashboard/DashboardContent';
+import DeviceDetailDialog from '@/components/dashboard/overview/dialogs/DeviceDetailDialog';
 import { EnhancedDevice } from '@/types/device';
 
 const DashboardPage: React.FC = (): ReactNode => {
@@ -28,7 +29,14 @@ const DashboardPage: React.FC = (): ReactNode => {
   const [isAddDeviceDialogOpen, setIsAddDeviceDialogOpen] = useState(false);
   const [isDeviceDetailDialogOpen, setIsDeviceDetailDialogOpen] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<EnhancedDevice | null>(null);
-  
+
+  // Ajout : fonction pour refresh la liste après suppression
+  const handleDeviceDeleted = async () => {
+    await loadDevicesWithContext();
+    setIsDeviceDetailDialogOpen(false);
+    setSelectedDevice(null);
+  };
+
   useEffect(() => {
     try {
       if (homes.length > 0 && !selectedHomeId) {
@@ -272,6 +280,13 @@ const DashboardPage: React.FC = (): ReactNode => {
           onDeviceDetailDialogChange={setIsDeviceDetailDialogOpen}
           onRenameDevice={handleRenameDevice}
           onDeleteDevice={handleDeleteDevice}
+        />
+        <DeviceDetailDialog
+          open={isDeviceDetailDialogOpen}
+          onOpenChange={setIsDeviceDetailDialogOpen}
+          device={selectedDevice}
+          onRename={handleRenameDevice}
+          onDelete={handleDeviceDeleted}
         />
       </DevicesProvider>
     </RoomsWithSelectedHome>

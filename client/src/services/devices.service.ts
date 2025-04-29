@@ -59,6 +59,14 @@ export type Device = {
   updated_at?: string;
 };
 
+export type DeviceCommand = {
+  id: string;
+  capability: string;
+  parameters: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export async function getEnergyConsumption(params: EnergyConsumptionParams): Promise<EnergyConsumptionResponse> {
   try {
     const searchParams = new URLSearchParams();
@@ -190,6 +198,19 @@ export async function sendDeviceCommand(
     });
     toast.success(extractSuccessMessage(data));
     return data;
+  } catch (error: any) {
+    toast.error(extractErrorMessage(error.raw, false, true));
+    throw error;
+  }
+}
+
+export async function getDeviceCommand(homeId: string, roomId: string, deviceId: string): Promise<DeviceCommand[]> {
+  try {
+    const data = await apiFetch<any>(`/homes/${homeId}/rooms/${roomId}/devices/${deviceId}/commands/`, { method: 'GET' });
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data.data)) return data.data;
+    if (Array.isArray(data.results)) return data.results;
+    return [];
   } catch (error: any) {
     toast.error(extractErrorMessage(error.raw, false, true));
     throw error;

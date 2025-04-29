@@ -96,9 +96,20 @@ class DeviceViewSet(viewsets.ModelViewSet):
         )
 
 
+# Mapping local type → puissance (en kW)
+DEVICE_TYPE_POWER = {
+    "smart_bulb_x": 0.01,        # 10W
+    "smart_thermostat_x": 0.05,  # 50W
+    "smart_shutter_x": 0,        # ça consomme pas car c'est un volet
+    "smart_television_x": 0.1,   # 100W
+    "smart_oven_x": 0.2,         # 200W
+    "smart_doorlocker_x": 0,
+    "smart_speaker_x": 0.1,      # 100W
+}
+
 class EnergyConsumptionView(APIView): #TODO?: Check logics & data
     def get(self, request):
-        power_kw = 5 # TODO: Get power from device
+        # La puissance sera déterminée pour chaque device dans la boucle plus bas
 
         home_id = request.GET.get('home_id')
         room_id = request.GET.get('room_id')
@@ -135,6 +146,26 @@ class EnergyConsumptionView(APIView): #TODO?: Check logics & data
         total = 0.0
 
         for device in devices:
+            # Détermine la puissance selon le type du device
+            power_kw = DEVICE_TYPE_POWER.get(getattr(device, 'type', None), 0)
+            # Si c'est une lampe, adapte la puissance en fonction de la brightness
+            if device.type == "smart_bulb_x":
+                brightness = device.state.get("brightness", 100)
+                power_kw *= (brightness/100)
+            if device.type == "smart_oven_x":
+                heat = device.state.get("heat", 100)
+                power_kw *= (heat / 100)
+            if device.type == "smart_fridge_x":
+                mode = device.state.get("mode", "normal")
+                # Consommation : normal = 0.15 kW, eco = 0.09 kW
+                if device.state.get("on_off", True) or device.state.get("power", "on") == "on":
+                    if mode == "eco":
+                        power_kw = 0.09
+                    else:
+                        power_kw = 0.15
+                else:
+                    power_kw = 0.0
+
             last_before = device.commands.filter(
                 capability='on_off',
                 status='success',
