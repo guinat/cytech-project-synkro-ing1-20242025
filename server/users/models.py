@@ -35,6 +35,7 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractUser):
+    is_guest = models.BooleanField(default=False, help_text="Désigne si l'utilisateur est un invité.")
     def can_add_home(self):
         from homes.models import Home
         from django.db.models import Q
@@ -67,12 +68,35 @@ class User(AbstractUser):
 
     profile_photo = models.TextField(null=True, blank=True)
 
+    display_name = models.CharField(
+        max_length=150, blank=True, null=True, help_text="Nom à afficher pour l'invité"
+    )
+    guest_detail = models.CharField(
+        max_length=100, blank=True, null=True, help_text="Détail ou catégorie de l'invité (ex: enfant, voisin, cousin)"
+    )
+
     is_email_verified = models.BooleanField(default=False)
 
     role = models.CharField(max_length=50, choices=ROLES, default='VISITOR')
     #guest_permissions = models.JSONField(null=True, blank=True, help_text="Permissions personnalisées pour les invités (ex: { 'can_view': True, 'can_control': False, 'can_add': False })")
     points = models.IntegerField(default=0)
     level = models.CharField(max_length=50, choices=LEVELS, default='BEGINNER')
+
+    invited_by = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='invited_guests'
+    )
+
+    invited_by = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='invited_guests'
+    )
 
     date_joined = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(null=True, blank=True)
