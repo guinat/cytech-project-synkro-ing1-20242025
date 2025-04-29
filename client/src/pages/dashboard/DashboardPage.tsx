@@ -1,48 +1,43 @@
-import React, { useState, useEffect, ReactNode } from 'react';
+import React, { useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { useHomes } from '@/contexts/HomesContext';
 import { RoomsProvider } from '@/contexts/RoomsContext';
 import { DevicesProvider } from '@/contexts/DevicesContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import type { Room } from '@/services/rooms.service';
-import type { Home } from '@/services/homes.service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { HomeQuickCreateForm } from '@/components/3_home/forms/HomeQuickCreateForm';
 import DashboardContent from '@/components/dashboard/DashboardContent';
-import DeviceDetailDialog from '@/components/dashboard/overview/dialogs/DeviceDetailDialog';
 import { EnhancedDevice } from '@/types/device';
 
 const DashboardPage: React.FC = (): ReactNode => {
-  const [error, setError] = useState<Error | null>(null);  
-  const { homes, loading: homesLoading, createHome, getHomeDetail, updateHome, deleteHome, createInvitation, reloadHomes } = useHomes();
+  const [error, setError] = useState<Error | null>(null);
+  const { homes, loading: homesLoading, createHome, updateHome, deleteHome, createInvitation, reloadHomes } = useHomes();
   
   const [selectedHomeId, setSelectedHomeId] = useState<string>("");
   const [selectedRoomId, setSelectedRoomId] = useState<string>("overview");
-  
   const [rooms, setRooms] = useState<Room[]>([]);
-
-  //c'est ici qu'on récupère les devices (localement) de la home actuelle
   const [devices, setDevices] = useState<EnhancedDevice[]>([]);
   const [isRoomsLoading, setIsRoomsLoading] = useState(false);
   const [isDevicesLoading, setIsDevicesLoading] = useState(false);
-  
   const [isAddRoomDialogOpen, setIsAddRoomDialogOpen] = useState(false);
   const [isAddDeviceDialogOpen, setIsAddDeviceDialogOpen] = useState(false);
   const [isDeviceDetailDialogOpen, setIsDeviceDetailDialogOpen] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<EnhancedDevice | null>(null);
 
-  // Ajout : fonction pour refresh la liste après suppression
-  const handleDeviceDeleted = async () => {
-    await loadDevicesWithContext();
-    setIsDeviceDetailDialogOpen(false);
-    setSelectedDevice(null);
-  };
+  const deviceCache = useRef<Map<string, EnhancedDevice[]>>(new Map());
+  const roomCache = useRef<Map<string, Room[]>>(new Map());
+  const roomDetailCache = useRef<Map<string, Room>>(new Map());
+  const networkRequestActive = useRef<{ rooms: boolean, devices: boolean, roomDetail: boolean }>({
+    rooms: false,
+    devices: false,
+    roomDetail: false
+  });
+  const previousRoomId = useRef<string>(selectedRoomId);
 
   useEffect(() => {
     try {
-      console.log('[DashboardPage] selectedHomeId:', selectedHomeId, 'homes:', homes);
-      // Si une liste de maisons est disponible mais aucune maison n'est sélectionnée, la première maison est automatiquement sélectionnée.
       if (homes.length > 0 && !selectedHomeId) {
         setSelectedHomeId(homes[0].id);
       }
@@ -51,73 +46,105 @@ const DashboardPage: React.FC = (): ReactNode => {
     }
   }, [homes, selectedHomeId]);
   
-  const loadRoomsWithContext = async () => {
-    if (!selectedHomeId) return;
-    
+  const loadRoomsWithContext = useCallback(async () => {
+    if (!selectedHomeId || networkRequestActive.current.rooms) return;
+    const cacheKey = `${selectedHomeId}`;
+    if (roomCache.current.has(cacheKey)) {
+      setRooms(roomCache.current.get(cacheKey) || []);
+      return;
+    }
+    networkRequestActive.current.rooms = true;
     setIsRoomsLoading(true);
     try {
       const roomsData = await import('@/services/rooms.service')
         .then(m => m.listRoomsService(selectedHomeId));
+      roomCache.current.set(cacheKey, roomsData);
       setRooms(roomsData);
     } catch (err) {
       console.error("Error loading rooms:", err);
       setRooms([]);
     } finally {
       setIsRoomsLoading(false);
+      networkRequestActive.current.rooms = false;
     }
-  };
+  }, [selectedHomeId]);
   
-  //on vient ici load les devices via la méthode listDevices du service device associé
-  const loadDevicesWithContext = async () => {
-    if (!selectedHomeId) return;
-    
+  const loadDevicesWithContext = useCallback(async () => {
+    if (!selectedHomeId || networkRequestActive.current.devices) return;
+    const cacheKey = `${selectedHomeId}_${selectedRoomId}`;
+    if (deviceCache.current.has(cacheKey)) {
+      setDevices(deviceCache.current.get(cacheKey) || []);
+      return;
+    }
+    networkRequestActive.current.devices = true;
     setIsDevicesLoading(true);
     try {
       const devicesData = await import('@/services/devices.service')
         .then(m => m.listDevices(selectedHomeId, selectedRoomId === 'overview' ? undefined : selectedRoomId));
-      
-      setDevices(devicesData.map(device => ({
+      const enhancedDevices = devicesData.map(device => ({
         ...device,
         home: selectedHomeId,
         room: device.room || '',
         type: device.type || 'unknown'
-      })));
+      }));
+      deviceCache.current.set(cacheKey, enhancedDevices);
+      setDevices(enhancedDevices);
     } catch (err) {
       console.error("Error loading devices:", err);
       setDevices([]);
     } finally {
       setIsDevicesLoading(false);
+      networkRequestActive.current.devices = false;
     }
-  };
-  
-  useEffect(() => {
-    loadRoomsWithContext();
-  }, [selectedHomeId]);
-  
-  useEffect(() => {
-    loadDevicesWithContext();
   }, [selectedHomeId, selectedRoomId]);
   
   useEffect(() => {
-    if (!selectedHomeId || selectedRoomId === 'overview') return;
-    
-    const fetchRoomDetail = async () => {
-      try {
-        const roomDetail = await import('@/services/rooms.service')
-          .then(m => m.getRoomService(selectedHomeId, selectedRoomId));
-        setRooms((prev: Room[]) => prev.map(r => r.id === selectedRoomId ? roomDetail : r));
-      } catch (error) {
-        console.error('[DashboardPage] Error fetching room detail:', error);
-        toast.error('Impossible de charger les infos de la pièce');
+    if (selectedHomeId) {
+      loadRoomsWithContext();
+    }
+  }, [selectedHomeId, loadRoomsWithContext]);
+  
+  useEffect(() => {
+    if (selectedHomeId && previousRoomId.current !== selectedRoomId) {
+      previousRoomId.current = selectedRoomId;
+      loadDevicesWithContext();
+    }
+  }, [selectedHomeId, selectedRoomId, loadDevicesWithContext]);
+  
+  const fetchRoomDetail = useCallback(async () => {
+    if (!selectedHomeId || selectedRoomId === 'overview' || networkRequestActive.current.roomDetail) return;
+    const cacheKey = `${selectedHomeId}_${selectedRoomId}`;
+    if (roomDetailCache.current.has(cacheKey)) {
+      const cachedRoom = roomDetailCache.current.get(cacheKey);
+      if (cachedRoom) {
+        setRooms((prev: Room[]) => prev.map(r => r.id === selectedRoomId ? cachedRoom : r));
       }
-    };
-    
-    fetchRoomDetail();
+      return;
+    }
+    networkRequestActive.current.roomDetail = true;
+    try {
+      const roomDetail = await import('@/services/rooms.service')
+        .then(m => m.getRoomService(selectedHomeId, selectedRoomId));
+      roomDetailCache.current.set(cacheKey, roomDetail);
+      setRooms((prev: Room[]) => prev.map(r => r.id === selectedRoomId ? roomDetail : r));
+    } catch (error) {
+      console.error('[DashboardPage] Error fetching room detail:', error);
+    } finally {
+      networkRequestActive.current.roomDetail = false;
+    }
   }, [selectedHomeId, selectedRoomId]);
+  
+  useEffect(() => {
+    if (selectedRoomId !== 'overview' && selectedHomeId) {
+      fetchRoomDetail();
+    }
+  }, [selectedRoomId, fetchRoomDetail]);
   
   const handleHomeChange = (homeId: string) => {
+    if (homeId === selectedHomeId) return;
     setSelectedHomeId(homeId);
     setSelectedRoomId('overview');
+    previousRoomId.current = 'overview';
   };
   
   const handleCreateHome = async (data: { name: string }): Promise<void> => {
@@ -131,22 +158,26 @@ const DashboardPage: React.FC = (): ReactNode => {
   
   const handleAddRoom = async (name: string) => {
     if (!selectedHomeId) return;
-    
     try {
       await import('@/services/rooms.service')
         .then(m => m.createRoomService(selectedHomeId, { name }));
+      roomCache.current.delete(selectedHomeId);
       loadRoomsWithContext();
     } catch (error) {
-      toast.error('Erreur lors de la création de la pièce');
+      toast.error('Failed to create room');
     }
   };
   
   const handleAddDevice = async (payload: any, roomId: string, homeId: string) => {
     if (!homeId || !roomId) return;
-    
     try {
       await import('@/services/devices.service')
         .then(m => m.createDevice(homeId, roomId, payload));
+      for (const key of Array.from(deviceCache.current.keys())) {
+        if (key.startsWith(homeId)) {
+          deviceCache.current.delete(key);
+        }
+      }
       loadDevicesWithContext();
       toast.success('Device added successfully');
     } catch (error) {
@@ -162,31 +193,35 @@ const DashboardPage: React.FC = (): ReactNode => {
   
   const handleRenameDevice = async (deviceId: string, name: string) => {
     if (!selectedHomeId || !selectedDevice?.room) return;
-    
     try {
       await import('@/services/devices.service')
         .then(m => m.updateDevice(selectedHomeId, selectedDevice.room, deviceId, { name }));
-      setDevices(
-        devices.map((device: EnhancedDevice) => 
-          device.id === deviceId ? { ...device, name } : device
-        )
+      const updatedDevices = devices.map((device: EnhancedDevice) => 
+        device.id === deviceId ? { ...device, name } : device
       );
+      setDevices(updatedDevices);
+      const cacheKey = `${selectedHomeId}_${selectedRoomId}`;
+      deviceCache.current.set(cacheKey, updatedDevices);
       setSelectedDevice((prev: EnhancedDevice | null) => prev?.id === deviceId ? { ...prev, name } : prev);
     } catch (error) {
-      toast.error("Impossible de renommer l'appareil");
+      toast.error("Failed to rename device");
     }
   };
   
   const handleDeleteDevice = async (deviceId: string) => {
     if (!selectedHomeId || !selectedDevice?.room) return;
-    
     try {
       await import('@/services/devices.service')
         .then(m => m.deleteDevice(selectedHomeId, selectedDevice.room, deviceId));
+      for (const key of Array.from(deviceCache.current.keys())) {
+        if (key.startsWith(selectedHomeId)) {
+          deviceCache.current.delete(key);
+        }
+      }
       setDevices(devices.filter((device: EnhancedDevice) => device.id !== deviceId));
       setIsDeviceDetailDialogOpen(false);
     } catch (error) {
-      toast.error("Impossible de supprimer l'appareil");
+      toast.error("Failed to delete device");
     }
   };
   
@@ -197,11 +232,11 @@ const DashboardPage: React.FC = (): ReactNode => {
   if (error) {
     return (
       <div className="min-h-screen p-6 flex flex-col items-center justify-center bg-red-50 dark:bg-red-950">
-        <h2 className="text-2xl font-bold mb-4 text-red-700 dark:text-red-400">Une erreur est survenue</h2>
-        <p className="text-red-500 dark:text-red-400 mb-6">{error?.message || 'Erreur inconnue'}</p>
-        <p className="text-zinc-500 dark:text-zinc-400 mb-6">Essayez de rafraîchir la page ou contactez le support si le problème persiste.</p>
+        <h2 className="text-2xl font-bold mb-4 text-red-700 dark:text-red-400">An error occurred</h2>
+        <p className="text-red-500 dark:text-red-400 mb-6">{error?.message || 'Unknown error'}</p>
+        <p className="text-zinc-500 dark:text-zinc-400 mb-6">Try refreshing the page or contact support if the problem persists.</p>
         <Button onClick={() => window.location.reload()}>
-          Rafraîchir la page
+          Refresh the page
         </Button>
       </div>
     );
@@ -255,47 +290,56 @@ const DashboardPage: React.FC = (): ReactNode => {
     );
   };
   
-  return (
-    <RoomsWithSelectedHome>
-      <DevicesProvider homeId={selectedHomeId} roomId={selectedRoomId === 'overview' ? '' : selectedRoomId}>
-        <DashboardContent 
-          selectedHomeId={selectedHomeId}
-          selectedRoomId={selectedRoomId}
-          homes={homes}
-          rooms={rooms}
-          filteredDevices={filteredDevices}
-          isRoomsLoading={isRoomsLoading}
-          isDevicesLoading={isDevicesLoading}
-          isAddRoomDialogOpen={isAddRoomDialogOpen}
-          isAddDeviceDialogOpen={isAddDeviceDialogOpen}
-          isDeviceDetailDialogOpen={isDeviceDetailDialogOpen}
-          selectedDevice={selectedDevice}
-          onHomeChange={handleHomeChange}
-          onCreateHome={handleCreateHome}
-          onUpdateHome={updateHome}
-          onDeleteHome={deleteHome}
-          onCreateInvitation={createInvitation}
-          onReloadHomes={reloadHomes}
-          onRoomChange={setSelectedRoomId}
-          onAddRoom={handleAddRoom}
-          onAddRoomDialogChange={setIsAddRoomDialogOpen}
-          onAddDevice={handleAddDevice}
-          onAddDeviceDialogChange={setIsAddDeviceDialogOpen}
-          onOpenDeviceDetail={handleOpenDeviceDetail}
-          onDeviceDetailDialogChange={setIsDeviceDetailDialogOpen}
-          onRenameDevice={handleRenameDevice}
-          onDeleteDevice={handleDeleteDevice}
-        />
-        <DeviceDetailDialog
-          open={isDeviceDetailDialogOpen}
-          onOpenChange={setIsDeviceDetailDialogOpen}
-          device={selectedDevice}
-          onRename={handleRenameDevice}
-          onDelete={handleDeviceDeleted}
-        />
+  const DevicesWithSelectedHome = ({ children }: { children: ReactNode }) => {
+    if (!selectedHomeId) return null;
+    return (
+      <DevicesProvider homeId={selectedHomeId} roomId={selectedRoomId !== 'overview' ? selectedRoomId : ''}>
+        {children}
       </DevicesProvider>
-    </RoomsWithSelectedHome>
+    );
+  };
+  
+  const handleRoomChange = (roomId: string) => {
+    if (roomId === selectedRoomId) return;
+    setSelectedRoomId(roomId);
+  };
+  
+  return (
+    <div className="min-h-screen">
+      <RoomsWithSelectedHome>
+        <DevicesWithSelectedHome>
+          <DashboardContent 
+            selectedHomeId={selectedHomeId}
+            selectedRoomId={selectedRoomId}
+            homes={homes}
+            rooms={rooms}
+            filteredDevices={filteredDevices}
+            isRoomsLoading={isRoomsLoading}
+            isDevicesLoading={isDevicesLoading}
+            isAddRoomDialogOpen={isAddRoomDialogOpen}
+            isAddDeviceDialogOpen={isAddDeviceDialogOpen}
+            isDeviceDetailDialogOpen={isDeviceDetailDialogOpen}
+            selectedDevice={selectedDevice}
+            onHomeChange={handleHomeChange}
+            onCreateHome={handleCreateHome}
+            onUpdateHome={updateHome}
+            onDeleteHome={deleteHome}
+            onCreateInvitation={createInvitation}
+            onReloadHomes={reloadHomes}
+            onRoomChange={handleRoomChange}
+            onAddRoom={handleAddRoom}
+            onAddRoomDialogChange={setIsAddRoomDialogOpen}
+            onAddDevice={handleAddDevice}
+            onAddDeviceDialogChange={setIsAddDeviceDialogOpen}
+            onOpenDeviceDetail={handleOpenDeviceDetail}
+            onDeviceDetailDialogChange={setIsDeviceDetailDialogOpen}
+            onRenameDevice={handleRenameDevice}
+            onDeleteDevice={handleDeleteDevice}
+          />
+        </DevicesWithSelectedHome>
+      </RoomsWithSelectedHome>
+    </div>
   );
 };
 
-export default DashboardPage; 
+export default DashboardPage;
