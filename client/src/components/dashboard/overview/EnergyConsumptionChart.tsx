@@ -6,12 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format, subDays, subHours, subMinutes, subMonths } from "date-fns";
 import { fr } from 'date-fns/locale';
-import { RefreshCw, PlayCircle, PauseCircle } from "lucide-react";
+import { RefreshCw, PlayCircle, PauseCircle, Download as DownloadIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { saveAs } from 'file-saver';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { toZonedTime, format as formatTz } from 'date-fns-tz';
+
+
 
 interface EnergyConsumptionChartProps {
   homeId?: string;
@@ -37,7 +43,7 @@ const refreshIntervals = {
   minute: 60000,
   hour: 3600000,
   day: 86400000,
-  month: 2592000000, 
+  month: 2592000000,
 };
 
 const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId, roomId, deviceId }) => {
@@ -57,207 +63,375 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
     historicalDataRef.current = historicalData;
   }, [historicalData]);
 
+  React.useEffect(() => {
+    if (granularity === 'month') {
+      setAutoRefresh(false);
+    }
+  }, [granularity]);
+  
+  const downloadCSV = () => {
+    const headers = ["Période", ...devices.map(d => d.device_name)];
+    const rows = data.map(row => [row.period, ...devices.map(d => row[d.device_name] ?? 0)]);
+    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    saveAs(blob, "energy_consumption.csv");
+  };
+
+  const downloadPDF = () => {
+    const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "A4" });
+    const tableColumn = ["Période", ...devices.map(d => d.device_name)];
+    const tableRows = data.map(row => [row.period, ...devices.map(d => (row[d.device_name] ?? 0).toFixed(3))]);
+
+    doc.text("Historique de consommation d'énergie", 40, 30);
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 50,
+      margin: { left: 20, right: 20 },
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [59, 130, 246] },
+      theme: "striped",
+    });
+
+    doc.save('energy_consumption.pdf');
+  };
   const loadData = React.useCallback(async () => {
     if (loading) return;
-    
     setLoading(true);
     setError(null);
+  
     try {
       const now = new Date();
       let dateStart;
-      
+  
       switch (granularity) {
-        case 'minute':
-          dateStart = subMinutes(now, 10);
-          break;
-        case 'hour':
-          dateStart = subHours(now, 10);
-          break;
-        case 'day':
-          dateStart = subDays(now, 10);
-          break;
-        case 'month':
-          dateStart = subMonths(now, 10);
-          break;
+        case 'minute': dateStart = subMinutes(now, 10); break;
+        case 'hour': dateStart = subHours(now, 10); break;
+        case 'day': dateStart = subDays(now, 10); break;
+        case 'month': dateStart = subMonths(now, 10); break;
       }
-
-      const formattedDateStart = dateStart.toISOString();
-      const formattedDateEnd = now.toISOString();
-
+  
       const params: EnergyConsumptionParams = {
         home_id: homeId,
         room_id: roomId,
         device_id: selectedDevice === "all" ? undefined : selectedDevice || deviceId,
-        date_start: formattedDateStart,
-        date_end: formattedDateEnd,
+        date_start: dateStart.toISOString(),
+        date_end: now.toISOString(),
         granularity,
         cumulative: cumulative.toString(),
       };
-      
+  
       const res: EnergyConsumptionResponse = await getEnergyConsumption(params);
-      
       const currentHistoricalData = { ...historicalDataRef.current };
-      
-      if (res.devices && res.devices.length > 0) {
+  
+      if (res.devices?.length) {
         res.devices.forEach(device => {
           if (!currentHistoricalData[device.device_id]) {
             currentHistoricalData[device.device_id] = {};
           }
-          
-          if (device.consumption) {
-            Object.keys(device.consumption).forEach(period => {
-              if (device.consumption[period] > 0 || !currentHistoricalData[device.device_id][period]) {
-                currentHistoricalData[device.device_id][period] = device.consumption[period];
-              }
-            });
-          }
+          Object.entries(device.consumption ?? {}).forEach(([period, value]) => {
+            if (value > 0 || !currentHistoricalData[device.device_id][period]) {
+              currentHistoricalData[device.device_id][period] = value;
+            }
+          });
         });
       }
-      
+      // Nettoyage des clés incompatibles avec la granularité actuelle
+Object.keys(currentHistoricalData).forEach(deviceId => {
+  const cleanedConsumption: Record<string, number> = {};
+
+  Object.entries(currentHistoricalData[deviceId]).forEach(([period, value]) => {
+    let isValid = true;
+
+    if (granularity === 'day') {
+      isValid = /^\d{4}-\d{2}-\d{2}$/.test(period);
+    } else if (granularity === 'hour') {
+      isValid = /^\d{4}-\d{2}-\d{2} \d{2}$/.test(period);
+    } else if (granularity === 'minute') {
+      isValid = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(period);
+    } else if (granularity === 'month') {
+      isValid = /^\d{4}-\d{2}$/.test(period);
+    }
+
+    if (isValid) {
+      cleanedConsumption[period] = value;
+    }
+  });
+
+  currentHistoricalData[deviceId] = cleanedConsumption;
+});
+
+  
       setHistoricalData(currentHistoricalData);
-      
+  
       const devicesWithHistory = res.devices?.map(device => {
         const deviceCopy = { ...device };
-        
         if (currentHistoricalData[device.device_id]) {
           deviceCopy.consumption = { ...device.consumption };
-          
-          Object.keys(currentHistoricalData[device.device_id]).forEach(period => {
-            if ((!deviceCopy.consumption[period] || deviceCopy.consumption[period] === 0) && 
-                currentHistoricalData[device.device_id][period] > 0) {
-              deviceCopy.consumption[period] = currentHistoricalData[device.device_id][period];
+          Object.entries(currentHistoricalData[device.device_id]).forEach(([period, value]) => {
+            if ((!deviceCopy.consumption[period] || deviceCopy.consumption[period] === 0) && value > 0) {
+              deviceCopy.consumption[period] = value;
             }
           });
         }
-        
         return deviceCopy;
       }) || [];
-      
+  
       setDevices(devicesWithHistory);
-      
-      if (devicesWithHistory.length > 0) {
+  
+      if (devicesWithHistory.length) {
         const allKeys = Array.from(
-          new Set(devicesWithHistory.flatMap(d => Object.keys(d.consumption || {})))
+          new Set(devicesWithHistory.flatMap(d => Object.keys(d.consumption ?? {})))
         ).sort();
-        
-        const limitedKeys = allKeys.slice(-10);
-        
-        const chartData = limitedKeys.map(key => {
-          const entry: any = { period: key };
-          devicesWithHistory.forEach(d => {
-            if (d.device_name) {
-              entry[d.device_name] = d.consumption?.[key] || 0;
-            }
+  
+        // ➔ Regrouper selon granularité
+        let groupedKeys: string[] = [];
+  
+        if (granularity === 'hour') {
+
+          const groupedSet = new Set<string>();
+          allKeys.forEach(key => {
+            const date = new Date(key + 'Z');
+            const zoned = toZonedTime(date, 'Europe/Paris');
+            const hourString = formatTz(zoned, 'yyyy-MM-dd HH');
+            groupedSet.add(hourString);
           });
-          return entry;
-        });
-        
-        if (granularity === 'minute') {
-          chartData.forEach(entry => {
-            const date = entry.period;
-            if (date && date.includes(' ')) {
-              entry.displayPeriod = date.split(' ')[1];
-            } else if (date && date.includes('T')) {
-              const dateObj = new Date(date);
-              entry.displayPeriod = format(dateObj, 'HH:mm');
-            } else {
-              entry.displayPeriod = date;
-            }
+          groupedKeys = Array.from(groupedSet).sort();
+        }else if (granularity === 'day') {
+          const groupedSet = new Set<string>();
+          allKeys.forEach(key => {
+            const date = new Date(key + 'Z');
+            const zoned = toZonedTime(date, 'Europe/Paris');
+            const dayString = formatTz(zoned, 'yyyy-MM-dd');
+            groupedSet.add(dayString);
           });
-        } else if (granularity === 'hour') {
-          chartData.forEach(entry => {
-            const date = entry.period;
-            if (date && date.includes(' ')) {
-              entry.displayPeriod = date.split(' ')[1].substring(0, 2) + 'h';
-            } else if (date && date.includes('T')) {
-              const dateObj = new Date(date);
-              entry.displayPeriod = format(dateObj, 'HH') + 'h';
-            } else {
-              entry.displayPeriod = date;
-            }
+          groupedKeys = Array.from(groupedSet).sort();
+        } if (granularity === 'month') {
+          // On va créer directement un tableau pour les 10 derniers mois
+          const months = [];
+          const currentDate = new Date();
+          
+          // Générer les 10 derniers mois (en commençant par le mois actuel)
+          for (let i = 0; i < 10; i++) {
+            const monthDate = subMonths(currentDate, i);
+            const monthKey = format(monthDate, 'yyyy-MM');
+            months.unshift(monthKey); // Ajouter au début pour conserver l'ordre chronologique
+          }
+          
+          // Préparer les données pour chaque mois et chaque appareil
+          const monthlyData = months.map(monthKey => {
+            const entry: any = { 
+              period: monthKey,
+              displayPeriod: format(new Date(monthKey + '-01'), 'MMM yyyy', { locale: fr })
+            };
+            
+            devicesWithHistory.forEach(device => {
+              let total = 0;
+              
+              // Pour chaque appareil, additionner les consommations de toutes les périodes du mois
+              Object.entries(device.consumption || {}).forEach(([period, value]) => {
+                if (period.startsWith(monthKey)) {
+                  total += value;
+                }
+              });
+              
+              entry[device.device_name] = total;
+            });
+            
+            return entry;
           });
-        } else if (granularity === 'day') {
-          chartData.forEach(entry => {
-            const date = entry.period;
-            if (date && date.includes('T')) {
-              const dateObj = new Date(date);
-              entry.displayPeriod = format(dateObj, 'dd MMM', { locale: fr });
-            } else {
-              entry.displayPeriod = date;
-            }
-          });
-        } else if (granularity === 'month') {
-          chartData.forEach(entry => {
-            const date = entry.period;
-            if (date && date.includes('-') && !date.includes('T')) {
-              const [year, month] = date.split('-');
-              entry.displayPeriod = format(new Date(parseInt(year), parseInt(month) - 1, 1), 'MMM yyyy', { locale: fr });
-            } else if (date && date.includes('T')) {
-              const dateObj = new Date(date);
-              entry.displayPeriod = format(dateObj, 'MMM yyyy', { locale: fr });
-            } else {
-              entry.displayPeriod = date;
-            }
-          });
+          
+          setData(monthlyData);
         } else {
-          chartData.forEach(entry => {
-            entry.displayPeriod = entry.period;
-          });
+          groupedKeys = allKeys; // minute
         }
+      // ➔ Ici la partie corrigée pour avoir vraiment les 10 dernières périodes par rapport à aujourd'hui
+      let limitStartDate: Date | null = null;
+
+if (granularity === 'hour') {
+  // Limite les données aux 10 dernières heures
+  limitStartDate = subHours(now, 9); // 10 dernières heures (on commence à partir de 9 heures en arrière)
+} else if (granularity === 'day') {
+  limitStartDate = subDays(now, 9); // 10 derniers jours
+} else {
+  limitStartDate = null; // minute et month : pas besoin
+}
+
+let limitedKeys: string[] = [];
+
+if (granularity === 'hour') {
+  if (limitStartDate) { // Assurer que limitStartDate est défini
+    limitedKeys = groupedKeys.filter(key => {
+      const dateKey = new Date(key.replace(' ', 'T') + ':00:00Z'); // Assure-toi que l'heure est au format ISO
+      const zoned = toZonedTime(dateKey, 'Europe/Paris');
+      return zoned >= limitStartDate;
+    });
+  }
+} else if (granularity === 'day') {
+  if (limitStartDate) { // Assurer que limitStartDate est défini
+    limitedKeys = groupedKeys.filter(key => {
+      const dateKey = new Date(key + 'T00:00:00Z'); // Crée une date valide pour le jour
+      const zoned = toZonedTime(dateKey, 'Europe/Paris');
+      return zoned >= limitStartDate;
+    });
+  }
+} else {
+  limitedKeys = groupedKeys.slice(-10); // Pour minute et month, on garde les 10 derniers
+}
+
+// D'abord construire chartData
+const chartData = limitedKeys.map(key => {
+  const entry: any = { period: key };
+  devicesWithHistory.forEach(d => {
+    let matchingKey;
+    
+    if (granularity === 'month') {
+      // Pour la granularité mensuelle, nous cherchons directement une correspondance
+      // ou une clé qui commence par le pattern YYYY-MM
+      matchingKey = allKeys.find(k => {
+        // La clé 'month' est au format YYYY-MM et on veut trouver les clés
+        // qui commencent par ce format
+        return k.startsWith(key);
+      });
+    } else {
+      matchingKey = allKeys.find(k => {
+        const date = new Date(k + 'Z');
+        const zoned = toZonedTime(date, 'Europe/Paris');
         
-        setData(chartData);
+        if (granularity === 'hour') {
+          return formatTz(zoned, 'yyyy-MM-dd HH') === key;
+        } else if (granularity === 'day') {
+          return formatTz(zoned, 'yyyy-MM-dd') === key;
+        } else {
+          return k === key;
+        }
+      });
+    }
+
+    if (matchingKey) {
+      entry[d.device_name] = d.consumption?.[matchingKey] ?? 0;
+    } else {
+      entry[d.device_name] = 0;
+    }
+  });
+  return entry;
+});
+
+// Puis après et SEULEMENT après formatter les labels d'affichage
+// Dans la section où tu traites les dates et leur formatage :
+
+chartData.forEach(entry => {
+  try {
+    let date: Date | null = null;
+
+    if (granularity === 'month') {
+      const match = entry.period.match(/^(\d{4})-(\d{2})$/);  // Ex: "2025-04"
+      if (match) {
+        const [_, year, month] = match;
+        date = new Date(`${year}-${month}-01T00:00:00Z`);  // Créer une date valide pour le mois
+      }
+    } else if (granularity === 'day') {
+      date = new Date(entry.period + 'T00:00:00Z');  // Assure-toi que la date est au format ISO
+    } else if (granularity === 'hour') {
+      date = new Date(entry.period + ':00:00Z');  // Assure-toi que l'heure est au format ISO
+    } else if (granularity === 'minute') {
+      date = new Date(entry.period + 'Z');  // Assure-toi que la minute est au format ISO
+    }
+
+    // Vérification de la validité de la date
+    if (!date || isNaN(date.getTime())) {
+      console.warn('Invalid date for period:', entry.period);
+      entry.displayPeriod = entry.period;  // Si la date est invalide, laisse la période brute
+      return;
+    }
+
+    const zonedDate = toZonedTime(date, 'Europe/Paris');
+
+    // Applique le formatage des dates en fonction de la granularité
+    entry.displayPeriod =
+      granularity === 'minute' ? formatTz(zonedDate, 'HH:mm', { locale: fr }) :
+      granularity === 'hour' ? formatTz(zonedDate, 'yyyy-MM-dd HH', { locale: fr }) + 'h' :
+      granularity === 'day' ? formatTz(zonedDate, 'dd MMM', { locale: fr }) :
+      granularity === 'month' ? formatTz(zonedDate, 'MMM yyyy', { locale: fr }) :
+      entry.period;  // Par défaut, utilise la période brute
+
+  } catch (error) {
+    console.error('Erreur parsing date :', entry.period, error);
+    entry.displayPeriod = entry.period;  // Retour à la période brute en cas d'erreur
+  }
+});
+
+// ➔ Puis après et SEULEMENT après formatter les labels d'affichage
+chartData.forEach(entry => {
+  try {
+    let date: Date | null = null;
+
+    if (granularity === 'month') {
+      const match = entry.period.match(/^(\d{4})-(\d{2})$/);
+      if (match) {
+        const [_, year, month] = match;
+        date = new Date(`${year}-${month}-01T00:00:00Z`);
+      }
+    } else if (granularity === 'day') {
+      date = new Date(entry.period + 'T00:00:00Z');
+    } else if (granularity === 'hour') {
+      date = new Date(entry.period + ':00:00Z');
+    } else if (granularity === 'minute') {
+      date = new Date(entry.period + 'Z');
+    }
+
+    if (!date || isNaN(date.getTime())) {
+      throw new Error('Invalid date');
+    }
+
+    const zonedDate = toZonedTime(date, 'Europe/Paris');
+
+    entry.displayPeriod =
+      granularity === 'minute' ? formatTz(zonedDate, 'HH:mm', { locale: fr }) :
+      granularity === 'hour' ? formatTz(zonedDate, 'yyyy-MM-dd HH', { locale: fr }) + 'h' :
+      granularity === 'day' ? formatTz(zonedDate, 'dd MMM', { locale: fr }) :
+      granularity === 'month' ? formatTz(zonedDate, 'MMM yyyy', { locale: fr }) :
+      entry.period;
+
+  } catch (error) {
+    console.error('Erreur parsing date :', entry.period, error);
+    entry.displayPeriod = entry.period;
+  }
+});
+
+
+
+
+
+  
+if (granularity !== 'month') {
+  setData(chartData);
+}
+
       } else {
         setData([]);
       }
     } catch (e: any) {
-      console.error("Erreur lors du chargement des données:", e);
-      setError(e?.message || 'Erreur lors du chargement');
+      console.error("Erreur lors du chargement:", e);
+      setError(e?.message || 'Erreur');
       setData([]);
     } finally {
       setLoading(false);
     }
   }, [homeId, roomId, deviceId, selectedDevice, granularity, cumulative]);
-
+  
+  React.useEffect(() => { loadData(); }, [loadData]);
   React.useEffect(() => {
-    loadData();
-  }, [loadData]);
-  React.useEffect(() => {
-    if (refreshTimerRef.current) {
-      clearInterval(refreshTimerRef.current);
-      refreshTimerRef.current = null;
-    }
-
+    if (refreshTimerRef.current) clearInterval(refreshTimerRef.current);
     if (autoRefresh) {
-      refreshTimerRef.current = setInterval(() => {
-        loadData();
-      }, refreshIntervals[granularity]);
+      refreshTimerRef.current = setInterval(() => { loadData(); }, refreshIntervals[granularity]);
     }
-
-    return () => {
-      if (refreshTimerRef.current) {
-        clearInterval(refreshTimerRef.current);
-      }
-    };
+    return () => { if (refreshTimerRef.current) clearInterval(refreshTimerRef.current); };
   }, [autoRefresh, granularity, loadData]);
 
-  React.useEffect(() => {
-    return () => {
-      if (refreshTimerRef.current) {
-        clearInterval(refreshTimerRef.current);
-      }
-    };
-  }, []);
-
   const getDeviceColor = (index: number) => {
-    const colors = [
-      '#3b82f6', 
-      '#10b981', 
-      '#ef4444', 
-      '#f59e0b', 
-      '#8b5cf6', 
-      '#ec4899',
-      '#06b6d4' 
-    ];
+    const colors = ['#3b82f6', '#10b981', '#ef4444', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
     return colors[index % colors.length];
   };
 
@@ -267,7 +441,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
     if (interval === 3600000) return "1 heure";
     if (interval === 86400000) return "1 jour";
     if (interval === 2592000000) return "30 jours";
-    return "automatique";
+    return "Automatique";
   };
 
   return (
@@ -277,33 +451,28 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
           <div>
             <CardTitle className="text-lg">Consommation d'énergie</CardTitle>
             <CardDescription>
-              Analyse des 10 derniers points de consommation
-              <Badge variant="outline" className="ml-2 text-xs">
-                Rafraîchissement: {autoRefresh ? getRefreshLabel() : "Manuel"}
-              </Badge>
+              Analyse des 10 derniers points
+              <Badge variant="outline" className="ml-2 text-xs">{autoRefresh ? getRefreshLabel() : "Manuel"}</Badge>
             </CardDescription>
           </div>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setAutoRefresh(!autoRefresh)} 
-              className="h-8"
-            >
-              {autoRefresh ? (
-                <PauseCircle className="h-4 w-4 mr-2" />
-              ) : (
-                <PlayCircle className="h-4 w-4 mr-2" />
-              )}
+            <Select onValueChange={(value) => { value === 'csv' ? downloadCSV() : downloadPDF(); }}>
+              <SelectTrigger className="h-10 w-48">
+                <div className="flex items-center gap-2">
+                  <DownloadIcon className="h-5 w-5" />
+                  <SelectValue placeholder="Télécharger" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="csv">CSV</SelectItem>
+                <SelectItem value="pdf">PDF</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" onClick={() => setAutoRefresh(!autoRefresh)} className="h-8">
+              {autoRefresh ? <PauseCircle className="h-4 w-4 mr-2" /> : <PlayCircle className="h-4 w-4 mr-2" />}
               {autoRefresh ? "Pause" : "Auto"}
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={loadData} 
-              disabled={loading}
-              className="h-8"
-            >
+            <Button variant="outline" size="sm" onClick={loadData} disabled={loading} className="h-8">
               <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
               Actualiser
             </Button>
@@ -412,9 +581,9 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
                   }}
                   formatter={(value, name) => {
                     if (typeof value === 'number') {
-                      return [`${value.toFixed(3)} kWh`, name];
+                      return ['${value.toFixed(3)} kWh', name];
                     }
-                    return [`${value} kWh`, name];
+                    return ['${value} kWh', name];
                   }}
                 />
                 <Legend wrapperStyle={{ fontSize: '12px' }} />
@@ -451,5 +620,4 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
     </Card>
   );
 };
-
 export default EnergyConsumptionChart;
