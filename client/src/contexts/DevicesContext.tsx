@@ -33,12 +33,23 @@ const DevicesContext = createContext<DevicesContextType | undefined>(undefined);
 export const DevicesProvider: React.FC<{ children: ReactNode; homeId: string; roomId: string }> = ({ children, homeId, roomId }) => {
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [previousParams, setPreviousParams] = useState<{homeId: string, roomId: string}>({homeId: '', roomId: ''});
 
   const reloadDevices = async (hId?: string, rId?: string) => {
+    const currentHomeId = hId || homeId;
+    const currentRoomId = rId || roomId;
+    
+    if (currentHomeId === previousParams.homeId && 
+        currentRoomId === previousParams.roomId && 
+        devices.length > 0) {
+      return;
+    }
+    
     setLoading(true);
     try {
-      const data = await listDevicesService(hId || homeId, rId || roomId);
+      const data = await listDevicesService(currentHomeId, currentRoomId);
       setDevices(data);
+      setPreviousParams({homeId: currentHomeId, roomId: currentRoomId});
     } catch (error: any) {
       setDevices([]);
       throw error;
@@ -90,12 +101,6 @@ export const DevicesProvider: React.FC<{ children: ReactNode; homeId: string; ro
       setLoading(false);
     }
   };
-  useEffect(() => {
-    if (homeId && roomId) reloadDevices(homeId, roomId);
-  }, [homeId, roomId]);
-
-
-
 
   const createDeviceContext = async (homeId: string, roomId: string, payload: Partial<Device>) => {
     setLoading(true);
@@ -142,7 +147,9 @@ export const DevicesProvider: React.FC<{ children: ReactNode; homeId: string; ro
   };
 
   useEffect(() => {
-    if (homeId && roomId) reloadDevices(homeId, roomId);
+    if (homeId && (homeId !== previousParams.homeId || roomId !== previousParams.roomId)) {
+      reloadDevices(homeId, roomId);
+    }
   }, [homeId, roomId]);
 
   return (

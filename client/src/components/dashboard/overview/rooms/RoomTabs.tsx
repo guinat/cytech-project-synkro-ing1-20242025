@@ -2,7 +2,6 @@ import React from 'react';
 import type { Room } from '@/services/rooms.service';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 

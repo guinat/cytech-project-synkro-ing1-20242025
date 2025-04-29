@@ -139,7 +139,6 @@ export async function listDevices(homeId: string, roomId?: string): Promise<Devi
       url = `/homes/${homeId}/devices/`;
     }
     const data = await apiFetch<any>(url, { method: 'GET' });
-    toast.success('Liste des appareils mise à jour');
     if (Array.isArray(data)) return data;
     if (Array.isArray(data.data)) return data.data;
     if (Array.isArray(data.results)) return data.results;
@@ -154,7 +153,7 @@ export async function getDevice(homeId: string, roomId: string, deviceId: string
   try {
     const data = await apiFetch<Device>(`/homes/${homeId}/rooms/${roomId}/devices/${deviceId}/`, { method: 'GET' });
     toast.success('Détails du device récupérés');
-    return data; // <<< PAS data.data
+    return data;
   } catch (error: any) {
     toast.error(extractErrorMessage(error.raw, false, true));
     throw error;
