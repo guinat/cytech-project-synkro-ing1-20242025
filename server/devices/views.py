@@ -19,6 +19,11 @@ from datetime import datetime, timedelta, timezone
 import pytz
 from django.db import transaction
 from django.utils import timezone
+from django.contrib.auth import get_user_model
+from users.models_action_history import ActionHistory
+
+User = get_user_model()
+
 
 
 class HomeDeviceListView(ListAPIView):
@@ -70,6 +75,23 @@ class DeviceViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         device = serializer.save()
+        user = request.user
+        if user.is_authenticated and hasattr(user, 'points'):
+            user.points += 15
+            user.save()
+        # Historique action utilisateur
+        user = request.user if request.user.is_authenticated else None
+        ip = request.META.get('HTTP_X_FORWARDED_FOR', '').split(',')[0] or request.META.get('REMOTE_ADDR')
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        if user:
+            ActionHistory.objects.create(
+                user=user,
+                action_type="CREATE_DEVICE",
+                target_id=str(device.id),
+                target_repr=str(device),
+                ip_address=ip,
+                user_agent=user_agent
+            )
         return ApiResponse.success(
             DeviceSerializer(device).data,
             message="Device created successfully",
@@ -118,6 +140,8 @@ class EnergyConsumptionView(APIView): #TODO?: Check logics & data
         date_end = request.GET.get('date_end')
         granularity = request.GET.get('granularity', 'day')
         cumulative = request.GET.get('cumulative', 'false').lower() == 'true'
+    
+        
 
         tz = pytz.UTC
 
@@ -329,6 +353,3 @@ class DeviceCommandViewSet(viewsets.ModelViewSet):
             message="Command sent and executed successfully",
             status_code=status.HTTP_201_CREATED
         )
-
-
-

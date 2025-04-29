@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import Header from '@/components/common/Header';
 import NotFoundPage from '@/pages/NotFoundPage';
 import LandingPage from '@/pages/LandingPage';
+import DiscoverPage from '@/pages/DiscoverPage';
 import AcceptInvitationPage from '@/pages/dashboard/AcceptInvitationPage';
 
 
@@ -44,6 +45,7 @@ import AuthRoute from '@/components/2_auth/AuthRedirect';
 
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import DevicesPage from '@/pages/dashboard/DevicesPage';
+import GuestsPage from '@/pages/dashboard/GuestsPage';
 import ProfilePage from '@/pages/dashboard/profile/ProfilePage';
 import SettingsPage from '@/pages/dashboard/profile/SettingsPage';
 import RequireEmailVerificationPage from '@/pages/dashboard/RequireEmailVerificationPage';
@@ -75,6 +77,7 @@ function App() {
 
             {/* Landing page */}
             <Route path="/" element={<LandingPage />} />
+            <Route path="/discover" element={<DiscoverPage />} />
 
             {/* Auth routes */}
             <Route path="/auth/sign_in" element={<LoginPage />} />
@@ -103,6 +106,7 @@ function App() {
           }>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/dashboard/devices" element={<DevicesPage />} />
+<Route path="/dashboard/guests" element={<GuestsPage />} />
             <Route path="/dashboard/profile" element={<ProfilePage />} />
             <Route path="/dashboard/settings" element={<SettingsPage />} />
           </Route>

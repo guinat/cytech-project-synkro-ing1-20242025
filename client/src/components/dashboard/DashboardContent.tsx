@@ -13,6 +13,7 @@ import AddRoomDialog from '@/components/dashboard/overview/dialogs/AddRoomDialog
 import AddDeviceDialog from '@/components/dashboard/overview/dialogs/AddDeviceDialog';
 import DeviceDetailDialog from '@/components/dashboard/overview/dialogs/DeviceDetailDialog';
 import { EnhancedDevice } from '@/types/device';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface DashboardContentProps {
   selectedHomeId: string;
@@ -71,6 +72,8 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
   onRenameDevice,
   onDeleteDevice
 }) => {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen p-6 bg-background text-foreground max-w-7xl mx-auto">
       <div className="space-y-6">
@@ -104,6 +107,10 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
             if (!selectedHomeId) return;
             await onCreateInvitation(selectedHomeId, email);
           }}
+
+          //je recupere les devices de la home actuelle depuis filteredDevices depuis le fichier DashboardPage.tsx
+          devices={filteredDevices} //ne contient les objets que de la maison/pièce active (overview pour toute la maison)
+          onOpenDeviceDetail={onOpenDeviceDetail}
         />
         
         <RoomTabs 
@@ -119,7 +126,13 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <EnergyConsumptionChart homeId={selectedHomeId} />
+            {user && user.points !== undefined && user.points >= 40 ? (
+              <EnergyConsumptionChart homeId={selectedHomeId} />
+            ) : (
+              <div className="text-center text-destructive font-semibold py-8">
+                Tu n'as pas assez de points pour voir les statistiques de consommation d'énergie (min. 40)
+              </div>
+            )}
           </motion.div>
         )}
         {selectedRoomId === 'overview' && filteredDevices.length === 0 && (

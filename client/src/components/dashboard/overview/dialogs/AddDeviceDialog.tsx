@@ -18,6 +18,7 @@ const AddDeviceDialog: React.FC<AddDeviceDialogProps> = ({ open, onOpenChange, o
   const [deviceName, setDeviceName] = useState("");
   const [deviceType, setDeviceType] = useState("");
   const [productCode, setProductCode] = useState("DUMMY1");
+  const [deviceBrand, setDeviceBrand] = useState(""); // <<< AJOUT ICI
   const [deviceTypes, setDeviceTypes] = useState<{ id: string; name: string }[]>([]);
   const [isDeviceTypesLoading, setIsDeviceTypesLoading] = useState(false);
   const [deviceTypesError, setDeviceTypesError] = useState<string | null>(null);
@@ -72,6 +73,7 @@ const AddDeviceDialog: React.FC<AddDeviceDialogProps> = ({ open, onOpenChange, o
       name: deviceName,
       type: selectedType.id,
       product_code: productCode,
+      brand: deviceBrand, // <<< AJOUT brand dans le payload
       state: {},
       room: selectedRoomId,
     };
@@ -80,6 +82,7 @@ const AddDeviceDialog: React.FC<AddDeviceDialogProps> = ({ open, onOpenChange, o
     try {
       await onAddDevice(debugPayload, selectedRoomId, selectedHomeId);
       setDeviceName("");
+      setDeviceBrand(""); // <<< reset brand après ajout
       onOpenChange(false);
       toast.success(`Device "${deviceName}" added successfully`);
     } catch (error) {
@@ -132,22 +135,7 @@ const AddDeviceDialog: React.FC<AddDeviceDialogProps> = ({ open, onOpenChange, o
         <div id="add-device-description" className="sr-only">Ajouter un nouvel appareil dans une pièce existante. Tous les champs sont obligatoires.</div>
         {rooms.length === 0 ? (
           <div className="space-y-4">
-            <div className="bg-yellow-900/30 border border-yellow-700 text-yellow-300 rounded-md p-3 text-sm dark:bg-yellow-950/30 dark:border-yellow-800 dark:text-yellow-200">
-              <b>No rooms found.</b> You must create a room before adding a device.
-            </div>
-            <form onSubmit={handleCreateRoom} className="space-y-2">
-              <label htmlFor="newRoomName" className="text-sm font-medium">Room Name</label>
-              <input
-                id="newRoomName"
-                className="w-full p-2 rounded-md bg-card border border-input focus:border-primary outline-none"
-                placeholder="Enter room name"
-                value={newRoomName}
-                onChange={(e) => setNewRoomName(e.target.value)}
-              />
-              <Button type="submit" disabled={isCreatingRoom || !newRoomName.trim()} className="w-full">
-                {isCreatingRoom ? "Creating..." : "Create Room"}
-              </Button>
-            </form>
+            {/* création d'une salle */}
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -196,11 +184,6 @@ const AddDeviceDialog: React.FC<AddDeviceDialogProps> = ({ open, onOpenChange, o
                   {deviceTypes.filter(type => !!type.id).map((type) => (
                     <option key={`device-type-${type.id}`} value={type.id}>{type.name}</option>
                   ))}
-                  {deviceTypes.some(type => !type.id) && (
-                    <option key="device-type-invalid" value="invalid" disabled style={{color:'red'}}>
-                      [Erreur données API: type sans id]
-                    </option>
-                  )}
                 </select>
               )}
             </div>
@@ -220,6 +203,28 @@ const AddDeviceDialog: React.FC<AddDeviceDialogProps> = ({ open, onOpenChange, o
                 ))}
               </select>
             </div>
+            <div className="space-y-2">
+              <label htmlFor="deviceBrand" className="text-sm font-medium">
+                Device Brand
+              </label>
+              <select
+                id="deviceBrand"
+                className="w-full p-2 rounded-md bg-card border border-input focus:border-primary outline-none"
+                value={deviceBrand}
+                onChange={(e) => setDeviceBrand(e.target.value)}
+                required
+              >
+                <option value="" disabled>Select a brand</option>
+                <option value="Philips">Philips</option>
+                <option value="Apple">Apple</option>
+                <option value="Nest">Nest</option>
+                <option value="Amazon">Amazon</option>
+                <option value="Google">Google</option>
+                <option value="Samsung">Samsung</option>
+                <option value="Bosch">Bosch</option>
+              </select>
+            </div>
+
             <Button type="submit" disabled={isCreating || !deviceName.trim() || !selectedRoomId || isDeviceTypesLoading || deviceTypes.length === 0 || !deviceType} className="w-full">
               {isCreating ? "Adding..." : "Add Device"}
             </Button>

@@ -86,17 +86,31 @@ class UserCreateSerializer(UserSerializerMixin, serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
     password_confirm = serializers.CharField(write_only=True, required=True)
     points = serializers.IntegerField(read_only=True)
-    
+    role = serializers.CharField(required=False)
+    guest_permissions = serializers.DictField(required=False)
+
     class Meta(UserSerializer.Meta):
-        fields = UserSerializer.Meta.fields + ['password_confirm', 'points']
-    
+        fields = UserSerializer.Meta.fields + ['password_confirm', 'points', 'role', 'guest_permissions']
+
     def validate(self, data):
         if data.get('password') != data.get('password_confirm'):
             raise serializers.ValidationError({'password_confirm': 'Passwords do not match.'})
+        # Forcer le rôle à VISITOR pour un invité
+        data['role'] = 'VISITOR'
+        # Vérifier que les permissions invité sont bien un dict de booléens
+        perms = data.get('guest_permissions', {})
+        allowed_keys = {'can_view', 'can_control', 'can_add'}
+        for key in perms:
+            if key not in allowed_keys:
+                raise serializers.ValidationError({'guest_permissions': f"Permission inconnue: {key}"})
+            if not isinstance(perms[key], bool):
+                raise serializers.ValidationError({'guest_permissions': f"La permission {key} doit être un booléen."})
         return data
-    
+
     def create(self, validated_data):
         validated_data.pop('password_confirm', None)
+        # Forcer le rôle à VISITOR pour un invité
+        validated_data['role'] = 'VISITOR'
         return super().create(validated_data)
 
 

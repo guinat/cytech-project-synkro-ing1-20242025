@@ -3,13 +3,20 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { sendDeviceCommand, getDevice } from '@/services/devices.service';
+import { Select as SelectShadcn, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from '@/components/ui/button'; // Import du bouton
 
 interface DeviceDynamicControlsProps {
   device: any;
   homeId: string;
   roomId: string;
   onStateUpdate: (newState: any) => void;
+  cycle?: string; 
+  delayStart?: number; 
+  spinSpeed?: number;
+  onOffTemps?: number;  // Nouvelle capacité "on/off_temps"
 }
+
 
 export const capabilityLabels: Record<string, string> = {
   on_off: 'On/Off',
@@ -24,7 +31,7 @@ export const capabilityLabels: Record<string, string> = {
   trackIndex: 'Track Index'
 };
 
-const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, homeId, roomId, onStateUpdate }) => {
+const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, homeId, roomId, onStateUpdate, cycle, delayStart, spinSpeed, onOffTemps }) => {
   const { id, state = {}, capabilities = [] } = device;
 
   const [localBrightness, setLocalBrightness] = React.useState<number>(state.brightness ?? 0);
@@ -36,6 +43,11 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
   const [localHeat, setLocalHeat] = React.useState<number>(state.heat ?? 100);
   const [localFridgeMode, setLocalFridgeMode] = React.useState<string>(state.mode ?? 'normal');
   const [localTrackIndex, setLocalTrackIndex] = React.useState<number>(state.trackIndex ?? 0);
+  const [localCycle, setLocalCycle] = React.useState<string>(cycle ?? 'Normal'); 
+  const [localDelayStart, setLocalDelayStart] = React.useState<number>(delayStart ?? 0); 
+  const [localSpinSpeed, setLocalSpinSpeed] = React.useState<number>(state.spin_speed_control ?? 1000); 
+  const [localOnOffTemps, setLocalOnOffTemps] = React.useState<number>(onOffTemps ?? 0);  // Temps de délai
+
 
   React.useEffect(() => {
     setLocalChannel(state.channel ? String(state.channel) : '1');
@@ -49,10 +61,14 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
   }, [state.volume]);
   React.useEffect(() => {
     setLocalTrackIndex(typeof state.trackIndex === 'number' ? state.trackIndex : 0);
-  }, [state.trackIndex]);
+  }, [state.trackIndex]);  const [localMotionDetection, setLocalMotionDetection] = React.useState<string>(state.motion_detection ?? "Regular");
+  
   React.useEffect(() => {
     setLocalBrightness(state.brightness ?? 0);
   }, [state.brightness]);
+  React.useEffect(() => {
+    setLocalSpinSpeed(state.spin_speed_control ?? 1000);
+  }, [state.spin_speed_control]);
   React.useEffect(() => {
     setLocalTemperature(state.temperature ?? 20);
   }, [state.temperature]);
@@ -65,9 +81,14 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
   React.useEffect(() => {
     setLocalHeat(state.heat ?? 100);
   }, [state.heat]);
+  React.useEffect(() => {
+    setLocalMotionDetection(state.motion_detection || 'Regular');
+  }, [state.motion_detection]);
 
+  // Fonction pour envoyer la commande au serveur
   const handleSendCommand = async (capability: string, value: any) => {
     try {
+      toast.error(`Envoi de la commande : ${capability} avec la valeur`, value);
       await sendDeviceCommand(homeId, roomId, id, capability, { [capability]: value });
       toast.success(`Commande envoyée: ${capability}`); // Désactivé pour ne pas spammer de notifications
       // Récupère le device à jour depuis l'API après la commande
@@ -77,6 +98,21 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
     } catch (e: any) {
       console.error('Erreur lors de l\'envoi de la commande', capability, e);
       toast.error(`Erreur commande: ${capability} - ${e?.message || ''}`);
+    }
+  };
+
+
+
+  // Fonction de validation
+  const handleValidate = async () => {
+    if (localOnOffTemps === 0) {
+      // Si onOffTemps est à 0, lance immédiatement l'appareil et le met en "ON"
+      await handleSendCommand('on_off', true);  // Met l'appareil en "ON"
+      toast.success("L'appareil est maintenant allumé.");
+    } else {
+      // Si onOffTemps est supérieur à 0, met l'appareil en "Prévu"
+      toast.success(`Démarrage prévu dans ${localOnOffTemps} minutes.`);
+      // Tu peux ici également gérer un timer pour démarrer l'appareil après un délai
     }
   };
 
@@ -200,6 +236,7 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
   // Cas générique pour tous les autres devices
   return (
     <div className="space-y-4">
+      {/* On/Off Switch */}
       {capabilities.includes('on_off') && (
         <div className="flex items-center gap-2">
           <span>On/Off</span>
@@ -240,9 +277,58 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
           <span className="ml-2">{localFridgeMode === 'eco' ? 'Eco mode (économie d\'énergie)' : 'Mode normal'}</span>
         </div>
       )}
+
+      {/* Cycle Selection */}
+      {capabilities.includes('cycle_selection') && (
+        <div>
+          <span>Cycle Selection</span>
+          <SelectShadcn
+            value={localCycle}
+            onValueChange={(v) => {
+              setLocalCycle(v);
+              handleSendCommand('cycle_selection', v);
+            }}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select Cycle" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Normal">Normal</SelectItem>
+              <SelectItem value="Quick">Quick</SelectItem>
+              <SelectItem value="Eco">Eco</SelectItem>
+            </SelectContent>
+          </SelectShadcn>
+        </div>
+      )}
+
+      {/* Spin Speed Control */}
+      {capabilities.includes('spin_speed_control') && (
+        <div>
+          <span>Spin Speed (RPM)</span>
+          <div className="flex justify-between text-xs">
+            <span>0</span>
+            <span>1000</span>
+            <span>2000</span>
+          </div>
+          <Slider
+            min={500}
+            max={2000}
+            value={[localSpinSpeed]}
+            onValueChange={([v]) => setLocalSpinSpeed(v)}
+            onValueCommit={([v]) => handleSendCommand('spin_speed_control', v)}
+          />
+          <div className="text-center text-sm mt-2">Spin Speed: {localSpinSpeed} RPM</div>
+        </div>
+      )}
+      
       {capabilities.includes('brightness') && (
         <div>
           <span>Brightness</span>
+          <div className="flex justify-between text-xs">
+            <span>0</span>
+            <span>50</span>
+            <span>100</span>
+          </div>
           <Slider
             min={0}
             max={100}
@@ -250,6 +336,7 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
             onValueChange={([v]) => setLocalBrightness(v)}
             onValueCommit={([v]) => handleSendCommand('brightness', v)}
           />
+          <div className="text-center text-sm mt-2">Brightness: {localBrightness}%</div>
         </div>
       )}
       {capabilities.includes('volume') && (
@@ -280,13 +367,19 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
       {capabilities.includes('temperature') && (
         <div>
           <span>Temperature</span>
+          <div className="flex justify-between text-xs">
+            <span>0</span>
+            <span>100</span>
+    
+          </div>
           <Slider
-            min={10}
-            max={35}
+            min={0}
+            max={100}
             value={[localTemperature]}
             onValueChange={([v]) => setLocalTemperature(v)}
             onValueCommit={([v]) => handleSendCommand('temperature', v)}
           />
+          <div className="text-center text-sm mt-2">Temperature: {localTemperature} °C</div>
         </div>
       )}
 

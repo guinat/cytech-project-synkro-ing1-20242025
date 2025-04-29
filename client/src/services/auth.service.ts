@@ -34,7 +34,7 @@ export async function registerService(email: string, password: string, username?
       }
     );
     setTokenService(data.data.tokens.access);
-    toast.success(extractSuccessMessage(data));
+    //toast.success(extractSuccessMessage(data));
     return data.data.user;
   } catch (error: any) {
     let msg = '';

@@ -8,7 +8,9 @@ import {
   Gauge, 
   Lightbulb,
   FileCog,
+  Key,
 } from 'lucide-react';
+import { useUser } from '@/contexts/UserContext';
 
 interface NavigationMenuProps {
   showFullWidth: boolean;
@@ -20,6 +22,7 @@ const SidebarNavigationMenu: React.FC<NavigationMenuProps> = ({
   userRole
 }) => {
   const location = useLocation();
+  const { profile } = useUser();
 
   const isActive = (path: string) => {
     if (path === '/dashboard') {
@@ -31,6 +34,10 @@ const SidebarNavigationMenu: React.FC<NavigationMenuProps> = ({
   const mainNavigation = [
     { icon: Gauge, label: 'Dashboard', href: '/dashboard' },
     { icon: Lightbulb, label: 'Devices', href: '/dashboard/devices' },
+    { icon: User, label: 'Invités', href: '/dashboard/guests' },
+    ...(profile?.points && profile.points >= 60
+      ? [{ icon: Key, label: 'Administrateur', href: 'http://127.0.0.1:8000/admin/' }]
+      : []),
   ];
 
   const secondaryNavigation = [
@@ -60,7 +67,7 @@ const SidebarNavigationMenu: React.FC<NavigationMenuProps> = ({
         <div className="h-px bg-border" />
       </div>
 
-      <NavSection title="Account" showTitle={showFullWidth}>
+      <NavSection title="Compte" showTitle={showFullWidth}>
         {secondaryNavigation.map((item) => (
           <NavItem 
             key={item.href}

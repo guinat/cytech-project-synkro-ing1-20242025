@@ -46,6 +46,8 @@ export type PublicDeviceType = {
   devices_count: number;
   created_at: string;
   updated_at: string;
+  brand?: string;
+  type?: string; // Ajout du champ type pour filtrer dans DiscoverPage
 };
 
 export type Device = {
@@ -55,8 +57,10 @@ export type Device = {
   home: string;
   room: string;
   isOn?: boolean;
+  brand: string;
   created_at?: string;
   updated_at?: string;
+  capabilities?: string[];
 };
 
 export type DeviceCommand = {
@@ -84,7 +88,7 @@ export async function getEnergyConsumption(params: EnergyConsumptionParams): Pro
     const url = `/devices/energy/consumption/?${searchParams.toString()}`;
   
     const response = await apiFetch(url) as EnergyConsumptionResponse;
-    toast.success(extractSuccessMessage(response));
+    //toast.success(extractSuccessMessage(response));
     return response;
   } catch (error: any) {
     toast.error(extractErrorMessage(error.raw, false, true));
@@ -95,7 +99,7 @@ export async function getEnergyConsumption(params: EnergyConsumptionParams): Pro
 export async function getPublicDeviceTypes(): Promise<PublicDeviceType[]> {
   try {
     const data = await apiFetch<any>('/devices/device-types/', { method: 'GET' });
-    toast.success(extractSuccessMessage(data));
+    //toast.success(extractSuccessMessage(data));
     if (Array.isArray(data)) {
       return data;
     } else if (data && data.data && Array.isArray(data.data)) {
@@ -111,6 +115,18 @@ export async function getPublicDeviceTypes(): Promise<PublicDeviceType[]> {
   } catch (error: any) {
     toast.error(extractErrorMessage(error.raw, false, true));
     throw error;
+  }
+}
+
+export async function getHomes(): Promise<any[]> {
+  try {
+    const data = await apiFetch('/homes/', { method: 'GET' });  // Assurez-vous que l'URL est correcte
+    if (Array.isArray(data)) {
+      return data;
+    }
+    return [];
+  } catch (error: any) {
+    throw new Error('Erreur de récupération des maisons');
   }
 }
 
@@ -136,14 +152,15 @@ export async function listDevices(homeId: string, roomId?: string): Promise<Devi
 
 export async function getDevice(homeId: string, roomId: string, deviceId: string): Promise<Device> {
   try {
-    const data = await apiFetch<{ data: Device }>(`/homes/${homeId}/rooms/${roomId}/devices/${deviceId}/`, { method: 'GET' });
-    toast.success(extractSuccessMessage(data));
-    return data.data ?? data;
+    const data = await apiFetch<Device>(`/homes/${homeId}/rooms/${roomId}/devices/${deviceId}/`, { method: 'GET' });
+    toast.success('Détails du device récupérés');
+    return data; // <<< PAS data.data
   } catch (error: any) {
     toast.error(extractErrorMessage(error.raw, false, true));
     throw error;
   }
 }
+
 
 export async function createDevice(homeId: string, roomId: string, payload: Partial<Device>): Promise<Device> {
   try {

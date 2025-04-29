@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,7 +13,7 @@ import { Edit, Trash2, AlertTriangle, Clock, Zap, History } from 'lucide-react';
 import { updateDevice, deleteDevice, Device, getDeviceCommand } from '@/services/devices.service';
 
 import { apiFetch } from '@/services/api';
-import { formatDistanceToNow, parseISO, format } from 'date-fns';
+import { formatDistanceToNow, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 interface DeviceDetailDialogProps {
@@ -35,8 +35,9 @@ interface EnhancedDevice {
   isOn?: boolean;
   energyConsumption?: string;
   activeTime?: string;
-  lastActiveAt?: string; 
+  lastActiveAt?: string;
   state?: any;
+  brand?: string;
 }
 
 interface DeviceStatsResponse {
@@ -46,7 +47,6 @@ interface DeviceStatsResponse {
   isOn: boolean;
 }
 
-// Map des couleurs selon le type d'appareil
 const deviceColors: Record<string, string> = {
   light: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
   thermostat: 'bg-red-500/10 text-red-500 border-red-500/20',
@@ -56,13 +56,7 @@ const deviceColors: Record<string, string> = {
   default: 'bg-secondary text-secondary-foreground'
 };
 
-const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ 
-  open, 
-  onOpenChange, 
-  device, 
-  onRename, 
-  onDelete 
-}) => {
+const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenChange, device, onRename, onDelete }) => {
   const [editName, setEditName] = useState(device?.name || "");
   const [isRenaming, setIsRenaming] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -71,47 +65,46 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({
   const [deviceDetails, setDeviceDetails] = useState<EnhancedDevice | null>(device);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Charger les détails complets de l'appareil depuis l'API
   useEffect(() => {
     if (device && open) {
       setIsLoading(true);
-      
-      // Récupérer les statistiques du device
       const fetchDeviceStats = async () => {
         try {
-          // Fetch les détails du device en utilisant la bonne structure d'URL
           const deviceData = await apiFetch<Device>(
             `/homes/${device.home}/rooms/${device.room}/devices/${device.id}/`
           );
-          
-          // Données de statistiques temporaires en attendant l'implémentation du backend
+
           let statsData: DeviceStatsResponse = {
             activeTime: '0 h',
             energyConsumption: '0 kWh',
             lastActiveAt: new Date().toISOString(),
             isOn: device.state?.power === 'on' || device.state?.isOn === true || false
           };
-          
-          // Tentative de récupération des statistiques (peut échouer si l'endpoint n'existe pas encore)
+
           try {
             statsData = await apiFetch<DeviceStatsResponse>(
               `/homes/${device.home}/rooms/${device.room}/devices/${device.id}/stats/`
             );
           } catch (statsError) {
-            console.warn("L'endpoint des statistiques n'est pas encore disponible:", statsError);
-            // On continue avec les données temporaires
+            console.warn("L'endpoint des stats n'est pas encore disponible:", statsError);
           }
-          
-          // Construction de l'objet EnhancedDevice
+
           const enhancedDevice: EnhancedDevice = {
             ...device,
+            name: deviceData.name || device.name,
+            id: deviceData.id || device.id,
+            home: device.home,
+            room: device.room,
+            home_id: device.home_id || device.home,
+            room_id: device.room_id || device.room,
             activeTime: statsData.activeTime,
             energyConsumption: statsData.energyConsumption,
             lastActiveAt: statsData.lastActiveAt,
             isOn: statsData.isOn,
-            state: device.state // On utilise device.state directement
+            state: device.state,
+            brand: deviceData.brand || device.brand || ''
           };
-          
+
           setDeviceDetails(enhancedDevice);
           if (device.state) {
             setLocalState(device.state);
@@ -124,7 +117,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({
           setIsLoading(false);
         }
       };
-      
+
       fetchDeviceStats();
     }
   }, [device, open]);
@@ -138,21 +131,10 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({
   const handleRename = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!deviceDetails || !editName.trim()) return;
-    
     setIsRenaming(true);
     try {
-      // Utiliser la fonction updateDevice du service
-      await updateDevice(
-        deviceDetails.home, 
-        deviceDetails.room, 
-        deviceDetails.id, 
-        { name: editName }
-      );
-      
-      // Mettre à jour l'état local
+      await updateDevice(deviceDetails.home, deviceDetails.room, deviceDetails.id, { name: editName });
       setDeviceDetails(prev => prev ? { ...prev, name: editName } : null);
-      
-      // Notifier le composant parent si nécessaire
       if (onRename) {
         onRename(deviceDetails.id, editName);
       }
@@ -166,20 +148,11 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({
 
   const handleDelete = async () => {
     if (!deviceDetails) return;
-    
     if (isConfirmingDelete) {
       setIsDeleting(true);
       try {
-        // Utiliser la fonction deleteDevice du service
-        await deleteDevice(
-          deviceDetails.home, 
-          deviceDetails.room, 
-          deviceDetails.id
-        );
-        
+        await deleteDevice(deviceDetails.home, deviceDetails.room, deviceDetails.id);
         onOpenChange(false);
-        
-        // Notifier le composant parent si nécessaire
         if (onDelete) {
           onDelete(deviceDetails.id);
         }
@@ -215,7 +188,6 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({
 
   const formatLastActive = (lastActiveAt?: string) => {
     if (!lastActiveAt) return "Inconnu";
-    
     try {
       const date = parseISO(lastActiveAt);
       return formatDistanceToNow(date, { addSuffix: true, locale: fr });
@@ -225,14 +197,9 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({
   };
 
   if (!device) return null;
-  
-  // Détermine si l'appareil est allumé basé sur l'état
-  const isDeviceOn = deviceDetails?.isOn || localState.power === 'on' || localState.isOn === true;
-  
-  // Sélectionne la couleur appropriée ou utilise la couleur par défaut
-  const deviceColorClass = deviceColors[device.type.toLowerCase()] || deviceColors.default;
 
-  // Assure-toi que homeId et roomId sont des strings non-undefined pour le composant DeviceDynamicControls
+  const isDeviceOn = deviceDetails?.isOn || localState.power === 'on' || localState.isOn === true;
+  const deviceColorClass = deviceColors[device.type.toLowerCase()] || deviceColors.default;
   const homeId = deviceDetails?.home_id || device.home || "";
   const roomId = deviceDetails?.room_id || device.room || "";
 
@@ -241,12 +208,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({
 
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => {
-      if (isOpen === false) {
-        setIsConfirmingDelete(false);
-      }
-      onOpenChange(isOpen);
-    }}>
+    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) setIsConfirmingDelete(false); onOpenChange(isOpen); }}>
       <DialogContent className="sm:max-w-md">
         {isLoading ? (
           <>
@@ -261,30 +223,25 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({
           <>
             <DialogHeader className="space-y-3">
               <div className="flex items-center gap-3">
-                <div className={cn(
-                  "w-12 h-12 rounded-full flex items-center justify-center transition-colors border",
-                  deviceColorClass
-                )}>
+                <div className={cn("w-12 h-12 rounded-full flex items-center justify-center transition-colors border", deviceColorClass)}>
                   <DeviceIcon type={device.type} />
                 </div>
                 <div>
                   <DialogTitle className="text-xl">{deviceDetails?.name || device.name}</DialogTitle>
                   <div className="text-xs text-muted-foreground">Type: {device.type}</div>
+                  {deviceDetails?.brand && (
+                    <div className="text-xs text-muted-foreground">Marque: {deviceDetails.brand}</div>
+                  )}
                 </div>
                 <div className="ml-auto">
-                  <Badge 
-                    variant={isDeviceOn ? "default" : "outline"}
-                    className={cn(
-                      isDeviceOn && "bg-green-500 hover:bg-green-500/90"
-                    )}
-                  >
+                  <Badge variant={isDeviceOn ? "default" : "outline"} className={cn(isDeviceOn && "bg-green-500 hover:bg-green-500/90")}>
                     {isDeviceOn ? "ON" : "OFF"}
                   </Badge>
                 </div>
               </div>
             </DialogHeader>
-            
-            <div className="space-y-4">
+
+            <div className="space-y-4 mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-muted/40 rounded-lg p-3 flex items-center gap-2">
                   <Zap className="h-4 w-4 text-primary" />
@@ -293,7 +250,6 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({
                     <div className="font-medium">{deviceDetails?.energyConsumption || '0 kWh'}</div>
                   </div>
                 </div>
-                
                 <div className="bg-muted/40 rounded-lg p-3 flex items-center gap-2">
                   <Clock className="h-4 w-4 text-primary" />
                   <div>
@@ -302,7 +258,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({
                   </div>
                 </div>
               </div>
-              
+
               <div className="bg-muted/40 rounded-lg p-3 flex items-center gap-2">
                 <History className="h-4 w-4 text-primary" />
                 <div>
@@ -310,22 +266,15 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({
                   <div className="font-medium">{formatLastActive(deviceDetails?.lastActiveAt)}</div>
                 </div>
               </div>
-              
+
               <div className="rounded-lg border border-border p-4">
                 <h3 className="text-sm font-medium mb-3">Contrôles</h3>
                 <DeviceDynamicControls
-                  device={{ 
-                    ...deviceDetails,
-                    id: deviceDetails?.id || device.id, 
-                    state: localState,
-                    home_id: homeId,
-                    room_id: roomId
-                  }}
+                  device={{ ...deviceDetails, id: deviceDetails?.id || device.id, state: localState, home_id: homeId, room_id: roomId }}
                   homeId={homeId}
                   roomId={roomId}
                   onStateUpdate={(state) => {
                     setLocalState(state);
-                    // Mettre à jour le statut ON/OFF en fonction de l'état
                     if (state.power === 'on' || state.isOn === true) {
                       setDeviceDetails(prev => prev ? { ...prev, isOn: true } : null);
                     } else if (state.power === 'off' || state.isOn === false) {
@@ -334,13 +283,9 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({
                   }}
                 />
               </div>
-              
-
 
               <form onSubmit={handleRename} className="space-y-3">
-                <Label htmlFor="deviceName" className="text-sm font-medium">
-                  Renommer l'appareil
-                </Label>
+                <Label htmlFor="deviceName" className="text-sm font-medium">Renommer l'appareil</Label>
                 <div className="flex gap-2">
                   <Input
                     id="deviceName"
@@ -349,9 +294,9 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({
                     onChange={(e) => setEditName(e.target.value)}
                     disabled={isRenaming}
                   />
-                  <Button 
-                    type="submit" 
-                    variant="outline" 
+                  <Button
+                    type="submit"
+                    variant="outline"
                     disabled={editName === (deviceDetails?.name || device.name) || !editName.trim() || isRenaming}
                     className="gap-1"
                   >
@@ -364,9 +309,9 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({
                   </Button>
                 </div>
               </form>
-              
+
               <Separator />
-              
+
               <div className="flex justify-end">
                 <Button
                   variant="destructive"
