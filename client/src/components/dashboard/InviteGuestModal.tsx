@@ -124,6 +124,9 @@ export const InviteGuestModal: React.FC<InviteGuestModalProps> = ({ open, onOpen
               <Label htmlFor="display_name">Nom à afficher</Label>
               <Input id="display_name" name="display_name" value={form.display_name} onChange={handleChange} required />
             </div>
+            <div className="mb-2 text-sm text-muted-foreground">
+              Nom : <b>{form.display_name?.trim() ? form.display_name : '(non renseigné)'}</b> | Rôle : <b>{guestToEdit?.role || "VISITOR"}</b>
+            </div>
             <div>
               <Label htmlFor="guest_detail">Catégorie / Détail</Label>
               <Input id="guest_detail" name="guest_detail" value={form.guest_detail} onChange={handleChange} placeholder="ex: enfant, voisin, cousin..." />

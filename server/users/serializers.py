@@ -56,15 +56,18 @@ class UserSerializer(UserSerializerMixin, serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
     profile_photo = serializers.CharField(required=False, allow_blank=True, allow_null=True, help_text="Base64 encoded profile photo")
     points = serializers.IntegerField(read_only=True)
+    invited_by = serializers.PrimaryKeyRelatedField(read_only=True)
+    is_guest = serializers.BooleanField(read_only=True)
     
     class Meta:
         model = User
         fields = [
             'id', 'email', 'username', 'profile_photo',
             'is_email_verified', 'role', 'level', 'points', 'date_joined', 'last_login',
-            'password'
+            'display_name', 'guest_detail',
+            'password', 'invited_by', 'is_guest'
         ]
-        read_only_fields = ['id', 'date_joined', 'last_login', 'is_email_verified', 'points']
+        read_only_fields = ['id', 'date_joined', 'last_login', 'is_email_verified', 'points', 'invited_by', 'is_guest']
 
 
 class UserMeSerializer(UserSerializer):
@@ -73,7 +76,7 @@ class UserMeSerializer(UserSerializer):
     points = serializers.IntegerField(read_only=True)
     
     class Meta(UserSerializer.Meta):
-        fields = UserSerializer.Meta.fields + ['owned_homes_count', 'member_homes_count', 'points']
+        fields = UserSerializer.Meta.fields + ['owned_homes_count', 'member_homes_count', 'points', 'display_name', 'guest_detail']
     
     def get_owned_homes_count(self, obj):
         return obj.owned_homes.count()
@@ -83,6 +86,14 @@ class UserMeSerializer(UserSerializer):
 
 
 class UserCreateSerializer(UserSerializerMixin, serializers.ModelSerializer):
+    is_guest = serializers.BooleanField(read_only=True)
+    def create(self, validated_data):
+        request = self.context.get('request')
+        if request:
+            validated_data['invited_by'] = request.user
+        validated_data['is_guest'] = True
+        return super().create(validated_data)
+
     password = serializers.CharField(write_only=True, required=True)
     password_confirm = serializers.CharField(write_only=True, required=True)
     points = serializers.IntegerField(read_only=True)
@@ -90,7 +101,7 @@ class UserCreateSerializer(UserSerializerMixin, serializers.ModelSerializer):
     guest_permissions = serializers.DictField(required=False)
 
     class Meta(UserSerializer.Meta):
-        fields = UserSerializer.Meta.fields + ['password_confirm', 'points', 'role', 'guest_permissions']
+        fields = UserSerializer.Meta.fields + ['password_confirm', 'points', 'role', 'guest_permissions', 'display_name', 'guest_detail', 'is_guest']
 
     def validate(self, data):
         if data.get('password') != data.get('password_confirm'):
@@ -119,7 +130,7 @@ class UserUpdateSerializer(UserSerializerMixin, serializers.ModelSerializer):
     points = serializers.IntegerField(read_only=True)
     
     class Meta(UserSerializer.Meta):
-        fields = UserSerializer.Meta.fields + ['current_password', 'points']
+        fields = UserSerializer.Meta.fields + ['current_password', 'points', 'display_name', 'guest_detail']
     
     def validate(self, data):
         if 'password' in data and not data.get('current_password'):

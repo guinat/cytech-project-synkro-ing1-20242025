@@ -13,6 +13,13 @@ User = get_user_model()
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        role = self.request.query_params.get('role')
+        if role == 'VISITOR':
+            return qs.filter(role='VISITOR', invited_by=self.request.user)
+        return qs
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['is_email_verified', 'role', 'level', 'date_joined']
@@ -28,7 +35,8 @@ class UserViewSet(viewsets.ModelViewSet):
         return UserSerializer
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        print(f"[DEBUG] request.user: {request.user}, is_authenticated: {getattr(request.user, 'is_authenticated', None)}")
+        serializer = self.get_serializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         return ApiResponse.success(
