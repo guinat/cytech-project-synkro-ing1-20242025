@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 import { HomeQuickCreateForm } from '@/components/3_home/forms/HomeQuickCreateForm';
 import { Plus, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import HomeModal from '@/components/dashboard/HomeModal';
 import type { Home } from '@/services/homes.service';
+import HomeModal from '@/components/dashboard/HomeModal';
 
 interface HomeTabsProps {
   homes: Array<{ id: string; name: string }>;
@@ -17,7 +17,7 @@ interface HomeTabsProps {
   onRename?: (name: string) => Promise<void>;
   onColorChange?: (color: string) => Promise<void>;
   onDelete?: () => Promise<void>;
-  onInvite?: (email: string) => Promise<void>;
+  onInvite?: (email: string, homeId: string) => Promise<void>;
   devices: any[]; //je récupère les devices filtrés pour la recherche
   onOpenDeviceDetail: (device: any) => void;
 }
@@ -168,18 +168,17 @@ const HomeTabs: React.FC<HomeTabsProps> = ({ homes, activeHome, onHomeChange, on
         </TooltipProvider>
 
 
-        {/*Bouton des paramètres de la home*/}
+        {/* Bouton des paramètres de la home */}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="icon" 
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
                 className="h-8 w-8 rounded-full"
-                onClick={() => {
-                  console.log('[HomeTabs] CLICK SETTINGS BTN - ouverture du modal Home Settings');
-                  setIsHomeModalOpen(true);
-                }}
+                onClick={() => setIsHomeModalOpen(true)}
+                aria-label="Home Settings"
               >
                 <Settings className="h-4 w-4" />
               </Button>
@@ -225,9 +224,30 @@ const HomeTabs: React.FC<HomeTabsProps> = ({ homes, activeHome, onHomeChange, on
         </div>
       )}
       
+      {/* Dialog natif pour test */}
+      <Dialog open={isHomeModalOpen} onOpenChange={setIsHomeModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Paramètres de la home</DialogTitle>
+            <DialogDescription>
+              Ceci est un test de modal natif avec Dialog. Si tu vois ce contenu, le Dialog fonctionne !
+            </DialogDescription>
+          </DialogHeader>
+          <div>
+            <p>Nom de la home : {activeHomeObj?.name}</p>
+            <p>ID : {activeHomeObj?.id}</p>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Fermer</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {activeHomeObj && (
         <>
-          {console.log("open modal", isHomeModalOpen, activeHomeObj)}
+          {console.log('[HomeTabs] HomeModal rendered with open:', isHomeModalOpen)}
           <HomeModal
             key={activeHomeObj.id}
             open={isHomeModalOpen}
@@ -236,7 +256,7 @@ const HomeTabs: React.FC<HomeTabsProps> = ({ homes, activeHome, onHomeChange, on
             onRename={onRename}
             onColorChange={onColorChange}
             onDelete={onDelete}
-            onInvite={onInvite}
+            onInvite={onInvite ? (email: string) => onInvite(email, activeHomeObj.id) : undefined}
           />
         </>
       )}
