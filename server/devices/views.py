@@ -176,9 +176,15 @@ class EnergyConsumptionView(APIView): #TODO?: Check logics & data
             if device.type == "smart_bulb_x":
                 brightness = device.state.get("brightness", 100)
                 power_kw *= (brightness/100)
+
             if device.type == "smart_oven_x":
-                heat = device.state.get("heat", 100)
-                power_kw *= (heat / 100)
+                # Consommation proportionnelle à la température réelle (heat en °C, entre 50°C et 250°C)
+                heat = device.state.get("heat", 0)
+                if isinstance(heat, (int, float)) and 50 <= heat <= 250:
+                    # 0 kW à 50°C, 0.2 kW à 250°C
+                    power_kw = 0.2 * (heat - 50) / (250 - 50)
+                else:
+                    power_kw = 0.0  # Pas de consommation hors plage
             if device.type == "smart_fridge_x":
                 mode = device.state.get("mode", "normal")
                 # Consommation : normal = 0.15 kW, eco = 0.09 kW
