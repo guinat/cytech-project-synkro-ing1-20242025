@@ -126,7 +126,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onOpenDetail }) => {
 
   return (
     <Card 
-      style={{ backgroundColor: '#98d7eb' }}
+      style={{ backgroundColor: '#FFFFFF' }}
       className={cn(
         "transition-all duration-300 ease-in-out overflow-hidden",
         isHovered && "shadow-lg scale-101",
