@@ -10,7 +10,8 @@ import { cn } from '@/lib/utils';
 import DeviceDynamicControls from '../devices/DeviceDynamicControls';
 import DeviceIcon from '../devices/DeviceIcon';
 import { Edit, Trash2, AlertTriangle, Clock, Zap, History } from 'lucide-react';
-import { updateDevice, deleteDevice, Device } from '@/services/devices.service';
+import { updateDevice, deleteDevice, Device, getDeviceCommand } from '@/services/devices.service';
+
 import { apiFetch } from '@/services/api';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -165,7 +166,25 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
     } else {
       setIsConfirmingDelete(true);
     }
+    console.log("test");
   };
+
+  const handleHistory = async () => {
+    if (!deviceDetails) return;
+    try {
+      const commands = await getDeviceCommand(
+        deviceDetails.home,
+        deviceDetails.room,
+        deviceDetails.id,
+      );
+      console.log('Liste des DeviceCommand:', commands);
+    } catch(error) {
+      console.error("Failed to get device commands", error);
+      toast.error("Impossible d'accéder à l'historique de l'appareil");
+      console.log("flop");
+    }
+  };
+
 
   const formatLastActive = (lastActiveAt?: string) => {
     if (!lastActiveAt) return "Inconnu";
@@ -183,6 +202,10 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
   const deviceColorClass = deviceColors[device.type.toLowerCase()] || deviceColors.default;
   const homeId = deviceDetails?.home_id || device.home || "";
   const roomId = deviceDetails?.room_id || device.room || "";
+
+
+
+
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) setIsConfirmingDelete(false); onOpenChange(isOpen); }}>
@@ -314,6 +337,9 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
                     </>
                   )}
                 </Button>
+                <Button
+                content='Historique'
+                onClick={handleHistory}/>
               </div>
             </div>
           </>
