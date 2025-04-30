@@ -23,7 +23,8 @@ import {
   getHome,
   updateHome as updateHomeService,
   deleteHome as deleteHomeService,
-  createInvitation as createInvitationService
+  createInvitation as createInvitationService,
+  removeMember as removeMemberService
 } from '@/services/homes.service';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -200,6 +201,17 @@ const SettingsPage = () => {
     }
   };
   
+  const handleRemoveMember = async (homeId: string, userId: string) => {
+    try {
+      await removeMemberService(homeId, userId);
+      await refreshHomeDetails(homeId);
+      toast.success('Member removed successfully');
+    } catch (error) {
+      toast.error('Failed to remove member');
+      throw error;
+    }
+  };
+  
   if (loading) {
     return (
       <div className="flex justify-center items-center h-full">
@@ -303,6 +315,7 @@ const SettingsPage = () => {
                 <MembersSettings
                   home={selectedHome}
                   onInvite={handleInvite}
+                  onRemoveMember={handleRemoveMember}
                 />
               </TabsContent>
 

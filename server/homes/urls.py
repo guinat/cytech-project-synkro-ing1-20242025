@@ -18,6 +18,14 @@ urlpatterns = [
          HomeViewSet.as_view({'post': 'set_primary'}),
          name='home-set-primary'),
     
+    path('<uuid:pk>/add_member/', 
+         HomeViewSet.as_view({'post': 'add_member'}),
+         name='home-add-member'),
+    
+    path('<uuid:pk>/remove_member/', 
+         HomeViewSet.as_view({'post': 'remove_member'}),
+         name='home-remove-member'),
+    
     path('<uuid:home_pk>/devices/',
          HomeDeviceListView.as_view(),
          name='home-device-list'),

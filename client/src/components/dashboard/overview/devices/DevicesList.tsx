@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import DeviceCard from './DeviceCard';
 import { EnhancedDevice } from '@/types/device';
+import { Room } from '@/services/rooms.service';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -26,7 +27,9 @@ interface DevicesListProps {
   devices: EnhancedDevice[];
   isLoading: boolean;
   selectedRoomId: string;
+  rooms: Room[];
   onAddDevice: () => void;
+  onAddRoom: () => void;
   onOpenDeviceDetail: (device: EnhancedDevice) => void;
 }
 
@@ -34,9 +37,20 @@ const DevicesList: React.FC<DevicesListProps> = ({
   devices,
   isLoading,
   selectedRoomId,
+  rooms,
   onAddDevice,
+  onAddRoom,
   onOpenDeviceDetail
 }) => {
+  
+  const handleAddDeviceClick = () => {
+    if (rooms.length === 0) {
+      onAddRoom();
+    } else {
+      onAddDevice();
+    }
+  };
+  
   return (
     <motion.div 
       className="mt-6"
@@ -47,7 +61,7 @@ const DevicesList: React.FC<DevicesListProps> = ({
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-medium">My Devices</h2>
         <Button 
-          onClick={onAddDevice}
+          onClick={handleAddDeviceClick}
           className="gap-1"
           size="sm"
         >
@@ -71,16 +85,18 @@ const DevicesList: React.FC<DevicesListProps> = ({
             <h3 className="text-xl font-medium mb-2">No devices found</h3>
             <p className="text-muted-foreground text-center mb-6 max-w-md">
               {selectedRoomId === 'overview' 
-                ? "You haven't added any devices yet. Add your first device to start monitoring your home."
+                ? rooms.length === 0 
+                  ? "You need to add a room before adding devices. Add your first room to get started."
+                  : "You haven't added any devices yet. Add your first device to start monitoring your home."
                 : `This room doesn't have any devices yet. Add a device to this room to start monitoring.`
               }
             </p>
             <Button 
-              onClick={onAddDevice}
+              onClick={handleAddDeviceClick}
               className="gap-1"
             >
               <PlusCircle className="h-4 w-4" />
-              Add Your First Device
+              {rooms.length === 0 ? "Add Your First Room" : "Add Your First Device"}
             </Button>
           </CardContent>
         </Card>

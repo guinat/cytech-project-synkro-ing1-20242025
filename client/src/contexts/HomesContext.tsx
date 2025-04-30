@@ -13,6 +13,7 @@ import {
   acceptInvitationByToken as acceptInvitationByTokenService,
   rejectInvitationByToken as rejectInvitationByTokenService,
   getHome as getHomeService,
+  removeMember as removeMemberService,
   Home,
   HomeInvitation
 } from '@/services/homes.service';
@@ -32,6 +33,7 @@ interface HomesContextType {
   acceptInvitationByToken: (token: string) => Promise<void>;
   rejectInvitationByToken: (token: string) => Promise<void>;
   getHomeDetail: (id: string) => Promise<Home>;
+  removeMember: (homeId: string, userId: string) => Promise<Home>;
 }
 
 const HomesContext = createContext<HomesContextType | undefined>(undefined);
@@ -195,6 +197,19 @@ export const HomesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
+  const removeMemberContext = async (homeId: string, userId: string) => {
+    setLoading(true);
+    try {
+      const home = await removeMemberService(homeId, userId);
+      await reloadHomes();
+      return home;
+    } catch (error: any) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <HomesContext.Provider
       value={{
@@ -213,6 +228,7 @@ export const HomesProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         acceptInvitationByToken: acceptInvitationByTokenContext,
         rejectInvitationByToken: rejectInvitationByTokenContext,
         getHomeDetail: getHomeDetailContext,
+        removeMember: removeMemberContext,
       }}
     >
       {children}
