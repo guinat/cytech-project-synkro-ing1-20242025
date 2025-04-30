@@ -7,19 +7,30 @@ import { Home } from '@/services/homes.service';
 import { toast } from 'sonner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAuth } from '@/contexts/AuthContext';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface MembersSettingsProps {
   home: Home;
   onInvite: (email: string, homeId: string) => Promise<void>;
+  onRemoveMember?: (homeId: string, userId: string) => Promise<void>; 
 }
 
 const MembersSettings: React.FC<MembersSettingsProps> = ({
   home,
   onInvite,
+  onRemoveMember
 }) => {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [memberToRemove, setMemberToRemove] = useState<{id: string, name: string} | null>(null);
   const { user } = useAuth();
 
   const handleInviteSubmit = async (e: React.FormEvent) => {
@@ -37,6 +48,21 @@ const MembersSettings: React.FC<MembersSettingsProps> = ({
       toast.error('Failed to send invitation');
     } finally {
       setIsLoading(false);
+    }
+  };
+  
+  const handleRemoveMember = async () => {
+    if (!memberToRemove || !onRemoveMember) return;
+    
+    setIsLoading(true);
+    try {
+      await onRemoveMember(home.id, memberToRemove.id);
+      toast.success(`${memberToRemove.name} a été retiré de la maison`);
+    } catch (err: any) {
+      toast.error('Échec de la suppression du membre');
+    } finally {
+      setIsLoading(false);
+      setMemberToRemove(null);
     }
   };
 
@@ -79,9 +105,15 @@ const MembersSettings: React.FC<MembersSettingsProps> = ({
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      {/* Les actions de gestion des membres pourraient être ajoutées ici */}
-                      {!member.is_owner && user && member.id !== user.id && home.permissions?.can_delete && (
-                        <Button variant="destructive" size="sm" disabled>
+                      {!member.is_owner && user && member.id !== user.id && home.permissions?.can_delete && onRemoveMember && (
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => setMemberToRemove({ 
+                            id: member.id, 
+                            name: member.username || member.email
+                          })}
+                        >
                           Remove
                         </Button>
                       )}
@@ -120,6 +152,24 @@ const MembersSettings: React.FC<MembersSettingsProps> = ({
           )}
         </CardContent>
       </Card>
+      
+      <Dialog open={!!memberToRemove} onOpenChange={(open) => !open && setMemberToRemove(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Member Removal</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to remove {memberToRemove?.name} from this home? 
+              They will no longer have access to this home and its devices.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMemberToRemove(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleRemoveMember} disabled={isLoading}>
+              {isLoading ? 'Removing...' : 'Remove Member'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

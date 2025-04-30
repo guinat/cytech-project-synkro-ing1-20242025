@@ -149,7 +149,9 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
           devices={filteredDevices}
           isLoading={isDevicesLoading}
           selectedRoomId={selectedRoomId}
+          rooms={rooms}
           onAddDevice={() => onAddDeviceDialogChange(true)}
+          onAddRoom={() => onAddRoomDialogChange(true)}
           onOpenDeviceDetail={onOpenDeviceDetail}
         />
       </div>

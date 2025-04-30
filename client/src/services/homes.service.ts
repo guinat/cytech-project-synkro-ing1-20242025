@@ -204,3 +204,17 @@ export async function rejectInvitation(invitationId: string): Promise<void> {
     throw error;
   }
 }
+
+export async function removeMember(homeId: string, userId: string): Promise<Home> {
+  try {
+    const data = await apiFetch<{ data: Home }>(`/homes/${homeId}/remove_member/`, {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId }),
+    });
+    toast.success('Membre retiré avec succès');
+    return data.data ?? data;
+  } catch (error: any) {
+    toast.error(extractErrorMessage(error?.raw || error, false, true));
+    throw error;
+  }
+}

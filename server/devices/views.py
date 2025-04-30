@@ -170,26 +170,30 @@ class EnergyConsumptionView(APIView): #TODO?: Check logics & data
         total = 0.0
 
         for device in devices:
-            # Détermine la puissance selon le type du device
             power_kw = DEVICE_TYPE_POWER.get(getattr(device, 'type', None), 0)
-            # Si c'est une lampe, adapte la puissance en fonction de la brightness
+            
+            device_state = getattr(device, 'state', {}) or {}
+            
             if device.type == "smart_bulb_x":
-                brightness = device.state.get("brightness", 100)
-                power_kw *= (brightness/100)
+                brightness = device_state.get("brightness", 100)
+                if brightness is not None and isinstance(brightness, (int, float)):
+                    power_kw *= (brightness/100)
+                else:
+                    power_kw *= 1 
 
             if device.type == "smart_oven_x":
-                # Consommation proportionnelle à la température réelle (heat en °C, entre 50°C et 250°C)
-                heat = device.state.get("heat", 0)
-                if isinstance(heat, (int, float)) and 50 <= heat <= 250:
-                    # 0 kW à 50°C, 0.2 kW à 250°C
+                heat = device_state.get("heat", 0)
+                if heat is not None and isinstance(heat, (int, float)) and 50 <= heat <= 250:
                     power_kw = 0.2 * (heat - 50) / (250 - 50)
                 else:
-                    power_kw = 0.0  # Pas de consommation hors plage
-                print(f"[DEBUG] Four {device.name} | Température: {heat}°C | Consommation: {power_kw*1000:.1f} W")
+                    power_kw = 0.0 
+
             if device.type == "smart_fridge_x":
-                mode = device.state.get("mode", "normal")
-                # Consommation : normal = 0.15 kW, eco = 0.09 kW
-                if device.state.get("on_off", True) or device.state.get("power", "on") == "on":
+                mode = device_state.get("mode", "normal")
+                on_off = device_state.get("on_off", True)
+                power = device_state.get("power", "on")
+                
+                if (on_off is not None and on_off) or (power is not None and power == "on"):
                     if mode == "eco":
                         power_kw = 0.09
                     else:
@@ -217,7 +221,7 @@ class EnergyConsumptionView(APIView): #TODO?: Check logics & data
 
             periods = []
             for cmd in cmds:
-                is_on = cmd.parameters.get('on_off')
+                is_on = cmd.parameters.get('on_off') if cmd.parameters else None
                 if is_on and last_on_time is None:
                     last_on_time = cmd.executed_at
                 elif not is_on and last_on_time:
@@ -229,6 +233,9 @@ class EnergyConsumptionView(APIView): #TODO?: Check logics & data
 
             consumption_by_period = {}
             for start, end in periods:
+                if start is None or end is None:
+                    continue
+                    
                 cur = start
                 while cur < end:
                     if granularity == 'minute':
@@ -286,6 +293,8 @@ class EnergyConsumptionView(APIView): #TODO?: Check logics & data
                 cum = {}
                 running = 0.0
                 for k, v in filled.items():
+                    if v is None:
+                        v = 0.0
                     running += v
                     cum[k] = running
                 filled = cum
@@ -300,6 +309,14 @@ class EnergyConsumptionView(APIView): #TODO?: Check logics & data
                 'consumption': filled,
                 'total': device_total,
             })
+
+        if total is None:
+            total = 0.0
+
+        for device_data in results:
+            for key, value in device_data['consumption'].items():
+                if value is None:
+                    device_data['consumption'][key] = 0.0
 
         return Response({
             'devices': results,

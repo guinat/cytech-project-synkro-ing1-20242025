@@ -133,16 +133,23 @@ class HomeViewSet(viewsets.ModelViewSet):
         except User.DoesNotExist:
             return ApiResponse.error("User not found.")
         
+        if user == home.owner:
+            return ApiResponse.error("Owner cannot be removed from his own home.")
+        
         if user not in home.members.all():
             return ApiResponse.error("User is not a member of this home.")
         
         home.members.remove(user)
-        home.save()
         
-        return ApiResponse.success(
-            HomeDetailSerializer(home).data,
-            message="Member removed successfully"
-        )
+        try:
+            serialized_data = HomeDetailSerializer(home).data
+            return ApiResponse.success(
+                serialized_data,
+                message="Member removed successfully"
+            )
+        except Exception as e:
+            from rest_framework.response import Response
+            return Response({"message": "Member removed successfully"}, status=status.HTTP_200_OK)
 
 class HomeInvitationViewSet(viewsets.ModelViewSet):
 
@@ -170,16 +177,12 @@ class HomeInvitationViewSet(viewsets.ModelViewSet):
             invitation.status = HomeInvitation.Status.EXPIRED
             invitation.save()
             return ApiResponse.error("This invitation has expired.", status_code=400)
-        # Email check
         if request.user.email != email:
             return ApiResponse.error("You must be logged in with the invited email address to accept this invitation.", status_code=403)
-        # Email verification check
         if hasattr(request.user, 'is_email_verified') and not request.user.is_email_verified:
             return ApiResponse.error("You must verify your email address before accepting an invitation.", status_code=403)
-        # Add user to home members
         home = invitation.home
         home.members.add(request.user)
-        # Update invitation status
         invitation.status = HomeInvitation.Status.ACCEPTED
         invitation.save()
         return ApiResponse.success(message="Invitation accepted successfully")
@@ -208,13 +211,10 @@ class HomeInvitationViewSet(viewsets.ModelViewSet):
             invitation.status = HomeInvitation.Status.EXPIRED
             invitation.save()
             return ApiResponse.error("This invitation has expired.", status_code=400)
-        # Email check
         if request.user.email != email:
             return ApiResponse.error("You must be logged in with the invited email address to decline this invitation.", status_code=403)
-        # Email verification check
-        # if hasattr(request.user, 'is_email_verified') and not request.user.is_email_verified:
-        #     return ApiResponse.error("Vous devez vérifier votre adresse email avant de refuser une invitation.", status_code=403)
-        # Update invitation status
+        if hasattr(request.user, 'is_email_verified') and not request.user.is_email_verified:
+            return ApiResponse.error("Vous devez vérifier votre adresse email avant de refuser une invitation.", status_code=403)
         invitation.status = HomeInvitation.Status.DECLINED
         invitation.save()
         return ApiResponse.success(message="Invitation declined successfully")
@@ -226,17 +226,14 @@ class HomeInvitationViewSet(viewsets.ModelViewSet):
         home_id = self.kwargs['home_pk']
         home = get_object_or_404(Home, id=home_id)
         
-        # Check if user is the owner or a member
         user = self.request.user
         if user != home.owner and user not in home.members.all():
             return HomeInvitation.objects.none()
         
-        # Return only pending invitations by default
         return HomeInvitation.objects.filter(home=home, status=HomeInvitation.Status.PENDING)
     
     def get_permissions(self):
         if self.action in ['create', 'destroy']:
-            # Owner of the home, not the invitation
             permission_classes = [permissions.IsAuthenticated]
             return [permission() for permission in permission_classes]
         return [IsHomeOwnerOrMember()]
@@ -248,22 +245,18 @@ class HomeInvitationViewSet(viewsets.ModelViewSet):
         return context
     
     def create(self, request, *args, **kwargs):
-        # Get the home
         home_id = self.kwargs['home_pk']
         home = get_object_or_404(Home, id=home_id)
         
-        # Check if user is the owner of the home
         if request.user != home.owner:
             raise PermissionDeniedError("Only the home owner can create invitations.")
         
         email = request.data.get('email')
         if not email:
             return ApiResponse.error("Email is required.", status_code=400)
-        # Delete any existing invitation for this home/email that is not pending
         existing = HomeInvitation.objects.filter(home=home, email=email).exclude(status=HomeInvitation.Status.PENDING)
         if existing.exists():
             existing.delete()
-        # If a pending invitation already exists, error
         if HomeInvitation.objects.filter(home=home, email=email, status=HomeInvitation.Status.PENDING).exists():
             return ApiResponse.error("An invitation is already pending for this user.", status_code=400)
         serializer = self.get_serializer(data=request.data)
@@ -277,10 +270,8 @@ class HomeInvitationViewSet(viewsets.ModelViewSet):
     
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        # Only the owner can delete invitations
         if request.user != instance.home.owner:
             raise PermissionDeniedError("Only the home owner can delete invitations.")
-        # Can delete any invitation, regardless of status
         self.perform_destroy(instance)
         return ApiResponse.success(
             message="Invitation deleted successfully",
