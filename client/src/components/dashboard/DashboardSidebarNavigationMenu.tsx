@@ -34,9 +34,8 @@ const SidebarNavigationMenu: React.FC<NavigationMenuProps> = ({
   const mainNavigation = [
     { icon: Gauge, label: 'Dashboard', href: '/dashboard' },
     { icon: Lightbulb, label: 'Devices', href: '/dashboard/devices' },
-    { icon: User, label: 'Invités', href: '/dashboard/guests' },
     ...(profile?.points && profile.points >= 60
-      ? [{ icon: Key, label: 'Administrateur', href: 'http://127.0.0.1:8000/admin/' }]
+      ? [{ icon: Key, label: 'Administrateur', href: '/dashboard/guests' }]
       : []),
   ];
 

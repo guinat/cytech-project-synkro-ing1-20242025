@@ -77,7 +77,7 @@ class DeviceViewSet(viewsets.ModelViewSet):
         device = serializer.save()
         user = request.user
         if user.is_authenticated and hasattr(user, 'points'):
-            user.points += 15
+            user.points += 5
             user.save()
         # Historique action utilisateur
         user = request.user if request.user.is_authenticated else None

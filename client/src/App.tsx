@@ -4,6 +4,7 @@ import Header from '@/components/common/Header';
 import NotFoundPage from '@/pages/NotFoundPage';
 import LandingPage from '@/pages/LandingPage';
 import DiscoverPage from '@/pages/DiscoverPage';
+
 import AcceptInvitationPage from '@/pages/dashboard/AcceptInvitationPage';
 
 
@@ -108,6 +109,7 @@ function App() {
             <Route path="/dashboard/devices" element={<DevicesPage />} />
 <Route path="/dashboard/guests" element={<GuestsPage />} />
             <Route path="/dashboard/profile" element={<ProfilePage />} />
+
             <Route path="/dashboard/settings" element={<SettingsPage />} />
           </Route>
         </Routes>

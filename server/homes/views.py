@@ -13,6 +13,8 @@ from utils.permissions import IsOwner, IsHomeOwnerOrMember
 from utils.exceptions import PermissionDeniedError
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
+from django.contrib.auth import get_user_model
+
 
 User = get_user_model()
 
@@ -47,6 +49,10 @@ class HomeViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         home = serializer.save()
+        user = request.user
+        if user.is_authenticated and hasattr(user, 'points'):
+            user.points += 30
+            user.save()
         return ApiResponse.success(
             HomeSerializer(home).data,
             message="Home created successfully",

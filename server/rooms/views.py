@@ -8,7 +8,9 @@ from utils.permissions import IsHomeOwnerOrMember
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from users.models_action_history import ActionHistory
+from django.contrib.auth import get_user_model
 
+User = get_user_model()
 
 class RoomViewSet(viewsets.ModelViewSet):
     serializer_class = RoomSerializer
@@ -47,8 +49,13 @@ class RoomViewSet(viewsets.ModelViewSet):
                     status_code=status.HTTP_400_BAD_REQUEST
                 )
             room = serializer.save()
+            user = request.user
+            if user.is_authenticated and hasattr(user, 'points'):
+                user.points += 10
+                user.save()
             # Historique action utilisateur
             user = request.user if request.user.is_authenticated else None
+
             ip = request.META.get('HTTP_X_FORWARDED_FOR', '').split(',')[0] or request.META.get('REMOTE_ADDR')
             user_agent = request.META.get('HTTP_USER_AGENT', '')
             if user:
