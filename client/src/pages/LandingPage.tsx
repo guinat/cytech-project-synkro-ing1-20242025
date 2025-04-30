@@ -1,6 +1,14 @@
 import React, { useEffect, useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import AnimatedCounter from "@/components/AnimatedCounter";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import BackgroundBeamsWithCollisionDemo from "@/components/background-beams-with-collision-demo";
+import CardHoverEffectDemo from "@/components/card-hover-effect-demo";
 
 const scrollToSection = (id: string) => {
   const el = document.getElementById(id);
@@ -10,43 +18,87 @@ const scrollToSection = (id: string) => {
 };
 
 const TEAM = [
-  { name: "Nathan", role: "Développeur", avatar: "🧑‍💻" },
-  { name: "Matias", role: "Développeur", avatar: "👨‍💻" },
-  { name: "Alice", role: "Design & Dev", avatar: "👩‍🎨" },
-  { name: "Kylian", role: "Développeur", avatar: "🧑‍🔬" },
-  { name: "Younes", role: "Développeur", avatar: "🧑‍🚀" },
+  { name: "Nathan", role: "Developer", avatar: "NJ" },
+  { name: "Matias", role: "Developer", avatar: "MD" },
+  { name: "Alice", role: "Design & Dev", avatar: "AL" },
+  { name: "Kylian", role: "Developer", avatar: "KD" },
+  { name: "Younes", role: "Developer", avatar: "YD" },
 ];
 
 const STATS = [
-  { label: "Utilisateurs", value: "+1 200" },
-  { label: "Maisons connectées", value: "+350" },
-  { label: "Routines automatisées", value: "+7 000" },
-  { label: "Économie d'énergie", value: "-22%" },
+  { label: "Users", value: "+1 200" },
+  { label: "Connected Homes", value: "+350" },
+  { label: "Automated Routines", value: "+7 000" },
+  { label: "Energy Savings", value: "-22%" },
+];
+
+const FEATURES = [
+  {
+    title: "Smart Automation",
+    description: "Schedule and let Synkro manage your routines for you.",
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M8 12l2 2 4-4" />
+      </svg>
+    ),
+  },
+  {
+    title: "Consumption Tracking",
+    description: "Visualize and optimize your energy consumption in real time.",
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+        <rect x="4" y="4" width="16" height="16" rx="4" />
+        <path d="M8 8h8v8H8z" />
+      </svg>
+    ),
+  },
+  {
+    title: "Security & Control",
+    description: "Keep control of your home, wherever you are.",
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+        <path d="M12 6v6l4 2" />
+        <circle cx="12" cy="12" r="10" />
+      </svg>
+    ),
+  },
+];
+
+const FAQ = [
+  {
+    author: "TG",
+    name: "Taisa Guidini",
+    question: "Does Synkro work with all connected devices?",
+    answer: "Yes! Synkro is compatible with most connected devices on the market (lights, thermostats, shutters, etc.) and the list continues to grow.",
+  },
+  {
+    author: "EA",
+    name: "Eva Ansermin",
+    question: "Can I control my home remotely?",
+    answer: "Absolutely! The Synkro app allows you to control your home from anywhere, from your smartphone or computer.",
+  },
+  {
+    author: "RG",
+    name: "Romuald Grignon",
+    question: "Is my data secure?",
+    answer: "Yes, your data security is a priority. All information is encrypted and strictly confidential.",
+  },
 ];
 
 const LandingPage = () => {
-  // Animation logo on scroll
   const logoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY;
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      // Ratio de scroll sur toute la page (0 en haut, 1 en bas)
       const scrollRatio = docHeight > 0 ? Math.min(Math.max(scrollY / docHeight, 0), 1) : 0;
-      
-      // Pour un effet plus rapide au début, on peut utiliser une fonction non-linéaire
-      // Cela donnera une animation qui commence plus rapidement puis ralentit
-      const animationRatio = Math.pow(scrollRatio, 0.7); // Effet plus progressif
+      const animationRatio = Math.pow(scrollRatio, 0.7);
       
       if (logoRef.current) {
-        // Grossissement du logo: 1x → 2.5x
         const scale = 1 + (animationRatio * 1.5);
-        
-        // Déplacement vers le haut: 0 → -120px (valeur plus importante pour un effet plus visible)
         const translateY = -animationRatio * 120;
-        
-        // Appliquer les transformations
         logoRef.current.style.transform = `translateY(${translateY}px) scale(${scale})`;
         logoRef.current.style.transition = 'transform 0.15s cubic-bezier(0.25, 0.1, 0.25, 1)';
         logoRef.current.style.willChange = 'transform';
@@ -54,7 +106,6 @@ const LandingPage = () => {
     };
     
     window.addEventListener("scroll", handleScroll, { passive: true });
-    // Application initiale
     handleScroll();
     
     return () => window.removeEventListener("scroll", handleScroll);
@@ -64,250 +115,360 @@ const LandingPage = () => {
   const statsInView = useInView(statsSectionRef, { once: true, amount: 0.4 });
 
   return (
-    <div className="bg-white min-h-screen w-full font-sans">
-      {/* Hero Section */}
-      <section className="flex flex-col items-center justify-center h-screen relative z-10">
-        <h1 className="text-5xl md:text-7xl font-extrabold text-indigo-800 mb-6 animate-fade-in-up-scroll">Bienvenue sur Synkro</h1>
-        <p className="text-lg md:text-2xl text-indigo-600 mb-10 animate-fade-in-up-scroll delay-150 text-center max-w-xl">
-          Gérez, surveillez et optimisez votre maison connectée en toute simplicité.
-        </p>
-        <button
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg transition-all duration-300 animate-bounce"
-          onClick={() => window.location.href = '/discover'}
+    <div className="bg-white text-primary min-h-screen w-full font-sans">
+      {/* Hero Section with Background Beams */}
+      <BackgroundBeamsWithCollisionDemo />
+      
+      {/* Main Hero Content */}
+      <section className="flex flex-col items-center justify-center h-screen relative z-10 px-4 -mt-[100vh]">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-center max-w-xl"
         >
-          Découvrez nos fonctionnalités
-        </button>
-        <button
-          className="mt-8 text-indigo-500 hover:text-indigo-700 text-xl animate-fade-in-up-scroll delay-300 flex flex-col items-center"
-          onClick={() => scrollToSection("features")}
-        >
-          <span>Découvrir</span>
-          <svg className="w-6 h-6 animate-bounce mt-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-        {/* Logo animé - replacé sous le bouton Découvrir */}
-        <div className="flex justify-center mt-8">
-          <img
-            
-            src="/synkro.svg"
-            alt="Logo Synkro"
-            className="w-56 h-56"
-          />
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary mb-4 tracking-tight">
+            SYNKRO
+          </h1>
+          <p className="text-base md:text-lg text-primary/80 mb-8 leading-relaxed mx-auto max-w-md">
+            Manage, monitor, and optimize your connected home with ease.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button 
+              className="px-6 py-2 text-sm rounded-md bg-primary text-white hover:bg-primary/90 transition-all duration-300"
+              onClick={() => window.location.href = '/discover'}
+            >
+              Discover Synkro
+            </Button>
+            <Button 
+              variant="outline" 
+              className="px-6 py-2 text-sm rounded-md border-primary text-primary hover:bg-primary hover:text-white transition-all duration-300"
+              onClick={() => window.location.href = '/auth/sign_up'}
+            >
+              Sign Up
+            </Button>
+          </div>
+        </motion.div>
+      </section>
+      
+      {/* Features Demo Cards */}
+      <section className="py-12 px-4 bg-white">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-xl font-medium text-center text-primary/80 mb-2">Our Solutions</h2>
+          <CardHoverEffectDemo />
         </div>
       </section>
       
       {/* Stats Section */}
       <motion.section
         ref={statsSectionRef}
-        className="flex flex-wrap justify-center gap-8 py-8"
-        initial={{ opacity: 0, y: 60 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.2 }}
-        transition={{ duration: 0.7, ease: "easeOut" }}
+        className="py-16 px-4 bg-gray-50"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.7 }}
       >
-        {STATS.map(stat => {
-          // Extraction du nombre pour l'animation
-          const match = stat.value.match(/([\d\s]+)/);
-          let num = 0;
-          if (match) {
-            num = parseInt(match[1].replace(/\s/g, ""), 10);
-          }
-          const isPercent = stat.value.includes('%');
-          return (
-            <motion.div
-              key={stat.label}
-              className="bg-white rounded-xl shadow-lg px-8 py-6 flex flex-col items-center min-w-[170px] hover:scale-105 transition-transform duration-300"
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.4 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-            >
-              <span className="text-3xl font-bold text-indigo-700 flex items-center">
-                <AnimatedCounter
-                  value={num}
-                  duration={1.2}
-                  className="inline-block"
-                  trigger={!!statsInView}
-                  format={n =>
-                    stat.value.startsWith("+") ?
-                      "+" + n.toLocaleString("fr-FR") + (isPercent ? "%" : "") :
-                    stat.value.startsWith("-") ?
-                      "-" + n.toLocaleString("fr-FR") + (isPercent ? "%" : "") :
-                      n.toLocaleString("fr-FR") + (isPercent ? "%" : "")
-                  }
-                />
-              </span>
-              <span className="text-md text-gray-600 mt-1">{stat.label}</span>
-            </motion.div>
-          );
-        })}
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-xl font-medium text-center text-primary/80 mb-10">Key Metrics</h2>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {STATS.map(stat => {
+              const match = stat.value.match(/([\d\s]+)/);
+              let num = 0;
+              if (match) {
+                num = parseInt(match[1].replace(/\s/g, ""), 10);
+              }
+              const isPercent = stat.value.includes('%');
+              
+              return (
+                <motion.div
+                  key={stat.label}
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  whileInView={{ scale: 1, opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <Card key={stat.label} className="bg-white shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
+                    <CardContent className="flex flex-col items-center p-4">
+                      <span className="text-2xl font-bold text-primary my-2">
+                        <AnimatedCounter
+                          value={num}
+                          duration={1.2}
+                          className="inline-block"
+                          trigger={!!statsInView}
+                          format={n =>
+                            stat.value.startsWith("+") ?
+                              "+" + n.toLocaleString("en-US") + (isPercent ? "%" : "") :
+                            stat.value.startsWith("-") ?
+                              "-" + n.toLocaleString("en-US") + (isPercent ? "%" : "") :
+                              n.toLocaleString("en-US") + (isPercent ? "%" : "")
+                          }
+                        />
+                      </span>
+                      <span className="text-sm text-primary/70">{stat.label}</span>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
       </motion.section>
       
       {/* Features Section */}
       <motion.section
         id="features"
-        className="py-24 px-4 max-w-5xl mx-auto"
-        initial={{ opacity: 0, y: 60 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.2 }}
-        transition={{ duration: 0.7, ease: "easeOut" }}
+        className="py-16 px-4 bg-white"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.7 }}
       >
-        <h2 className="text-4xl font-bold text-center text-indigo-700 mb-16">Pourquoi Synkro ?</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          <motion.div
-            className="bg-white rounded-2xl p-8 shadow-xl hover:scale-105 transition-transform duration-300 flex flex-col items-center"
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-          >
-            <svg className="w-14 h-14 text-indigo-400 mb-4 animate-float" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M8 12l2 2 4-4" />
-            </svg>
-            <h3 className="text-xl font-semibold mb-2">Automatisation intelligente</h3>
-            <p className="text-gray-600 text-center">Programmez et laissez Synkro gérer vos routines pour vous.</p>
-          </motion.div>
-
-          <motion.div
-            className="bg-white rounded-2xl p-8 shadow-xl hover:scale-105 transition-transform duration-300 flex flex-col items-center"
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.7, ease: "easeOut", delay: 0.1 }}
-          >
-            <svg className="w-14 h-14 text-indigo-400 mb-4 animate-float-delay" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <rect x="4" y="4" width="16" height="16" rx="4" />
-              <path d="M8 8h8v8H8z" />
-            </svg>
-            <h3 className="text-xl font-semibold mb-2">Suivi de la consommation</h3>
-            <p className="text-gray-600 text-center">Visualisez et optimisez votre consommation d'énergie en temps réel.</p>
-          </motion.div>
-
-          <motion.div
-            className="bg-white rounded-2xl p-8 shadow-xl hover:scale-105 transition-transform duration-300 flex flex-col items-center"
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.7, ease: "easeOut", delay: 0.2 }}
-          >
-            <svg className="w-14 h-14 text-indigo-400 mb-4 animate-float-delay-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path d="M12 6v6l4 2" />
-              <circle cx="12" cy="12" r="10" />
-            </svg>
-            <h3 className="text-xl font-semibold mb-2">Sécurité & contrôle</h3>
-            <p className="text-gray-600 text-center">Gardez le contrôle de votre maison, où que vous soyez.</p>
-          </motion.div>
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-xl font-medium text-center text-primary/80 mb-10">Why Synkro</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {FEATURES.map((feature, index) => (
+              <motion.div
+                key={feature.title}
+                className="border border-gray-100 rounded-md p-6 hover:border-primary/30 hover:shadow-sm transition-all duration-300"
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: index * 0.1 }}
+                whileHover={{ 
+                  y: -5,
+                  transition: { duration: 0.2 }
+                }}
+              >
+                <div className="p-2 bg-primary/5 rounded-full w-10 h-10 flex items-center justify-center mb-4">
+                  <div className="text-primary">{feature.icon}</div>
+                </div>
+                <h3 className="text-base font-medium text-primary mb-2">{feature.title}</h3>
+                <p className="text-sm text-primary/70 leading-relaxed">{feature.description}</p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </motion.section>
 
       {/* Team Section */}
       <motion.section
-        className="py-20 px-4 max-w-4xl mx-auto"
-        initial={{ opacity: 0, y: 60 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.2 }}
-        transition={{ duration: 0.7, ease: "easeOut" }}
+        className="py-16 px-4 bg-gray-50"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.7 }}
       >
-        <h2 className="text-3xl font-bold text-center text-indigo-700 mb-12">L'équipe Synkro</h2>
-        <div className="flex flex-wrap justify-center gap-12">
-          {TEAM.map(member => (
-            <motion.div
-              key={member.name}
-              className="bg-white rounded-xl shadow-lg px-12 py-10 flex flex-col items-center hover:scale-105 transition-transform duration-300"
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.4 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-            >
-              <div className="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center text-4xl mb-4 border-4 border-indigo-300 shadow">
-                <span aria-label="avatar" role="img">{member.avatar}</span>
-              </div>
-              <span className="font-semibold text-xl text-indigo-800 mb-1">{member.name}</span>
-              <span className="text-gray-500 text-base">{member.role}</span>
-            </motion.div>
-          ))}
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-xl font-medium text-center text-primary/80 mb-10">Our Team</h2>
+          <div className="grid grid-cols-3 md:grid-cols-5 gap-6">
+            {TEAM.map((member, index) => (
+              <motion.div
+                key={member.name}
+                className="flex flex-col items-center"
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: index * 0.1 }}
+                whileHover={{ 
+                  scale: 1.03,
+                  transition: { duration: 0.2 }
+                }}
+              >
+                <Avatar className="w-14 h-14 border border-primary/20 mb-2">
+                  <AvatarFallback className="bg-primary/5 text-primary text-xs">
+                    {member.avatar}
+                  </AvatarFallback>
+                </Avatar>
+                <h3 className="text-sm font-medium text-primary">{member.name}</h3>
+                <Badge variant="outline" className="mt-1 text-xs bg-transparent border-primary/20 text-primary/70">
+                  {member.role}
+                </Badge>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </motion.section>
 
-      {/* Section FAQ */}
+      {/* FAQ Section */}
       <motion.section
-        className="py-20 px-4 max-w-3xl mx-auto"
-        initial={{ opacity: 0, y: 60 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.2 }}
-        transition={{ duration: 0.7, ease: "easeOut" }}
+        className="py-16 px-4 bg-white"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.7 }}
       >
-        <h2 className="text-3xl font-bold text-center text-indigo-700 mb-10">FAQ</h2>
-        <div className="space-y-8">
-          <div className="bg-indigo-50 rounded-xl p-6 shadow flex flex-col md:flex-row items-start gap-4">
-            <div className="w-12 h-12 rounded-full bg-indigo-200 flex items-center justify-center text-xl font-bold text-indigo-700">TG</div>
-            <div>
-              <div className="font-semibold text-indigo-900">Taisa Guidini</div>
-              <div className="text-indigo-800 mt-1">Est-ce que Synkro fonctionne avec tous les appareils connectés&nbsp;?</div>
-              <div className="text-gray-600 mt-2">Bien sûr ! Synkro est compatible avec la majorité des objets connectés du marché (lumières, thermostats, volets, etc.) et la liste s’agrandit régulièrement.</div>
-            </div>
-          </div>
-          <div className="bg-indigo-50 rounded-xl p-6 shadow flex flex-col md:flex-row items-start gap-4">
-            <div className="w-12 h-12 rounded-full bg-indigo-200 flex items-center justify-center text-xl font-bold text-indigo-700">EA</div>
-            <div>
-              <div className="font-semibold text-indigo-900">Eva Ansermin</div>
-              <div className="text-indigo-800 mt-1">Est-ce que je peux contrôler ma maison à distance&nbsp;?</div>
-              <div className="text-gray-600 mt-2">Absolument ! L’application Synkro vous permet de piloter votre maison où que vous soyez, depuis votre smartphone ou ordinateur.</div>
-            </div>
-          </div>
-          <div className="bg-indigo-50 rounded-xl p-6 shadow flex flex-col md:flex-row items-start gap-4">
-            <div className="w-12 h-12 rounded-full bg-indigo-200 flex items-center justify-center text-xl font-bold text-indigo-700">RG</div>
-            <div>
-              <div className="font-semibold text-indigo-900">Romuald Grignon</div>
-              <div className="text-indigo-800 mt-1">Est-ce que mes données sont sécurisées&nbsp;?</div>
-              <div className="text-gray-600 mt-2">Oui, la sécurité de vos données est une priorité. Toutes les informations sont chiffrées et strictement confidentielles.</div>
-            </div>
-          </div>
-        </div>
-        {/* Call to action final */}
-        <div className="text-center mt-16">
-          <h3 className="text-2xl font-bold text-indigo-800 mb-6">Convaincu&nbsp;?</h3>
-          <button
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-4 rounded-full text-lg font-semibold shadow-lg transition-all duration-300"
-            onClick={() => window.location.href = '/auth/sign_up'}
-          >
-            Inscrivez vous Maintenant 
-          </button>
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-xl font-medium text-center text-primary/80 mb-8">FAQ</h2>
+          
+          <Tabs defaultValue="tab1" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-6 bg-gray-50">
+              <TabsTrigger value="tab1" className="text-xs">Compatibility</TabsTrigger>
+              <TabsTrigger value="tab2" className="text-xs">Usage</TabsTrigger>
+              <TabsTrigger value="tab3" className="text-xs">Security</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="tab1" className="space-y-4">
+              <Card className="border border-gray-100 bg-white shadow-sm hover:shadow-md transition-all duration-300">
+                <CardContent className="pt-4 px-4">
+                  <div className="flex items-start gap-3">
+                    <Avatar className="w-8 h-8">
+                      <AvatarFallback className="bg-primary/5 text-primary text-xs">
+                        {FAQ[0].author}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-medium text-primary">{FAQ[0].name}</p>
+                      <p className="text-sm text-primary mt-1">{FAQ[0].question}</p>
+                      <p className="text-xs text-primary/70 mt-1 leading-relaxed">{FAQ[0].answer}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="tab2" className="space-y-4">
+              <Card className="border border-gray-100 bg-white shadow-sm hover:shadow-md transition-all duration-300">
+                <CardContent className="pt-4 px-4">
+                  <div className="flex items-start gap-3">
+                    <Avatar className="w-8 h-8">
+                      <AvatarFallback className="bg-primary/5 text-primary text-xs">
+                        {FAQ[1].author}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-medium text-primary">{FAQ[1].name}</p>
+                      <p className="text-sm text-primary mt-1">{FAQ[1].question}</p>
+                      <p className="text-xs text-primary/70 mt-1 leading-relaxed">{FAQ[1].answer}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="tab3" className="space-y-4">
+              <Card className="border border-gray-100 bg-white shadow-sm hover:shadow-md transition-all duration-300">
+                <CardContent className="pt-4 px-4">
+                  <div className="flex items-start gap-3">
+                    <Avatar className="w-8 h-8">
+                      <AvatarFallback className="bg-primary/5 text-primary text-xs">
+                        {FAQ[2].author}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-medium text-primary">{FAQ[2].name}</p>
+                      <p className="text-sm text-primary mt-1">{FAQ[2].question}</p>
+                      <p className="text-xs text-primary/70 mt-1 leading-relaxed">{FAQ[2].answer}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </motion.section>
       
-      {/* Optionnel : tu peux garder ou retirer les blobs animés pour un style plus "moderne blanc" épuré */}
-      {/* <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-0 left-0 w-80 h-80 bg-indigo-200 rounded-full opacity-30 blur-3xl animate-bg-move" style={{filter:'blur(80px)'}}></div>
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-200 rounded-full opacity-30 blur-3xl animate-bg-move-reverse" style={{filter:'blur(90px)'}}></div>
-      </div> */}
+      {/* CTA Section */}
+      <motion.section
+        className="py-16 px-4 bg-gray-50 text-center"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.7 }}
+      >
+        <div className="max-w-md mx-auto">
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            whileInView={{ scale: 1, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2 className="text-xl font-medium text-primary mb-3">Ready to transform your home?</h2>
+            <p className="text-sm text-primary/70 mb-6">Join the Synkro community and take control of your living space.</p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button 
+                className="px-6 py-2 text-sm rounded-md bg-primary text-white hover:bg-primary/90 transition-all duration-300"
+                onClick={() => window.location.href = '/auth/sign_up'}
+              >
+                Get Started
+              </Button>
+              <Button 
+                variant="outline" 
+                className="px-6 py-2 text-sm rounded-md border-primary text-primary hover:bg-primary hover:text-white transition-all duration-300"
+                onClick={() => window.location.href = '/discover'}
+              >
+                Learn More
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      </motion.section>
+
+      {/* Footer */}
+      <footer className="py-10 px-4 bg-white border-t border-gray-100">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+            <div>
+              <h3 className="text-sm font-medium text-primary mb-3">Synkro</h3>
+              <p className="text-xs text-primary/70">Smart home solution</p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-primary mb-3">Product</h3>
+              <ul className="space-y-1">
+                <li><a href="#" className="text-xs text-primary/70 hover:text-primary transition-colors">Features</a></li>
+                <li><a href="#" className="text-xs text-primary/70 hover:text-primary transition-colors">Pricing</a></li>
+                <li><a href="#" className="text-xs text-primary/70 hover:text-primary transition-colors">FAQ</a></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-primary mb-3">Resources</h3>
+              <ul className="space-y-1">
+                <li><a href="#" className="text-xs text-primary/70 hover:text-primary transition-colors">Blog</a></li>
+                <li><a href="#" className="text-xs text-primary/70 hover:text-primary transition-colors">Documentation</a></li>
+                <li><a href="#" className="text-xs text-primary/70 hover:text-primary transition-colors">Support</a></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-primary mb-3">Legal</h3>
+              <ul className="space-y-1">
+                <li><a href="#" className="text-xs text-primary/70 hover:text-primary transition-colors">Privacy</a></li>
+                <li><a href="#" className="text-xs text-primary/70 hover:text-primary transition-colors">Terms</a></li>
+                <li><a href="#" className="text-xs text-primary/70 hover:text-primary transition-colors">Cookies</a></li>
+              </ul>
+            </div>
+          </div>
+          <Separator className="bg-gray-100 mb-6" />
+          <div className="flex flex-col md:flex-row justify-between items-center gap-3">
+            <p className="text-xs text-primary/70">© 2025 Synkro. All rights reserved.</p>
+            <div className="flex gap-3">
+              <a href="#" className="text-primary/70 hover:text-primary transition-colors">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
+                </svg>
+              </a>
+              <a href="#" className="text-primary/70 hover:text-primary transition-colors">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
+                </svg>
+              </a>
+              <a href="#" className="text-primary/70 hover:text-primary transition-colors">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fillRule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" clipRule="evenodd" />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
       
       {/* Styles d'animation */}
       <style>{`
         @keyframes fade-in-up-scroll {
-          0% { opacity: 0; transform: translateY(40px); }
+          0% { opacity: 0; transform: translateY(20px); }
           100% { opacity: 1; transform: translateY(0); }
         }
-        .animate-fade-in-up-scroll { opacity: 0; animation: fade-in-up-scroll 1s cubic-bezier(.4,0,.2,1) both; }
+        .animate-fade-in-up-scroll { opacity: 0; animation: fade-in-up-scroll 0.8s cubic-bezier(.4,0,.2,1) both; }
         .animate-fade-in-up-scroll.delay-150 { animation-delay: .15s; }
         .animate-fade-in-up-scroll.delay-300 { animation-delay: .3s; }
-        
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-12px); }
-        }
-        .animate-float { animation: float 3s ease-in-out infinite; }
-        .animate-float-delay { animation: float 3s ease-in-out infinite; animation-delay: 1s; }
-        .animate-float-delay-2 { animation: float 3s ease-in-out infinite; animation-delay: 2s; }
-        
-        @keyframes bg-move {
-          0%, 100% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(60px) scale(1.1); }
-        }
-        .animate-bg-move { animation: bg-move 8s ease-in-out infinite; }
-        .animate-bg-move-reverse { animation: bg-move 10s ease-in-out infinite reverse; }
       `}</style>
     </div>
   );
