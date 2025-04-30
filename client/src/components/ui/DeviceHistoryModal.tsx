@@ -50,9 +50,28 @@ export function DeviceHistoryModal({ homeId, roomId, deviceId, triggerClassName 
         ) : error ? (
           <div style={{ color: 'red' }}>{error}</div>
         ) : (
-          <pre style={{ maxHeight: 400, overflow: 'auto', fontSize: 13, background: '#f6f6f6', padding: 8 }}>
-            {commands.length > 0 ? JSON.stringify(commands, null, 2) : 'Aucune commande trouvée.'}
-          </pre>
+          <div style={{ maxHeight: 400, overflow: 'auto', fontSize: 14, background: '#f6f6f6', padding: 8 }}>
+            {commands.length > 0 ? (
+              <ul className="space-y-1">
+                {commands.map((cmd, idx) => (
+                  Object.entries(cmd.parameters).map(([param, value], j) => (
+                    <li key={idx + '-' + j} className="flex gap-4 items-center border-b border-gray-200 py-1">
+                      <span className="text-xs text-gray-500 min-w-[120px]">
+                        {cmd.executed_at || cmd.created_at
+                          ? new Date(cmd.executed_at || cmd.created_at).toLocaleString('fr-FR')
+                          : 'Date inconnue'}
+                      </span>
+                      <span className="font-semibold text-blue-700">{param}</span>
+                      <span className="mx-2 text-gray-400">→</span>
+                      <span className="text-black dark:text-white">{String(value)}</span>
+                    </li>
+                  ))
+                ))}
+              </ul>
+            ) : (
+              <div className="text-gray-400">Aucune commande trouvée.</div>
+            )}
+          </div>
         )}
       </DialogContent>
     </Dialog>

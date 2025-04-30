@@ -110,6 +110,13 @@ const DashboardPage: React.FC = (): ReactNode => {
       loadDevicesWithContext();
     }
   }, [selectedHomeId, selectedRoomId, loadDevicesWithContext]);
+
+  // Correction : charge les devices dès l'arrivée sur la page overview
+  useEffect(() => {
+    if (selectedHomeId && selectedRoomId === "overview") {
+      loadDevicesWithContext();
+    }
+  }, [selectedHomeId, selectedRoomId, loadDevicesWithContext]);
   
   const fetchRoomDetail = useCallback(async () => {
     if (!selectedHomeId || selectedRoomId === 'overview' || networkRequestActive.current.roomDetail) return;
