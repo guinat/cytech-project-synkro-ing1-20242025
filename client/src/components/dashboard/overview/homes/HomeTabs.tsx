@@ -1,38 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { HomeQuickCreateForm } from '@/components/3_home/forms/HomeQuickCreateForm';
 import { Plus, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import type { Home } from '@/services/homes.service';
-import HomeModal from '@/components/dashboard/HomeModal';
+import { useNavigate } from 'react-router-dom';
 
 interface HomeTabsProps {
   homes: Array<{ id: string; name: string }>;
   activeHome: string;
   onHomeChange: (homeId: string) => void;
   onCreateHome: (data: { name: string }) => Promise<void>;
-  onRename?: (name: string) => Promise<void>;
-  onColorChange?: (color: string) => Promise<void>;
-  onDelete?: () => Promise<void>;
-  onInvite?: (email: string, homeId: string) => Promise<void>;
-  devices: any[]; //je récupère les devices filtrés pour la recherche
+  devices: any[];
   onOpenDeviceDetail: (device: any) => void;
 }
 
-const HomeTabs: React.FC<HomeTabsProps> = ({ homes, activeHome, onHomeChange, onCreateHome, onRename, onColorChange, onDelete, onInvite, devices = [], onOpenDeviceDetail }) => {
+const HomeTabs: React.FC<HomeTabsProps> = ({ homes, activeHome, onHomeChange, onCreateHome, devices = [], onOpenDeviceDetail }) => {
+  const navigate = useNavigate();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [isHomeModalOpen, setIsHomeModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchInput, setShowSearchInput] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  //hookers de la fonctionnalité de recherche
-  const [searchQuery, setSearchQuery] = useState(''); //stocker la requete de recherche, set pour la mettre a jour
-  const [showSearchInput, setShowSearchInput] = useState(false); //etat pour afficher ou non le champs de recherche, set le boolean 1 oui 0 non
-  const searchInputRef = useRef<HTMLInputElement>(null); //réf react pour l'input (généré par IA car je ne savais pas comment faire)
- 
-  //ce hook se déclenche quand showSearchInput est vrai 
   useEffect(() => {
     if (showSearchInput && searchInputRef.current) {
       searchInputRef.current.focus();
@@ -56,9 +47,6 @@ const HomeTabs: React.FC<HomeTabsProps> = ({ homes, activeHome, onHomeChange, on
     }
   };
 
-  const activeHomeObj = homes.find((h) => h.id === activeHome) as Home | undefined;
-
-  // Recherche device
   const [deviceSearch, setDeviceSearch] = useState('');
   const [showDeviceSearch, setShowDeviceSearch] = useState(false);
   const deviceInputRef = useRef<HTMLInputElement>(null);
@@ -73,8 +61,6 @@ const HomeTabs: React.FC<HomeTabsProps> = ({ homes, activeHome, onHomeChange, on
     device.name.toLowerCase().includes(deviceSearch.toLowerCase())
   );
 
-  console.log("[HomeTabs] isHomeModalOpen:", isHomeModalOpen, "activeHomeObj:", activeHomeObj);
-
   return (
     <div className="flex items-center justify-between mb-6 border-b border-border pb-3">
       <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar">
@@ -82,7 +68,7 @@ const HomeTabs: React.FC<HomeTabsProps> = ({ homes, activeHome, onHomeChange, on
           <input
             ref={searchInputRef}
             type="text"
-            placeholder="Rechercher un home..."
+            placeholder="Search for a home..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className="border rounded-md px-4 py-2 w-full max-w-xs text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent mr-2"
@@ -121,7 +107,7 @@ const HomeTabs: React.FC<HomeTabsProps> = ({ homes, activeHome, onHomeChange, on
           </Dialog>
         )}
       </div>
-      
+
       <div className="flex items-center invisible">
         <TooltipProvider>
           <Tooltip>
@@ -132,7 +118,6 @@ const HomeTabs: React.FC<HomeTabsProps> = ({ homes, activeHome, onHomeChange, on
                 className="h-8 w-8 rounded-full"
                 onClick={() => setShowSearchInput((v) => !v)}
               >
-                
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -140,10 +125,9 @@ const HomeTabs: React.FC<HomeTabsProps> = ({ homes, activeHome, onHomeChange, on
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-        </div>
+      </div>
 
-        <div className="flex items-center ">
-        {/*Bouton de recherche des devices de la maison*/}
+      <div className="flex items-center">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -162,13 +146,11 @@ const HomeTabs: React.FC<HomeTabsProps> = ({ homes, activeHome, onHomeChange, on
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Rechercher un objet de la maison</p>
+              <p>Search for a device</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
 
-
-        {/* Bouton des paramètres de la home */}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -177,7 +159,7 @@ const HomeTabs: React.FC<HomeTabsProps> = ({ homes, activeHome, onHomeChange, on
                 variant="outline"
                 size="icon"
                 className="h-8 w-8 rounded-full"
-                onClick={() => setIsHomeModalOpen(true)}
+                onClick={() => navigate(`/dashboard/settings`)}
                 aria-label="Home Settings"
               >
                 <Settings className="h-4 w-4" />
@@ -188,15 +170,14 @@ const HomeTabs: React.FC<HomeTabsProps> = ({ homes, activeHome, onHomeChange, on
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-
       </div>
-      
+
       {showDeviceSearch && (
         <div className="relative">
           <input
             ref={deviceInputRef}
             type="text"
-            placeholder="Rechercher un objet..."
+            placeholder="Search for a device..."
             value={deviceSearch}
             onChange={e => setDeviceSearch(e.target.value)}
             className="border rounded-md px-4 py-2 w-full max-w-xs text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent mt-2"
@@ -219,46 +200,11 @@ const HomeTabs: React.FC<HomeTabsProps> = ({ homes, activeHome, onHomeChange, on
             </ul>
           )}
           {deviceSearch && filteredDevices.length === 0 && (
-            <div className="absolute z-10 w-full bg-white border rounded shadow mt-1 px-4 py-2 text-sm text-muted-foreground">Aucun objet trouvé</div>
+            <div className="absolute z-10 w-full bg-white border rounded shadow mt-1 px-4 py-2 text-sm text-muted-foreground">
+              No device found
+            </div>
           )}
         </div>
-      )}
-      
-      {/* Dialog natif pour test */}
-      <Dialog open={isHomeModalOpen} onOpenChange={setIsHomeModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Paramètres de la home</DialogTitle>
-            <DialogDescription>
-              Ceci est un test de modal natif avec Dialog. Si tu vois ce contenu, le Dialog fonctionne !
-            </DialogDescription>
-          </DialogHeader>
-          <div>
-            <p>Nom de la home : {activeHomeObj?.name}</p>
-            <p>ID : {activeHomeObj?.id}</p>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Fermer</Button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {activeHomeObj && (
-        <>
-          {console.log('[HomeTabs] HomeModal rendered with open:', isHomeModalOpen)}
-          <HomeModal
-            key={activeHomeObj.id}
-            open={isHomeModalOpen}
-            onClose={() => setIsHomeModalOpen(false)}
-            home={activeHomeObj}
-            onRename={onRename}
-            onColorChange={onColorChange}
-            onDelete={onDelete}
-            onInvite={onInvite ? (email: string) => onInvite(email, activeHomeObj.id) : undefined}
-          />
-        </>
       )}
     </div>
   );
