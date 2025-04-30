@@ -185,6 +185,7 @@ class EnergyConsumptionView(APIView): #TODO?: Check logics & data
                     power_kw = 0.2 * (heat - 50) / (250 - 50)
                 else:
                     power_kw = 0.0  # Pas de consommation hors plage
+                print(f"[DEBUG] Four {device.name} | Température: {heat}°C | Consommation: {power_kw*1000:.1f} W")
             if device.type == "smart_fridge_x":
                 mode = device.state.get("mode", "normal")
                 # Consommation : normal = 0.15 kW, eco = 0.09 kW

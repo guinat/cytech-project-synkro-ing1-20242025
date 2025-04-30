@@ -131,7 +131,8 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
             currentHistoricalData[device.device_id] = {};
           }
           Object.entries(device.consumption ?? {}).forEach(([period, value]) => {
-            if (value > 0 || !currentHistoricalData[device.device_id][period]) {
+            // Ne pas écraser les anciennes valeurs déjà enregistrées
+            if (currentHistoricalData[device.device_id][period] === undefined) {
               currentHistoricalData[device.device_id][period] = value;
             }
           });
