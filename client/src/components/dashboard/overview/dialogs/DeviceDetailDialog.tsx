@@ -6,6 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
+import { DeviceHistoryModal } from '@/components/ui/DeviceHistoryModal';
+
 import { cn } from '@/lib/utils';
 import DeviceDynamicControls from '../devices/DeviceDynamicControls';
 import DeviceIcon from '../devices/DeviceIcon';
@@ -169,22 +171,6 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
     console.log("test");
   };
 
-  const handleHistory = async () => {
-    if (!deviceDetails) return;
-    try {
-      const commands = await getDeviceCommand(
-        deviceDetails.home,
-        deviceDetails.room,
-        deviceDetails.id,
-      );
-      console.log('Liste des DeviceCommand:', commands);
-    } catch(error) {
-      console.error("Failed to get device commands", error);
-      toast.error("Impossible d'accéder à l'historique de l'appareil");
-      console.log("flop");
-    }
-  };
-
 
   const formatLastActive = (lastActiveAt?: string) => {
     if (!lastActiveAt) return "Inconnu";
@@ -337,9 +323,12 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
                     </>
                   )}
                 </Button>
-                <Button
-                content='Historique'
-                onClick={handleHistory}/>
+                <DeviceHistoryModal
+                  homeId={homeId}
+                  roomId={roomId}
+                  deviceId={deviceDetails?.id || device.id}
+                  triggerClassName="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-white px-4 py-2 ml-2"
+                />
               </div>
             </div>
           </>
