@@ -101,7 +101,7 @@ export const InviteGuestModal: React.FC<InviteGuestModalProps> = ({ open, onOpen
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{guestToEdit ? 'Modifier un invité' : 'Inviter un nouvel invité'}</DialogTitle>
+            <DialogTitle>{guestToEdit ? 'Modifier un compte' : 'Inviter une nouvelle personne'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

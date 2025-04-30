@@ -10,6 +10,7 @@ import {
     SelectValue,
   } from "@/components/ui/select"
 import FeatureServiceCard from '@/components/dashboard/FeatureServiceCard';
+import { motion } from "framer-motion";
 
 const DiscoverPage = () => {
     const [deviceTypes, setDeviceTypes] = React.useState<PublicDeviceType[]>([]);
@@ -185,109 +186,122 @@ const DiscoverPage = () => {
         );
     }
 
+    const cardBase = "bg-white rounded-2xl shadow-lg p-6 border-2 border-transparent transition-all duration-300 cursor-pointer";
+    const cardHover = "hover:scale-105 hover:border-violet-500 hover:shadow-2xl hover:z-10";
+
     return (
-        <div className="flex flex-col h-screen">
-            <div className="pt-4 flex justify-center">
-                <Tabs defaultValue="devices" className="w-full max-w-4xl">
-                    <TabsList className="flex justify-center w-full gap-4">
-                        <TabsTrigger value="devices" className="w-1/2 text-lg px-8 py-3">Objets connectés</TabsTrigger>
-                        <TabsTrigger value="fonctionnality" className="w-1/2 text-lg px-8 py-3">Fonctionnalités</TabsTrigger>
-                    </TabsList>
+        <div className="min-h-screen bg-gradient-to-br from-white to-violet-50 pb-24">
+            <div className="max-w-5xl mx-auto px-4 py-12">
+                <h1 className="text-4xl font-extrabold text-violet-700 mb-8 text-center drop-shadow">Découvrez les appareils compatibles</h1>
+                <div className="flex flex-col h-screen">
+                    <div className="pt-4 flex justify-center">
+                        <Tabs defaultValue="devices" className="w-full max-w-4xl">
+                            <TabsList className="flex justify-center w-full gap-4">
+                                <TabsTrigger value="devices" className="w-1/2 text-lg px-8 py-3">Objets connectés</TabsTrigger>
+                                <TabsTrigger value="fonctionnality" className="w-1/2 text-lg px-8 py-3">Fonctionnalités</TabsTrigger>
+                            </TabsList>
 
-                    <TabsContent value="devices">
-                        <div className="w-full max-w-7xl mx-auto py-10 px-4">
-                            <div className="flex flex-col md:flex-row justify-center gap-4 mb-8 w-full max-w-3xl mx-auto">
-                                <input
-                                    type="text"
-                                    placeholder="Rechercher un appareil..."
-                                    value={search}
-                                    onChange={e => setSearch(e.target.value)}
-                                    className="border rounded-md px-4 py-2 w-full max-w-md text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                                />
-                                {/* Nouveau Select UI pour les catégories */}
-                                <Select value={selectedType} onValueChange={setSelectedType}>
-                                    <SelectTrigger className="w-full max-w-xs border rounded-md px-4 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
-                                        <SelectValue placeholder="Catégorie" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {categoryOptions.map(opt => (
-                                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {/* Select pour la marque */}
-                                <Select value={selectedBrand} onValueChange={setSelectedBrand}>
-                                    <SelectTrigger className="w-full max-w-xs border rounded-md px-4 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
-                                        <SelectValue placeholder="Marque" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {brandOptions.map(opt => (
-                                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                                {filteredDeviceTypes.map((deviceType) => {
-                                    const DeviceCardComponent = getDeviceCardComponent(deviceType.name);
-                                    return (
-                                        <div className="w-full">
-                                            <DeviceCardComponent key={deviceType.id} device={deviceType} />
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </TabsContent>
+                            <TabsContent value="devices">
+                                <div className="w-full max-w-7xl mx-auto py-10 px-4">
+                                    <div className="flex flex-col md:flex-row justify-center gap-4 mb-8 w-full max-w-3xl mx-auto">
+                                        <input
+                                            type="text"
+                                            placeholder="Rechercher un appareil..."
+                                            value={search}
+                                            onChange={e => setSearch(e.target.value)}
+                                            className="border rounded-md px-4 py-2 w-full max-w-md text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        />
+                                        {/* Nouveau Select UI pour les catégories */}
+                                        <Select value={selectedType} onValueChange={setSelectedType}>
+                                            <SelectTrigger className="w-full max-w-xs border rounded-md px-4 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                                <SelectValue placeholder="Catégorie" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {categoryOptions.map(opt => (
+                                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        {/* Select pour la marque */}
+                                        <Select value={selectedBrand} onValueChange={setSelectedBrand}>
+                                            <SelectTrigger className="w-full max-w-xs border rounded-md px-4 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                                <SelectValue placeholder="Marque" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {brandOptions.map(opt => (
+                                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                                        {filteredDeviceTypes.map((deviceType) => {
+                                            const DeviceCardComponent = getDeviceCardComponent(deviceType.name);
+                                            return (
+                                                <motion.div
+                                                    key={deviceType.id}
+                                                    className={`${cardBase} ${cardHover}`}
+                                                    whileHover={{ scale: 1.10, boxShadow: "0 8px 32px 0 rgba(124,58,237,0.15)", borderColor: "#a78bfa" }}
+                                                    transition={{ type: "spring", stiffness: 330, damping: 18 }}
+                                                >
+                                                    <DeviceCardComponent device={deviceType} />
+                                                </motion.div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </TabsContent>
 
-                    <TabsContent value="fonctionnality">
-                        <div className="w-full max-w-7xl mx-auto py-10 px-4">
-                            <div className="flex flex-col md:flex-row justify-center gap-4 mb-8 w-full max-w-3xl mx-auto">
-                                <input
-                                    type="text"
-                                    placeholder="Rechercher une fonctionnalité ou un service..."
-                                    value={featureServiceSearch}
-                                    onChange={e => setFeatureServiceSearch(e.target.value)}
-                                    className="border rounded-md px-4 py-2 w-full max-w-md text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                                />
-                                <Select value={selectedFeatureCategory} onValueChange={setSelectedFeatureCategory}>
-                                    <SelectTrigger className="w-full max-w-xs border rounded-md px-4 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
-                                        <SelectValue placeholder="Catégorie" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {featureCategories.map(opt => (
-                                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                            <TabsContent value="fonctionnality">
+                                <div className="w-full max-w-7xl mx-auto py-10 px-4">
+                                    <div className="flex flex-col md:flex-row justify-center gap-4 mb-8 w-full max-w-3xl mx-auto">
+                                        <input
+                                            type="text"
+                                            placeholder="Rechercher une fonctionnalité ou un service..."
+                                            value={featureServiceSearch}
+                                            onChange={e => setFeatureServiceSearch(e.target.value)}
+                                            className="border rounded-md px-4 py-2 w-full max-w-md text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        />
+                                        <Select value={selectedFeatureCategory} onValueChange={setSelectedFeatureCategory}>
+                                            <SelectTrigger className="w-full max-w-xs border rounded-md px-4 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                                <SelectValue placeholder="Catégorie" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {featureCategories.map(opt => (
+                                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <Select value={selectedFeatureTaskType} onValueChange={setSelectedFeatureTaskType}>
+                                            <SelectTrigger className="w-full max-w-xs border rounded-md px-4 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                                <SelectValue placeholder="Type de tâche" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {featureTaskTypes.map(opt => (
+                                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                                        {filteredFeatureServices.map((fs, idx) => (
+                                            <FeatureServiceCard
+                                                key={fs.title + idx}
+                                                title={fs.title}
+                                                description={fs.description}
+                                                icon={fs.icon}
+                                                category={fs.category}
+                                                taskType={fs.taskType}
+                                            />
                                         ))}
-                                    </SelectContent>
-                                </Select>
-                                <Select value={selectedFeatureTaskType} onValueChange={setSelectedFeatureTaskType}>
-                                    <SelectTrigger className="w-full max-w-xs border rounded-md px-4 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
-                                        <SelectValue placeholder="Type de tâche" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {featureTaskTypes.map(opt => (
-                                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                                {filteredFeatureServices.map((fs, idx) => (
-                                    <FeatureServiceCard
-                                        key={fs.title + idx}
-                                        title={fs.title}
-                                        description={fs.description}
-                                        icon={fs.icon}
-                                        category={fs.category}
-                                        taskType={fs.taskType}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    </TabsContent>
-                </Tabs>
-            </div>
-            <div className="flex flex-col items-center justify-center h-full p-8">
+                                    </div>
+                                </div>
+                            </TabsContent>
+                        </Tabs>
+                    </div>
+                    <div className="flex flex-col items-center justify-center h-full p-8">
+                    </div>
+                </div>
             </div>
         </div>
     )
