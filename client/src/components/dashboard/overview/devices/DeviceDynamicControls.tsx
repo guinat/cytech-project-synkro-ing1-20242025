@@ -306,8 +306,7 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
         <div>
           <span>Spin Speed (RPM)</span>
           <div className="flex justify-between text-xs">
-            <span>0</span>
-            <span>1000</span>
+            <span>500</span>
             <span>2000</span>
           </div>
           <Slider

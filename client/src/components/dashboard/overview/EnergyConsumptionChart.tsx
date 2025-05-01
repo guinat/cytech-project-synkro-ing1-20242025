@@ -582,9 +582,9 @@ if (granularity !== 'month') {
                   }}
                   formatter={(value, name) => {
                     if (typeof value === 'number') {
-                      return ['${value.toFixed(3)} kWh', name];
+                      return [`${value.toFixed(3)} kWh`, name];
                     }
-                    return ['${value} kWh', name];
+                    return [`${value} kWh`, name];
                   }}
                 />
                 <Legend wrapperStyle={{ fontSize: '12px' }} />
