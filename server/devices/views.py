@@ -2,9 +2,9 @@ from rest_framework import viewsets, status, generics
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.shortcuts import get_object_or_404
-from .models import Device, DeviceCommand
+from .models import Device, DeviceCommand, DeviceConsumptionHistory
 from rooms.models import Room
-from .serializers import DeviceSerializer, DeviceCommandSerializer
+from .serializers import DeviceSerializer, DeviceCommandSerializer, DeviceConsumptionHistorySerializer
 from utils.responses import ApiResponse
 from utils.permissions import IsHomeOwnerOrMember
 from django_filters.rest_framework import DjangoFilterBackend
@@ -326,6 +326,33 @@ class EnergyConsumptionView(APIView): #TODO?: Check logics & data
             'date_start': date_start,
             'date_end': date_end,
         })
+
+
+from rest_framework.views import APIView
+
+class DeviceConsumptionHistoryView(APIView):
+    permission_classes = [IsHomeOwnerOrMember]
+
+    def get(self, request):
+        device_id = request.GET.get('device_id')
+        start = request.GET.get('start')
+        end = request.GET.get('end')
+        queryset = DeviceConsumptionHistory.objects.all()
+        if device_id:
+            queryset = queryset.filter(device__id=device_id)
+        if start:
+            queryset = queryset.filter(timestamp__gte=start)
+        if end:
+            queryset = queryset.filter(timestamp__lte=end)
+        queryset = queryset.order_by('-timestamp')
+        serializer = DeviceConsumptionHistorySerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = DeviceConsumptionHistorySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class DeviceCommandViewSet(viewsets.ModelViewSet):

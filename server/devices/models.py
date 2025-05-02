@@ -37,6 +37,25 @@ class Device(models.Model):
         ordering = ['room', 'name']
         unique_together = ('room', 'name')
 
+class DeviceConsumptionHistory(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    device = models.ForeignKey(
+        Device,
+        on_delete=models.CASCADE,
+        related_name='consumption_history'
+    )
+    timestamp = models.DateTimeField()
+    consumption = models.FloatField(help_text='Consommation en kWh')
+
+    class Meta:
+        verbose_name = 'Device Consumption History'
+        verbose_name_plural = 'Device Consumption Histories'
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"{self.device.name} | {self.timestamp} | {self.consumption} kWh"
+
+
 class DeviceCommand(models.Model):
     class Status(models.TextChoices):
         PENDING = 'pending', 'Pending'
