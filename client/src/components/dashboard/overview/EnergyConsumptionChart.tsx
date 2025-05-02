@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format, subDays, subHours, subMinutes, subMonths } from "date-fns";
-import { fr } from 'date-fns/locale';
+import { enGB } from 'date-fns/locale';
 import { RefreshCw, PlayCircle, PauseCircle, Download as DownloadIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,9 +32,9 @@ interface DeviceData {
 
 const granularities = [
   { label: 'Minute', value: 'minute' },
-  { label: 'Heure', value: 'hour' },
-  { label: 'Jour', value: 'day' },
-  { label: 'Mois', value: 'month' },
+  { label: 'Hour', value: 'hour' },
+  { label: 'Day', value: 'day' },
+  { label: 'Month', value: 'month' },
 ];
 
 const refreshIntervals = {
@@ -68,7 +68,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
   }, [granularity]);
   
   const downloadCSV = () => {
-    const headers = ["Période", ...devices.map(d => d.device_name)];
+    const headers = ["Period", ...devices.map(d => d.device_name)];
     const rows = data.map(row => [row.period, ...devices.map(d => row[d.device_name] ?? 0)]);
     const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -77,7 +77,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
 
   const downloadPDF = () => {
     const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "A4" });
-    const tableColumn = ["Période", ...devices.map(d => d.device_name)];
+    const tableColumn = ["Period", ...devices.map(d => d.device_name)];
     const tableRows = data.map(row => {
       return [
         row.displayPeriod || row.period,
@@ -89,7 +89,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
     });
     
 
-    doc.text("Historique de consommation d'énergie", 40, 30);
+    doc.text("Energy consumption history", 40, 30);
 
     autoTable(doc, {
       head: [tableColumn],
@@ -206,7 +206,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
               const hourString = formatTz(zoned, 'yyyy-MM-dd HH');
               groupedSet.add(hourString);
             } catch (e) {
-              console.error('Erreur parsing date:', key, e);
+              console.error('Error parsing date:', key, e);
             }
           });
           groupedKeys = Array.from(groupedSet).sort();
@@ -219,7 +219,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
               const dayString = formatTz(zoned, 'yyyy-MM-dd');
               groupedSet.add(dayString);
             } catch (e) {
-              console.error('Erreur parsing date:', key, e);
+              console.error('Error parsing date:', key, e);
             }
           });
           groupedKeys = Array.from(groupedSet).sort();
@@ -236,7 +236,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
           const monthlyData = months.map(monthKey => {
             const entry: any = { 
               period: monthKey,
-              displayPeriod: format(new Date(monthKey + '-01'), 'MMM yyyy', { locale: fr })
+              displayPeriod: format(new Date(monthKey + '-01'), 'MMM yyyy', { locale: enGB })
             };
             
             devicesWithHistory.forEach(device => {
@@ -271,7 +271,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
               const zoned = toZonedTime(dateKey, 'Europe/Paris');
               return zoned >= limitStartDate!;
             } catch (e) {
-              console.error('Erreur parsing date key:', key, e);
+              console.error('Error parsing date key:', key, e);
               return false;
             }
           });
@@ -283,7 +283,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
               const zoned = toZonedTime(dateKey, 'Europe/Paris');
               return zoned >= limitStartDate!;
             } catch (e) {
-              console.error('Erreur parsing date key:', key, e);
+              console.error('Error parsing date key:', key, e);
               return false;
             }
           });
@@ -316,7 +316,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
                     total += value;
                   }
                 } catch (e) {
-                  console.error('Erreur parsing consumption key:', consumptionKey, e);
+                  console.error('Error parsing consumption key:', consumptionKey, e);
                 }
               });
               
@@ -346,13 +346,13 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
               const zonedDate = toZonedTime(date, 'Europe/Paris');
 
               entry.displayPeriod =
-                granularity === 'minute' ? formatTz(zonedDate, 'HH:mm', { locale: fr }) :
-                granularity === 'hour' ? formatTz(zonedDate, 'HH\'h\'', { locale: fr }) :
-                granularity === 'day' ? formatTz(zonedDate, 'dd MMM', { locale: fr }) :
+                granularity === 'minute' ? formatTz(zonedDate, 'HH:mm', { locale: enGB }) :
+                granularity === 'hour' ? formatTz(zonedDate, 'HH\'h\'', { locale: enGB }) :
+                granularity === 'day' ? formatTz(zonedDate, 'dd MMM', { locale: enGB }) :
                 entry.period;
 
             } catch (error) {
-              console.error('Erreur parsing date:', entry.period, error);
+              console.error('Error parsing date:', entry.period, error);
               entry.displayPeriod = entry.period;
             }
           });
@@ -363,8 +363,8 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
         setData([]);
       }
     } catch (e: any) {
-      console.error("Erreur lors du chargement:", e);
-      setError(e?.message || 'Erreur');
+      console.error("Error loading data:", e);
+      setError(e?.message || 'Error');
       setData([]);
     } finally {
       setLoading(false);
@@ -389,10 +389,10 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
   const getRefreshLabel = () => {
     const interval = refreshIntervals[granularity];
     if (interval === 60000) return "1 minute";
-    if (interval === 3600000) return "1 heure";
-    if (interval === 86400000) return "1 jour";
-    if (interval === 2592000000) return "30 jours";
-    return "Automatique";
+    if (interval === 3600000) return "1 hour";
+    if (interval === 86400000) return "1 day";
+    if (interval === 2592000000) return "30 days";
+    return "Automatic";
   };
 
   return (
@@ -400,10 +400,10 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle className="text-lg">Consommation d'énergie</CardTitle>
+            <CardTitle className="text-lg">Energy Consumption</CardTitle>
             <CardDescription>
-              Analyse des 10 derniers points
-              <Badge variant="outline" className="ml-2 text-xs">{autoRefresh ? getRefreshLabel() : "Manuel"}</Badge>
+              Analysis of the last 10 points
+              <Badge variant="outline" className="ml-2 text-xs">{autoRefresh ? getRefreshLabel() : "Manual"}</Badge>
             </CardDescription>
           </div>
           <div className="flex gap-2">
@@ -411,7 +411,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
               <SelectTrigger className="h-10 w-48">
                 <div className="flex items-center gap-2">
                   <DownloadIcon className="h-5 w-5" />
-                  <SelectValue placeholder="Télécharger" />
+                  <SelectValue placeholder="Download" />
                 </div>
               </SelectTrigger>
               <SelectContent>
@@ -425,7 +425,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
             </Button>
             <Button variant="outline" size="sm" onClick={loadData} disabled={loading} className="h-8">
               <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
-              Actualiser
+              Refresh
             </Button>
           </div>
         </div>
@@ -433,10 +433,10 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
       <CardContent>
         <div className="flex flex-wrap gap-3 mb-4">
           <div className="flex-1 min-w-[120px]">
-            <label className="text-xs text-muted-foreground mb-1 block">Période</label>
+            <label className="text-xs text-muted-foreground mb-1 block">Period</label>
             <Select value={granularity} onValueChange={(value) => setGranularity(value as any)}>
               <SelectTrigger className="h-8">
-                <SelectValue placeholder="Sélectionner une période" />
+                <SelectValue placeholder="Select a period" />
               </SelectTrigger>
               <SelectContent>
                 {granularities.map(g => (
@@ -447,13 +447,13 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
           </div>
           
           <div className="flex-1 min-w-[120px]">
-            <label className="text-xs text-muted-foreground mb-1 block">Appareil</label>
+            <label className="text-xs text-muted-foreground mb-1 block">Device</label>
             <Select value={selectedDevice} onValueChange={setSelectedDevice}>
               <SelectTrigger className="h-8">
-                <SelectValue placeholder="Tous les appareils" />
+                <SelectValue placeholder="All devices" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous les appareils</SelectItem>
+                <SelectItem value="all">All devices</SelectItem>
                 {devices.map(d => (
                   <SelectItem key={d.device_id} value={d.device_id}>{d.device_name}</SelectItem>
                 ))}
@@ -462,7 +462,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
           </div>
           
           <div className="flex-1 min-w-[120px]">
-            <label className="text-xs text-muted-foreground mb-1 block">Mode d'affichage</label>
+            <label className="text-xs text-muted-foreground mb-1 block">Display mode</label>
             <div className="flex items-center space-x-2 mt-1">
               <Switch 
                 id="cumulative" 
@@ -470,7 +470,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
                 onCheckedChange={setCumulative}
               />
               <Label htmlFor="cumulative" className="text-xs">
-                {cumulative ? "Consommation cumulée" : "Consommation par période"}
+                {cumulative ? "Cumulative consumption" : "Consumption per period"}
               </Label>
             </div>
           </div>
@@ -490,7 +490,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
           </div>
         ) : data.length === 0 ? (
           <div className="w-full h-[250px] flex items-center justify-center text-muted-foreground">
-            Aucune donnée disponible pour la période sélectionnée
+            No data available for the selected period
           </div>
         ) : (
           <div className="w-full h-[250px]">
@@ -506,7 +506,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
                   tick={{ fontSize: 12 }}
                   domain={cumulative ? ['auto', 'auto'] : [0, 'auto']} 
                   label={{ 
-                    value: cumulative ? "Consommation cumulée (kWh)" : "Consommation (kWh)", 
+                    value: cumulative ? "Cumulative consumption (kWh)" : "Consumption (kWh)", 
                     angle: -90, 
                     position: 'insideLeft',
                     style: { fontSize: '12px', textAnchor: 'middle' }
@@ -526,7 +526,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
                     const fullPeriod = dataItem?.period || label;
                     return (
                       <span className="font-medium">
-                        {fullPeriod} {cumulative ? " - Consommation cumulée" : " - Consommation"}
+                        {fullPeriod} {cumulative ? " - Cumulative consumption" : " - Consumption"}
                       </span>
                     );
                   }}

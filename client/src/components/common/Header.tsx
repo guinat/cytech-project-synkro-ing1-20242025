@@ -55,7 +55,7 @@ const Header: React.FC = () => {
       requiredRole: 'USER'
     },
     {
-      path: '/admin',
+      path: '/dashboard/guests',
       label: 'Administration',
       requiredRole: 'ADMIN'
     },

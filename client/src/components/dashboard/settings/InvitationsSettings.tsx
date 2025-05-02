@@ -7,6 +7,7 @@ import { Home, HomeInvitation, listInvitations, deleteInvitation } from '@/servi
 import { toast } from 'sonner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUser } from '@/contexts/UserContext';
 
 interface InvitationsSettingsProps {
   home: Home;
@@ -22,6 +23,10 @@ const InvitationsSettings: React.FC<InvitationsSettingsProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [loadingInvitations, setLoadingInvitations] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { profile: user } = useUser();
+
+  const userPoints = user?.points ?? 0;
+  const canInvite = userPoints >= 40;
 
   const fetchInvitations = async () => {
     setLoadingInvitations(true);
@@ -153,7 +158,7 @@ const InvitationsSettings: React.FC<InvitationsSettingsProps> = ({
           )}
 
           {isHomeOwner && (
-            <div className="mt-6">
+            <div className={`mt-6 ${!canInvite ? 'opacity-50 pointer-events-none select-none' : ''}`}>
               <h3 className="text-lg font-medium mb-4">Send a new invitation</h3>
               <form onSubmit={handleInviteSubmit} className="flex gap-2" autoComplete="off">
                 <Input
@@ -161,15 +166,18 @@ const InvitationsSettings: React.FC<InvitationsSettingsProps> = ({
                   placeholder="Email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  disabled={isLoading}
+                  disabled={isLoading || !canInvite}
                   className="flex-1"
                   required
                 />
-                <Button type="submit" disabled={isLoading}>
+                <Button type="submit" disabled={isLoading || !canInvite}>
                   {isLoading ? 'Sending...' : 'Invite'}
                 </Button>
               </form>
               {error && <p className="text-destructive text-sm mt-2">{error}</p>}
+              {!canInvite && (
+                <p className="text-muted-foreground text-sm mt-2">Vous devez avoir au moins 40 points pour inviter quelqu'un.</p>
+              )}
             </div>
           )}
         </CardContent>

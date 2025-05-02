@@ -18,11 +18,11 @@ const scrollToSection = (id: string) => {
 };
 
 const TEAM = [
-  { name: "Nathan", role: "Developer", avatar: "NJ" },
-  { name: "Matias", role: "Developer", avatar: "MD" },
-  { name: "Alice", role: "Design & Dev", avatar: "AL" },
-  { name: "Kylian", role: "Developer", avatar: "KD" },
-  { name: "Younes", role: "Developer", avatar: "YD" },
+  { name: "Nathan", role: "Back & Front End", avatar: "NJ" },
+  { name: "Matias", role: "Back & Front End", avatar: "MD" },
+  { name: "Alice", role: "Front End", avatar: "AL" },
+  { name: "Kylian", role: "Front End", avatar: "KD" },
+  { name: "Younes", role: "Back End", avatar: "YD" },
 ];
 
 const STATS = [
@@ -90,24 +90,34 @@ const LandingPage = () => {
   const logoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let lastScrollY = window.scrollY;
+    let lastTranslateY = 0;
     const handleScroll = () => {
       const scrollY = window.scrollY;
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
       const scrollRatio = docHeight > 0 ? Math.min(Math.max(scrollY / docHeight, 0), 1) : 0;
       const animationRatio = Math.pow(scrollRatio, 0.7);
-      
+
+      // Effet scale comme avant
+      const scale = 1.3 + (animationRatio * 0.9);
+
+      // Calcul du déplacement Y : remonte beaucoup plus
+      let translateY = -animationRatio * 350;
+
+      // Pour rendre le mouvement fluide dans les deux sens
       if (logoRef.current) {
-        const scale = 1 + (animationRatio * 1.5);
-        const translateY = -animationRatio * 120;
         logoRef.current.style.transform = `translateY(${translateY}px) scale(${scale})`;
         logoRef.current.style.transition = 'transform 0.15s cubic-bezier(0.25, 0.1, 0.25, 1)';
         logoRef.current.style.willChange = 'transform';
       }
+
+      lastScrollY = scrollY;
+      lastTranslateY = translateY;
     };
-    
+
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
-    
+
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -154,7 +164,24 @@ const LandingPage = () => {
       {/* Features Demo Cards */}
       <section className="py-12 px-4 bg-white">
         <div className="max-w-5xl mx-auto">
+          
+
+          {/* Synkro Logo Section */}
+          <div
+            ref={logoRef}
+            className="flex flex-col items-center justify-center py-16 transition-transform duration-300"
+            style={{ willChange: 'transform' }}
+          >
+            <img
+              src="/synkro.svg"
+              alt="Synkro Logo"
+              className="w-[14rem] h-[14rem] object-contain drop-shadow-2xl"
+              style={{ paddingTop: '3rem', paddingBottom: '3rem' }}
+            />
+          </div>
           <h2 className="text-xl font-medium text-center text-primary/80 mb-2">Our Solutions</h2>
+
+          {/* End Synkro Logo Section */}
           <CardHoverEffectDemo />
         </div>
       </section>
@@ -438,7 +465,7 @@ const LandingPage = () => {
           </div>
           <Separator className="bg-gray-100 mb-6" />
           <div className="flex flex-col md:flex-row justify-between items-center gap-3">
-            <p className="text-xs text-primary/70">© 2025 Synkro. All rights reserved.</p>
+            <p className="text-xs text-primary/70"> 2025 Synkro. All rights reserved.</p>
             <div className="flex gap-3">
               <a href="#" className="text-primary/70 hover:text-primary transition-colors">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">

@@ -13,6 +13,8 @@ import UserEditForm from '@/components/1_user/forms/UserEditForm';
 
 // Fonction utilitaire pour déterminer le niveau selon les points
 function getUserLevel(points?: number) {
+  const { profile: user, loading } = useUser();
+  if(user?.role === "ADMIN") return 'Administrator';
   if (typeof points !== 'number') return '-';
   if (points < 35) return 'beginner';
   if (points < 70) return 'intermediate';
