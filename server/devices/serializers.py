@@ -50,6 +50,15 @@ class DeviceSerializer(serializers.ModelSerializer):
         validated_data['room'] = room
         return super().create(validated_data)
 
+class DeviceConsumptionHistorySerializer(serializers.ModelSerializer):
+    device_name = serializers.CharField(source='device.name', read_only=True)
+
+    class Meta:
+        model = DeviceConsumptionHistory
+        fields = ['id', 'device', 'device_name', 'timestamp', 'consumption']
+        read_only_fields = ['id', 'device_name']
+
+
 class DeviceCommandSerializer(serializers.ModelSerializer):
     device = serializers.PrimaryKeyRelatedField(read_only=True)
     device_name = serializers.CharField(source='device.name', read_only=True)
