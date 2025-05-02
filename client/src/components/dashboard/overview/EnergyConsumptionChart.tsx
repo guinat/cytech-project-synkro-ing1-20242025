@@ -17,8 +17,6 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toZonedTime, format as formatTz } from 'date-fns-tz';
 
-
-
 interface EnergyConsumptionChartProps {
   homeId?: string;
   roomId?: string;
@@ -96,6 +94,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
 
     doc.save('energy_consumption.pdf');
   };
+
   const loadData = React.useCallback(async () => {
     if (loading) return;
     setLoading(true);
@@ -131,38 +130,38 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
             currentHistoricalData[device.device_id] = {};
           }
           Object.entries(device.consumption ?? {}).forEach(([period, value]) => {
-            // Ne pas écraser les anciennes valeurs déjà enregistrées
-            if (currentHistoricalData[device.device_id][period] === undefined) {
+            if (value > 0 || !currentHistoricalData[device.device_id][period]) {
               currentHistoricalData[device.device_id][period] = value;
             }
           });
         });
       }
+
       // Nettoyage des clés incompatibles avec la granularité actuelle
-Object.keys(currentHistoricalData).forEach(deviceId => {
-  const cleanedConsumption: Record<string, number> = {};
+      Object.keys(currentHistoricalData).forEach(deviceId => {
+        const cleanedConsumption: Record<string, number> = {};
 
-  Object.entries(currentHistoricalData[deviceId]).forEach(([period, value]) => {
-    let isValid = true;
+        Object.entries(currentHistoricalData[deviceId]).forEach(([period, value]) => {
+          let isValid = true;
 
-    if (granularity === 'day') {
-      isValid = /^\d{4}-\d{2}-\d{2}$/.test(period);
-    } else if (granularity === 'hour') {
-      isValid = /^\d{4}-\d{2}-\d{2} \d{2}$/.test(period);
-    } else if (granularity === 'minute') {
-      isValid = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(period);
-    } else if (granularity === 'month') {
-      isValid = /^\d{4}-\d{2}$/.test(period);
-    }
+          if (granularity === 'day') {
+            isValid = /^\d{4}-\d{2}-\d{2}$/.test(period);
+          } else if (granularity === 'hour') {
+            isValid = /^\d{4}-\d{2}-\d{2} \d{2}$/.test(period) || 
+                      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(period);
+          } else if (granularity === 'minute') {
+            isValid = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(period);
+          } else if (granularity === 'month') {
+            isValid = /^\d{4}-\d{2}$/.test(period);
+          }
 
-    if (isValid) {
-      cleanedConsumption[period] = value;
-    }
-  });
+          if (isValid) {
+            cleanedConsumption[period] = value;
+          }
+        });
 
-  currentHistoricalData[deviceId] = cleanedConsumption;
-});
-
+        currentHistoricalData[deviceId] = cleanedConsumption;
+      });
   
       setHistoricalData(currentHistoricalData);
   
@@ -186,41 +185,45 @@ Object.keys(currentHistoricalData).forEach(deviceId => {
           new Set(devicesWithHistory.flatMap(d => Object.keys(d.consumption ?? {})))
         ).sort();
   
-        // ➔ Regrouper selon granularité
+        // Regroupement des clés selon la granularité
         let groupedKeys: string[] = [];
   
         if (granularity === 'hour') {
-
           const groupedSet = new Set<string>();
           allKeys.forEach(key => {
-            const date = new Date(key + 'Z');
-            const zoned = toZonedTime(date, 'Europe/Paris');
-            const hourString = formatTz(zoned, 'yyyy-MM-dd HH');
-            groupedSet.add(hourString);
+            try {
+              const date = new Date(key + 'Z');
+              const zoned = toZonedTime(date, 'Europe/Paris');
+              const hourString = formatTz(zoned, 'yyyy-MM-dd HH');
+              groupedSet.add(hourString);
+            } catch (e) {
+              console.error('Erreur parsing date:', key, e);
+            }
           });
           groupedKeys = Array.from(groupedSet).sort();
-        }else if (granularity === 'day') {
+        } else if (granularity === 'day') {
           const groupedSet = new Set<string>();
           allKeys.forEach(key => {
-            const date = new Date(key + 'Z');
-            const zoned = toZonedTime(date, 'Europe/Paris');
-            const dayString = formatTz(zoned, 'yyyy-MM-dd');
-            groupedSet.add(dayString);
+            try {
+              const date = new Date(key + 'Z');
+              const zoned = toZonedTime(date, 'Europe/Paris');
+              const dayString = formatTz(zoned, 'yyyy-MM-dd');
+              groupedSet.add(dayString);
+            } catch (e) {
+              console.error('Erreur parsing date:', key, e);
+            }
           });
           groupedKeys = Array.from(groupedSet).sort();
-        } if (granularity === 'month') {
-          // On va créer directement un tableau pour les 10 derniers mois
+        } else if (granularity === 'month') {
           const months = [];
           const currentDate = new Date();
           
-          // Générer les 10 derniers mois (en commençant par le mois actuel)
           for (let i = 0; i < 10; i++) {
             const monthDate = subMonths(currentDate, i);
             const monthKey = format(monthDate, 'yyyy-MM');
-            months.unshift(monthKey); // Ajouter au début pour conserver l'ordre chronologique
+            months.unshift(monthKey);
           }
           
-          // Préparer les données pour chaque mois et chaque appareil
           const monthlyData = months.map(monthKey => {
             const entry: any = { 
               period: monthKey,
@@ -230,7 +233,6 @@ Object.keys(currentHistoricalData).forEach(deviceId => {
             devicesWithHistory.forEach(device => {
               let total = 0;
               
-              // Pour chaque appareil, additionner les consommations de toutes les périodes du mois
               Object.entries(device.consumption || {}).forEach(([period, value]) => {
                 if (period.startsWith(monthKey)) {
                   total += value;
@@ -247,169 +249,107 @@ Object.keys(currentHistoricalData).forEach(deviceId => {
         } else {
           groupedKeys = allKeys; // minute
         }
-      // ➔ Ici la partie corrigée pour avoir vraiment les 10 dernières périodes par rapport à aujourd'hui
-      let limitStartDate: Date | null = null;
 
-if (granularity === 'hour') {
-  // Limite les données aux 10 dernières heures
-  limitStartDate = subHours(now, 9); // 10 dernières heures (on commence à partir de 9 heures en arrière)
-} else if (granularity === 'day') {
-  limitStartDate = subDays(now, 9); // 10 derniers jours
-} else {
-  limitStartDate = null; // minute et month : pas besoin
-}
+        // Limitation aux 10 dernières périodes
+        let limitStartDate: Date | null = null;
+        let limitedKeys: string[] = [];
 
-let limitedKeys: string[] = [];
-
-if (granularity === 'hour') {
-  if (limitStartDate) { // Assurer que limitStartDate est défini
-    limitedKeys = groupedKeys.filter(key => {
-      const dateKey = new Date(key.replace(' ', 'T') + ':00:00Z'); // Assure-toi que l'heure est au format ISO
-      const zoned = toZonedTime(dateKey, 'Europe/Paris');
-      return zoned >= limitStartDate;
-    });
-  }
-} else if (granularity === 'day') {
-  if (limitStartDate) { // Assurer que limitStartDate est défini
-    limitedKeys = groupedKeys.filter(key => {
-      const dateKey = new Date(key + 'T00:00:00Z'); // Crée une date valide pour le jour
-      const zoned = toZonedTime(dateKey, 'Europe/Paris');
-      return zoned >= limitStartDate;
-    });
-  }
-} else {
-  limitedKeys = groupedKeys.slice(-10); // Pour minute et month, on garde les 10 derniers
-}
-
-// D'abord construire chartData
-const chartData = limitedKeys.map(key => {
-  const entry: any = { period: key };
-  devicesWithHistory.forEach(d => {
-    let matchingKey;
-    
-    if (granularity === 'month') {
-      // Pour la granularité mensuelle, nous cherchons directement une correspondance
-      // ou une clé qui commence par le pattern YYYY-MM
-      matchingKey = allKeys.find(k => {
-        // La clé 'month' est au format YYYY-MM et on veut trouver les clés
-        // qui commencent par ce format
-        return k.startsWith(key);
-      });
-    } else {
-      matchingKey = allKeys.find(k => {
-        const date = new Date(k + 'Z');
-        const zoned = toZonedTime(date, 'Europe/Paris');
-        
         if (granularity === 'hour') {
-          return formatTz(zoned, 'yyyy-MM-dd HH') === key;
+          limitStartDate = subHours(now, 9);
+          limitedKeys = groupedKeys.filter(key => {
+            try {
+              const dateKey = new Date(key.replace(' ', 'T') + ':00:00Z');
+              const zoned = toZonedTime(dateKey, 'Europe/Paris');
+              return zoned >= limitStartDate!;
+            } catch (e) {
+              console.error('Erreur parsing date key:', key, e);
+              return false;
+            }
+          });
         } else if (granularity === 'day') {
-          return formatTz(zoned, 'yyyy-MM-dd') === key;
+          limitStartDate = subDays(now, 9);
+          limitedKeys = groupedKeys.filter(key => {
+            try {
+              const dateKey = new Date(key + 'T00:00:00Z');
+              const zoned = toZonedTime(dateKey, 'Europe/Paris');
+              return zoned >= limitStartDate!;
+            } catch (e) {
+              console.error('Erreur parsing date key:', key, e);
+              return false;
+            }
+          });
         } else {
-          return k === key;
+          limitedKeys = groupedKeys.slice(-10);
         }
-      });
-    }
 
-    if (matchingKey) {
-      entry[d.device_name] = d.consumption?.[matchingKey] ?? 0;
-    } else {
-      entry[d.device_name] = 0;
-    }
-  });
-  return entry;
-});
+        // Construction des données pour le graphique
+        if (granularity !== 'month') {
+          const chartData = limitedKeys.map(key => {
+            const entry: any = { period: key };
+            devicesWithHistory.forEach(d => {
+              let total = 0;
+              
+              Object.entries(d.consumption || {}).forEach(([consumptionKey, value]) => {
+                try {
+                  const date = new Date(consumptionKey + 'Z');
+                  const zoned = toZonedTime(date, 'Europe/Paris');
+                  let formattedKey;
+                  
+                  if (granularity === 'hour') {
+                    formattedKey = formatTz(zoned, 'yyyy-MM-dd HH');
+                  } else if (granularity === 'day') {
+                    formattedKey = formatTz(zoned, 'yyyy-MM-dd');
+                  } else {
+                    formattedKey = consumptionKey;
+                  }
+                  
+                  if (formattedKey === key) {
+                    total += value;
+                  }
+                } catch (e) {
+                  console.error('Erreur parsing consumption key:', consumptionKey, e);
+                }
+              });
+              
+              entry[d.device_name] = total;
+            });
+            return entry;
+          });
 
-// Puis après et SEULEMENT après formatter les labels d'affichage
-// Dans la section où tu traites les dates et leur formatage :
+          // Formatage des dates pour l'affichage
+          chartData.forEach(entry => {
+            try {
+              let date: Date | null = null;
 
-chartData.forEach(entry => {
-  try {
-    let date: Date | null = null;
+              if (granularity === 'hour') {
+                date = new Date(entry.period.replace(' ', 'T') + ':00:00Z');
+              } else if (granularity === 'day') {
+                date = new Date(entry.period + 'T00:00:00Z');
+              } else if (granularity === 'minute') {
+                date = new Date(entry.period + 'Z');
+              }
 
-    if (granularity === 'month') {
-      const match = entry.period.match(/^(\d{4})-(\d{2})$/);  // Ex: "2025-04"
-      if (match) {
-        const [_, year, month] = match;
-        date = new Date(`${year}-${month}-01T00:00:00Z`);  // Créer une date valide pour le mois
-      }
-    } else if (granularity === 'day') {
-      date = new Date(entry.period + 'T00:00:00Z');  // Assure-toi que la date est au format ISO
-    } else if (granularity === 'hour') {
-      date = new Date(entry.period + ':00:00Z');  // Assure-toi que l'heure est au format ISO
-    } else if (granularity === 'minute') {
-      date = new Date(entry.period + 'Z');  // Assure-toi que la minute est au format ISO
-    }
+              if (!date || isNaN(date.getTime())) {
+                entry.displayPeriod = entry.period;
+                return;
+              }
 
-    // Vérification de la validité de la date
-    if (!date || isNaN(date.getTime())) {
-      console.warn('Invalid date for period:', entry.period);
-      entry.displayPeriod = entry.period;  // Si la date est invalide, laisse la période brute
-      return;
-    }
+              const zonedDate = toZonedTime(date, 'Europe/Paris');
 
-    const zonedDate = toZonedTime(date, 'Europe/Paris');
+              entry.displayPeriod =
+                granularity === 'minute' ? formatTz(zonedDate, 'HH:mm', { locale: fr }) :
+                granularity === 'hour' ? formatTz(zonedDate, 'HH\'h\'', { locale: fr }) :
+                granularity === 'day' ? formatTz(zonedDate, 'dd MMM', { locale: fr }) :
+                entry.period;
 
-    // Applique le formatage des dates en fonction de la granularité
-    entry.displayPeriod =
-      granularity === 'minute' ? formatTz(zonedDate, 'HH:mm', { locale: fr }) :
-      granularity === 'hour' ? formatTz(zonedDate, 'yyyy-MM-dd HH', { locale: fr }) + 'h' :
-      granularity === 'day' ? formatTz(zonedDate, 'dd MMM', { locale: fr }) :
-      granularity === 'month' ? formatTz(zonedDate, 'MMM yyyy', { locale: fr }) :
-      entry.period;  // Par défaut, utilise la période brute
+            } catch (error) {
+              console.error('Erreur parsing date:', entry.period, error);
+              entry.displayPeriod = entry.period;
+            }
+          });
 
-  } catch (error) {
-    console.error('Erreur parsing date :', entry.period, error);
-    entry.displayPeriod = entry.period;  // Retour à la période brute en cas d'erreur
-  }
-});
-
-// ➔ Puis après et SEULEMENT après formatter les labels d'affichage
-chartData.forEach(entry => {
-  try {
-    let date: Date | null = null;
-
-    if (granularity === 'month') {
-      const match = entry.period.match(/^(\d{4})-(\d{2})$/);
-      if (match) {
-        const [_, year, month] = match;
-        date = new Date(`${year}-${month}-01T00:00:00Z`);
-      }
-    } else if (granularity === 'day') {
-      date = new Date(entry.period + 'T00:00:00Z');
-    } else if (granularity === 'hour') {
-      date = new Date(entry.period + ':00:00Z');
-    } else if (granularity === 'minute') {
-      date = new Date(entry.period + 'Z');
-    }
-
-    if (!date || isNaN(date.getTime())) {
-      throw new Error('Invalid date');
-    }
-
-    const zonedDate = toZonedTime(date, 'Europe/Paris');
-
-    entry.displayPeriod =
-      granularity === 'minute' ? formatTz(zonedDate, 'HH:mm', { locale: fr }) :
-      granularity === 'hour' ? formatTz(zonedDate, 'yyyy-MM-dd HH', { locale: fr }) + 'h' :
-      granularity === 'day' ? formatTz(zonedDate, 'dd MMM', { locale: fr }) :
-      granularity === 'month' ? formatTz(zonedDate, 'MMM yyyy', { locale: fr }) :
-      entry.period;
-
-  } catch (error) {
-    console.error('Erreur parsing date :', entry.period, error);
-    entry.displayPeriod = entry.period;
-  }
-});
-
-
-
-
-
-  
-if (granularity !== 'month') {
-  setData(chartData);
-}
-
+          setData(chartData);
+        }
       } else {
         setData([]);
       }
@@ -423,6 +363,7 @@ if (granularity !== 'month') {
   }, [homeId, roomId, deviceId, selectedDevice, granularity, cumulative]);
   
   React.useEffect(() => { loadData(); }, [loadData]);
+  
   React.useEffect(() => {
     if (refreshTimerRef.current) clearInterval(refreshTimerRef.current);
     if (autoRefresh) {
@@ -548,7 +489,7 @@ if (granularity !== 'month') {
               <LineChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
                 <XAxis 
-                  dataKey={data[0]?.displayPeriod ? "displayPeriod" : "period"} 
+                  dataKey="displayPeriod" 
                   tick={{ fontSize: 12 }} 
                 />
                 <YAxis 
@@ -582,9 +523,9 @@ if (granularity !== 'month') {
                   }}
                   formatter={(value, name) => {
                     if (typeof value === 'number') {
-                      return ['${value.toFixed(3)} kWh', name];
+                      return [`${value.toFixed(3)} kWh`, name];
                     }
-                    return ['${value} kWh', name];
+                    return [`${value} kWh`, name];
                   }}
                 />
                 <Legend wrapperStyle={{ fontSize: '12px' }} />
@@ -602,7 +543,6 @@ if (granularity !== 'month') {
                     />
                   ))
                 ) : (
-                  // Default line if no devices are available but we have data
                   <Line 
                     type={cumulative ? "monotone" : "linear"} 
                     dataKey="value" 
@@ -621,4 +561,5 @@ if (granularity !== 'month') {
     </Card>
   );
 };
+
 export default EnergyConsumptionChart;
