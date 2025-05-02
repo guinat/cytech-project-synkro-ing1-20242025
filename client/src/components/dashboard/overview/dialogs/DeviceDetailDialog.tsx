@@ -91,6 +91,58 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
             console.warn("L'endpoint des stats n'est pas encore disponible:", statsError);
           }
 
+          // Calcul de la durée ON à partir de l'historique des commandes
+          let activeTime = '0 h';
+          try {
+            // @ts-ignore
+            const commands = await getDeviceCommand(device.home, device.room, device.id);
+            if (Array.isArray(commands) && commands.length > 0) {
+              // Filtrer uniquement les commandes on/off exécutées avec executed_at
+              const onOffCmds = commands
+                .filter(cmd => cmd.capability === 'on_off' && !!cmd.executed_at)
+                .sort((a, b) => (a.executed_at && b.executed_at ? a.executed_at.localeCompare(b.executed_at) : 0));
+
+              let totalMs = 0;
+              let lastOn: string | null = null;
+              for (const cmd of onOffCmds) {
+                let isOn: boolean | undefined = undefined;
+                if (typeof cmd.parameters === 'object' && cmd.parameters !== null) {
+                  // Certains backends envoient parameters en string, on parse si besoin
+                  let paramsObj: any = cmd.parameters;
+                  if (typeof paramsObj === 'string') {
+                    try {
+                      paramsObj = JSON.parse(paramsObj);
+                    } catch {}
+                  }
+                  if (typeof paramsObj === 'object' && paramsObj !== null && 'on_off' in paramsObj) {
+                    isOn = paramsObj.on_off;
+                  }
+                }
+                if (isOn && !lastOn) {
+                  lastOn = cmd.executed_at!;
+                } else if (isOn === false && lastOn) {
+                  // Ajoute la période ON
+                  totalMs += new Date(cmd.executed_at!).getTime() - new Date(lastOn).getTime();
+                  lastOn = null;
+                }
+              }
+              // Si le dernier état est ON, on considère que le device est encore allumé jusqu'à maintenant
+              if (lastOn) {
+                totalMs += new Date().getTime() - new Date(lastOn).getTime();
+              }
+              // Formattage de la durée
+              const totalMin = Math.floor(totalMs / 60000);
+              const h = Math.floor(totalMin / 60);
+              const min = totalMin % 60;
+              if (h > 0 && min > 0) activeTime = `${h} h ${min} min`;
+              else if (h > 0) activeTime = `${h} h`;
+              else activeTime = `${min} min`;
+            }
+          } catch (e) {
+            // fallback: statsData.activeTime
+            activeTime = statsData.activeTime;
+          }
+
           // Récupération de la dernière commande exécutée
           let lastCommandAt: string | null = null;
           try {
@@ -117,7 +169,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
             room: device.room,
             home_id: device.home_id || device.home,
             room_id: device.room_id || device.room,
-            activeTime: statsData.activeTime,
+            activeTime: activeTime, // Utilise la valeur calculée
             energyConsumption: statsData.energyConsumption,
             lastActiveAt: lastCommandAt || undefined, // On priorise la vraie dernière commande
             isOn: statsData.isOn,
