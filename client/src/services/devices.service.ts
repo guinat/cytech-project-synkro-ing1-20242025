@@ -69,6 +69,7 @@ export type DeviceCommand = {
   parameters: string;
   created_at?: string;
   updated_at?: string;
+  executed_at?: string; // Date d'exécution réelle de la commande
 }
 
 export async function getEnergyConsumption(params: EnergyConsumptionParams): Promise<EnergyConsumptionResponse> {

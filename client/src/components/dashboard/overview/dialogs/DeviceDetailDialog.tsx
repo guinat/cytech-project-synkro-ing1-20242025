@@ -91,6 +91,24 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
             console.warn("L'endpoint des stats n'est pas encore disponible:", statsError);
           }
 
+          // Récupération de la dernière commande exécutée
+          let lastCommandAt: string | null = null;
+          try {
+            // @ts-ignore
+            const commands = await getDeviceCommand(device.home, device.room, device.id);
+            if (Array.isArray(commands) && commands.length > 0) {
+              // On prend la dernière commande exécutée (la plus récente)
+              const sorted = [...commands].sort((a, b) => {
+                if (!a.executed_at) return 1;
+                if (!b.executed_at) return -1;
+                return b.executed_at.localeCompare(a.executed_at);
+              });
+              lastCommandAt = sorted[0].executed_at || null;
+            }
+          } catch (e) {
+            // ignore erreur, fallback handled below
+          }
+
           const enhancedDevice: EnhancedDevice = {
             ...device,
             name: deviceData.name || device.name,
@@ -101,7 +119,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
             room_id: device.room_id || device.room,
             activeTime: statsData.activeTime,
             energyConsumption: statsData.energyConsumption,
-            lastActiveAt: statsData.lastActiveAt,
+            lastActiveAt: lastCommandAt || undefined, // On priorise la vraie dernière commande
             isOn: statsData.isOn,
             state: device.state,
             brand: deviceData.brand || device.brand || ''
@@ -173,7 +191,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
 
 
   const formatLastActive = (lastActiveAt?: string) => {
-    if (!lastActiveAt) return "Inconnu";
+    if (!lastActiveAt) return "Never used";
     try {
       const date = parseISO(lastActiveAt);
       return formatDistanceToNow(date, { addSuffix: true, locale: fr });
@@ -181,6 +199,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
       return "Format de date invalide";
     }
   };
+
 
   if (!device) return null;
 
