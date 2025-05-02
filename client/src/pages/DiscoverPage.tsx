@@ -140,7 +140,7 @@ const DiscoverPage = () => {
         { value: 'Confort', label: 'Confort' },
     ];
     const featureTaskTypes = [
-        { value: 'all', label: 'Tous les types de tâche' },
+        { value: 'all', label: 'Tous les types de tâches' },
         { value: 'Contrôler', label: 'Contrôler' },
         { value: 'Programmer', label: 'Programmer' },
         { value: 'Surveiller', label: 'Surveiller' },

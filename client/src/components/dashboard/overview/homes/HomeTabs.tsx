@@ -14,6 +14,10 @@ interface HomeTabsProps {
   onCreateHome: (data: { name: string }) => Promise<void>;
   devices: any[];
   onOpenDeviceDetail: (device: any) => void;
+  onRename?: (name: string) => Promise<void>;
+  onDelete?: () => Promise<void>;
+  onInvite?: (email: string) => Promise<void>;
+  onColorChange?: (color: string) => Promise<void>;
 }
 
 const HomeTabs: React.FC<HomeTabsProps> = ({ homes, activeHome, onHomeChange, onCreateHome, devices = [], onOpenDeviceDetail }) => {
