@@ -78,7 +78,16 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
   const downloadPDF = () => {
     const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "A4" });
     const tableColumn = ["Période", ...devices.map(d => d.device_name)];
-    const tableRows = data.map(row => [row.period, ...devices.map(d => (row[d.device_name] ?? 0).toFixed(3))]);
+    const tableRows = data.map(row => {
+      return [
+        row.displayPeriod || row.period,
+        ...devices.map(d => {
+          const val = row[d.device_name];
+          return typeof val === "number" ? val.toFixed(3) : "0.000";
+        }),
+      ];
+    });
+    
 
     doc.text("Historique de consommation d'énergie", 40, 30);
 
