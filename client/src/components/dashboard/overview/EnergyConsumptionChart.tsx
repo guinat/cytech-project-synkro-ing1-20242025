@@ -83,7 +83,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
         row.displayPeriod || row.period,
         ...devices.map(d => {
           const val = row[d.device_name];
-          return typeof val === "number" ? val.toFixed(3) : "0.000";
+          return typeof val === "number" ? val.toFixed(5) : "0.00000";
         }),
       ];
     });

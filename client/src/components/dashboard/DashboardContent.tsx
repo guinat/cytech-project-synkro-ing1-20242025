@@ -42,6 +42,7 @@ interface DashboardContentProps {
   onDeviceDetailDialogChange: (open: boolean) => void;
   onRenameDevice: (deviceId: string, name: string) => Promise<void>;
   onDeleteDevice: (deviceId: string) => Promise<void>;
+  onDeviceDeleted: () => void;
 }
 
 const DashboardContent: React.FC<DashboardContentProps> = ({
@@ -70,7 +71,8 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
   onOpenDeviceDetail,
   onDeviceDetailDialogChange,
   onRenameDevice,
-  onDeleteDevice
+  onDeleteDevice,
+  onDeviceDeleted
 }) => {
   const { user } = useAuth();
 
@@ -176,7 +178,10 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
         onOpenChange={onDeviceDetailDialogChange}
         device={selectedDevice}
         onRename={onRenameDevice}
-        onDelete={onDeleteDevice}
+        onDelete={async (deviceId: string) => {
+          await onDeleteDevice(deviceId);
+          onDeviceDeleted(); 
+        }}
       />
     </div>
   );
