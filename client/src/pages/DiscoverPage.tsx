@@ -20,17 +20,17 @@ const DiscoverPage = () => {
     const [selectedType, setSelectedType] = React.useState('all');
     const [selectedBrand, setSelectedBrand] = React.useState('all');
 
-    // Catégories fixes pour le select
+    // Fixed categories for select
     const categoryOptions = [
-        { value: 'all', label: 'Tous les types' },
-        { value: 'lumiere', label: 'Lumière' },
-        { value: 'securite', label: 'Sécurité' },
-        { value: 'divertissement', label: 'Divertissement' },
-        { value: 'gestion', label: 'Gestion de la maison' },
+        { value: 'all', label: 'All types' },
+        { value: 'lumiere', label: 'Lighting' },
+        { value: 'securite', label: 'Security' },
+        { value: 'divertissement', label: 'Entertainment' },
+        { value: 'gestion', label: 'Home management' },
     ];
 
     const brandOptions = [
-        { value: 'all', label: 'Toutes les marques' },
+        { value: 'all', label: 'All brands' },
         { value: 'Philips', label: 'Philips' },
         { value: 'Apple', label: 'Apple' },
         { value: 'Nest', label: 'Nest' },
@@ -44,11 +44,19 @@ const DiscoverPage = () => {
     const categorizedDevices = React.useMemo((): Record<string, PublicDeviceType[]> => ({
         lumiere: deviceTypes.filter(dt => dt.name.toLowerCase().includes('bulb')), // plus souple pour le nom
                                         //dt.name.toLowerCase().includes('bulb') || dt.name.toLowerCase().includes('lamp')
-        securite: deviceTypes.filter(dt => dt.name.toLowerCase().includes('camera')), // plus souple
-        divertissement: [],
+        securite: deviceTypes.filter(dt => dt.name.toLowerCase().includes('camera')
+                                || dt.name.toLowerCase().includes('doorlocker')
+            ), // plus souple
+        divertissement: deviceTypes.filter(dt =>
+            dt.name.toLowerCase().includes('speaker') ||
+            dt.name.toLowerCase().includes('television')
+        ),
         gestion: deviceTypes.filter(dt =>
             dt.name.toLowerCase().includes('thermostat') ||
             dt.name.toLowerCase().includes('washing machine') ||
+            dt.name.toLowerCase().includes('shutter') ||
+            dt.name.toLowerCase().includes('fridge') ||
+            dt.name.toLowerCase().includes('oven') ||
             dt.name.toLowerCase().includes('dish washer')
         ),
     }), [deviceTypes]);
@@ -71,82 +79,113 @@ const DiscoverPage = () => {
         });
     }, [deviceTypes, categorizedDevices, selectedType, selectedBrand, search]);
 
-    // --- Données de fonctionnalités/services proposés ---
+    // --- Proposed features/services data ---
     const featureServices = [
         {
-            title: 'Contrôler ses objets connectés',
-            description: 'Prenez le contrôle de tous vos appareils connectés depuis une seule interface intuitive.',
+            title: 'Control your smart devices',
+            description: 'Take control of all your connected devices from a single intuitive interface.',
             icon: '🕹️',
-            category: 'Gestion',
-            taskType: 'Contrôler',
+            category: 'Management',
+            taskType: 'Control',
         },
         {
-            title: 'Automatiser sa maison',
-            description: 'Créez des scénarios pour automatiser l’éclairage, le chauffage, la sécurité et plus encore.',
+            title: 'Schedule routines',
+            description: 'Automate your daily tasks with personalized routines.',
+            icon: '⏰',
+            category: 'Management',
+            taskType: 'Automate',
+        },
+        {
+            title: 'Optimize consumption',
+            description: 'Reduce your energy consumption with our intelligent algorithms.',
+            icon: '💡',
+            category: 'Management',
+            taskType: 'Optimize',
+        },
+        {
+            title: 'Secure your home',
+            description: 'Monitor and protect your home remotely with real-time alerts.',
+            icon: '🔒',
+            category: 'Security',
+            taskType: 'Secure',
+        },
+        {
+            title: 'Analyze your data',
+            description: 'Visualize and analyze your consumption data with detailed charts.',
+            icon: '📊',
+            category: 'Management',
+            taskType: 'Analyze',
+        },
+        {
+            title: 'Share access',
+            description: 'Share access to your smart home with your loved ones.',
+            icon: '👨‍👩‍👧‍👦',
+            category: 'Management',
+            taskType: 'Share',
+        },
+        {
+            title: 'Automate your home',
+            description: 'Create scenarios to automate lighting, heating, security and more.',
             icon: '🤖',
-            category: 'Automatisation',
-            taskType: 'Programmer',
+            category: 'Automation',
+            taskType: 'Program',
         },
         {
-            title: 'Surveiller à distance',
-            description: 'Gardez un œil sur votre maison grâce aux caméras et capteurs, même en déplacement.',
+            title: 'Monitor remotely',
+            description: 'Keep an eye on your home with cameras and sensors, even when you’re away.',
             icon: '📹',
-            category: 'Sécurité',
-            taskType: 'Surveiller',
+            category: 'Security',
+            taskType: 'Monitor',
         },
         {
-            title: 'Recevoir des alertes intelligentes',
-            description: 'Soyez averti instantanément en cas de détection d’intrusion, de fuite ou d’anomalie.',
+            title: 'Receive smart alerts',
+            description: 'Be instantly notified in case of intrusion, leak or anomaly detection.',
             icon: '🔔',
-            category: 'Sécurité',
-            taskType: 'Être alerté',
+            category: 'Security',
+            taskType: 'Be alerted',
         },
         {
-            title: 'Optimiser la consommation',
-            description: 'Analysez et réduisez votre consommation d’énergie grâce à des rapports détaillés.',
-            icon: '⚡',
-            category: 'Énergie',
-            taskType: 'Analyser',
-        },
-        {
-            title: 'Commander à la voix',
-            description: 'Pilotez vos équipements par la voix grâce à l’intégration avec les assistants vocaux.',
+            title: 'Command with your voice',
+            description: 'Control your devices with your voice thanks to integration with voice assistants.',
             icon: '🎤',
-            category: 'Confort',
-            taskType: 'Contrôler',
+            category: 'Convenience',
+            taskType: 'Control',
         },
         {
-            title: 'Gérer les accès',
-            description: 'Ouvrez, fermez et surveillez vos accès à distance pour plus de sécurité.',
+            title: 'Manage access',
+            description: 'Open, close and monitor your accesses remotely for more security.',
             icon: '🚪',
-            category: 'Sécurité',
-            taskType: 'Gérer',
+            category: 'Security',
+            taskType: 'Manage',
         },
         {
-            title: 'Créer des routines personnalisées',
-            description: 'Définissez vos propres routines quotidiennes pour une maison qui s’adapte à vos besoins.',
+            title: 'Create custom routines',
+            description: 'Define your own daily routines for a home that adapts to your needs.',
             icon: '🗓️',
-            category: 'Automatisation',
-            taskType: 'Programmer',
+            category: 'Automation',
+            taskType: 'Program',
         },
     ];
 
     const featureCategories = [
-        { value: 'all', label: 'Toutes les catégories' },
-        { value: 'Gestion', label: 'Gestion' },
-        { value: 'Automatisation', label: 'Automatisation' },
-        { value: 'Sécurité', label: 'Sécurité' },
-        { value: 'Énergie', label: 'Énergie' },
-        { value: 'Confort', label: 'Confort' },
+        { value: 'all', label: 'All categories' },
+        { value: 'Management', label: 'Management' },
+        { value: 'Automation', label: 'Automation' },
+        { value: 'Security', label: 'Security' },
+        { value: 'Energy', label: 'Energy' },
+        { value: 'Convenience', label: 'Convenience' },
     ];
     const featureTaskTypes = [
-        { value: 'all', label: 'Tous les types de tâche' },
-        { value: 'Contrôler', label: 'Contrôler' },
-        { value: 'Programmer', label: 'Programmer' },
-        { value: 'Surveiller', label: 'Surveiller' },
-        { value: 'Être alerté', label: 'Être alerté' },
-        { value: 'Analyser', label: 'Analyser' },
-        { value: 'Gérer', label: 'Gérer' },
+        { value: 'all', label: 'All task types' },
+        { value: 'Control', label: 'Control' },
+        { value: 'Automate', label: 'Automate' },
+        { value: 'Monitor', label: 'Monitor' },
+        { value: 'Secure', label: 'Secure' },
+        { value: 'Analyze', label: 'Analyze' },
+        { value: 'Share', label: 'Share' },
+        { value: 'Program', label: 'Program' },
+        { value: 'Be alerted', label: 'Be alerted' },
+        { value: 'Manage', label: 'Manage' },
     ];
     const [selectedFeatureCategory, setSelectedFeatureCategory] = React.useState('all');
     const [selectedFeatureTaskType, setSelectedFeatureTaskType] = React.useState('all');
@@ -166,14 +205,14 @@ const DiscoverPage = () => {
     React.useEffect(() => {
         getPublicDeviceTypes()
             .then(setDeviceTypes)
-            .catch((e) => setError(e.message || 'Erreur de  chargement'))
+            .catch((e) => setError(e.message || 'Loading error'))
             .finally(() => setLoading(false));
     }, []);
 
     if (loading) {
         return (
             <div className="flex items-center justify-center h-screen">
-                <div className="text-lg">Chargement du catalogue...</div>
+                <div className="text-lg">Loading catalog...</div>
             </div>
         );
     }
@@ -192,13 +231,13 @@ const DiscoverPage = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-white to-violet-50 pb-24">
             <div className="max-w-5xl mx-auto px-4 py-12">
-                <h1 className="text-4xl font-extrabold text-violet-700 mb-8 text-center drop-shadow">Découvrez les appareils compatibles</h1>
+                <h1 className="text-4xl font-extrabold text-black-700 mb-8 text-center drop-shadow">Discover the devices we offer</h1>
                 <div className="flex flex-col h-screen">
                     <div className="pt-4 flex justify-center">
                         <Tabs defaultValue="devices" className="w-full max-w-4xl">
                             <TabsList className="flex justify-center w-full gap-4">
-                                <TabsTrigger value="devices" className="w-1/2 text-lg px-8 py-3">Objets connectés</TabsTrigger>
-                                <TabsTrigger value="fonctionnality" className="w-1/2 text-lg px-8 py-3">Fonctionnalités</TabsTrigger>
+                                <TabsTrigger value="devices" className="w-1/2 text-lg px-8 py-3">Connected devices</TabsTrigger>
+                                <TabsTrigger value="fonctionnality" className="w-1/2 text-lg px-8 py-3">Features</TabsTrigger>
                             </TabsList>
 
                             <TabsContent value="devices">
@@ -206,15 +245,15 @@ const DiscoverPage = () => {
                                     <div className="flex flex-col md:flex-row justify-center gap-4 mb-8 w-full max-w-3xl mx-auto">
                                         <input
                                             type="text"
-                                            placeholder="Rechercher un appareil..."
+                                            placeholder="Search for a device..."
                                             value={search}
                                             onChange={e => setSearch(e.target.value)}
                                             className="border rounded-md px-4 py-2 w-full max-w-md text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                                         />
-                                        {/* Nouveau Select UI pour les catégories */}
+                                        {/* New Select UI for categories */}
                                         <Select value={selectedType} onValueChange={setSelectedType}>
                                             <SelectTrigger className="w-full max-w-xs border rounded-md px-4 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
-                                                <SelectValue placeholder="Catégorie" />
+                                                <SelectValue placeholder="Category" />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {categoryOptions.map(opt => (
@@ -222,10 +261,10 @@ const DiscoverPage = () => {
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        {/* Select pour la marque */}
+                                        {/* Select for brand */}
                                         <Select value={selectedBrand} onValueChange={setSelectedBrand}>
                                             <SelectTrigger className="w-full max-w-xs border rounded-md px-4 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
-                                                <SelectValue placeholder="Marque" />
+                                                <SelectValue placeholder="Brand" />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {brandOptions.map(opt => (
@@ -257,14 +296,14 @@ const DiscoverPage = () => {
                                     <div className="flex flex-col md:flex-row justify-center gap-4 mb-8 w-full max-w-3xl mx-auto">
                                         <input
                                             type="text"
-                                            placeholder="Rechercher une fonctionnalité ou un service..."
+                                            placeholder="Search for a feature or service..."
                                             value={featureServiceSearch}
                                             onChange={e => setFeatureServiceSearch(e.target.value)}
                                             className="border rounded-md px-4 py-2 w-full max-w-md text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                                         />
                                         <Select value={selectedFeatureCategory} onValueChange={setSelectedFeatureCategory}>
                                             <SelectTrigger className="w-full max-w-xs border rounded-md px-4 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
-                                                <SelectValue placeholder="Catégorie" />
+                                                <SelectValue placeholder="Category" />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {featureCategories.map(opt => (
@@ -274,7 +313,7 @@ const DiscoverPage = () => {
                                         </Select>
                                         <Select value={selectedFeatureTaskType} onValueChange={setSelectedFeatureTaskType}>
                                             <SelectTrigger className="w-full max-w-xs border rounded-md px-4 py-2 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
-                                                <SelectValue placeholder="Type de tâche" />
+                                                <SelectValue placeholder="Task type" />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {featureTaskTypes.map(opt => (

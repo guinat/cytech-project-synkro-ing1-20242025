@@ -59,7 +59,7 @@ export const InviteGuestModal: React.FC<InviteGuestModalProps> = ({ open, onOpen
     e.preventDefault();
     setError(null);
     if (!guestToEdit && form.password !== form.password_confirm) {
-      setError("Les mots de passe ne correspondent pas.");
+      setError("Passwords do not match.");
       return;
     }
     setLoading(true);
@@ -90,7 +90,7 @@ export const InviteGuestModal: React.FC<InviteGuestModalProps> = ({ open, onOpen
       onOpenChange(false);
     } catch (e: any) {
       // Affiche le message d'erreur détaillé du backend
-      setError(e.message + (e.raw ? ' : ' + JSON.stringify(e.raw) : '') || 'Erreur inconnue');
+      setError(e.message + (e.raw ? ' : ' + JSON.stringify(e.raw) : '') || 'Unknown error');
     } finally {
       setLoading(false);
     }
@@ -101,7 +101,7 @@ export const InviteGuestModal: React.FC<InviteGuestModalProps> = ({ open, onOpen
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{guestToEdit ? 'Modifier un compte' : 'Inviter une nouvelle personne'}</DialogTitle>
+            <DialogTitle>{guestToEdit ? 'Edit account' : 'Invite a new person'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -111,7 +111,7 @@ export const InviteGuestModal: React.FC<InviteGuestModalProps> = ({ open, onOpen
             {!guestToEdit && (
               <div className="flex gap-2">
                 <div className="flex-1">
-                  <Label htmlFor="password">Mot de passe</Label>
+                  <Label htmlFor="password">Password</Label>
                   <Input id="password" name="password" type="password" value={form.password} onChange={handleChange} required />
                 </div>
                 <div className="flex-1">
@@ -121,22 +121,22 @@ export const InviteGuestModal: React.FC<InviteGuestModalProps> = ({ open, onOpen
               </div>
             )}
             <div>
-              <Label htmlFor="display_name">Nom à afficher</Label>
+              <Label htmlFor="display_name">Display name</Label>
               <Input id="display_name" name="display_name" value={form.display_name} onChange={handleChange} required />
             </div>
             <div className="mb-2 text-sm text-muted-foreground">
-              Nom : <b>{form.display_name?.trim() ? form.display_name : '(non renseigné)'}</b> | Rôle : <b>{guestToEdit?.role || "VISITOR"}</b>
+              Name: <b>{form.display_name?.trim() ? form.display_name : '(not provided)'}</b> | Role: <b>{guestToEdit?.role || "VISITOR"}</b>
             </div>
             <div>
-              <Label htmlFor="guest_detail">Catégorie / Détail</Label>
-              <Input id="guest_detail" name="guest_detail" value={form.guest_detail} onChange={handleChange} placeholder="ex: enfant, voisin, cousin..." />
+              <Label htmlFor="guest_detail">Category / Detail</Label>
+              <Input id="guest_detail" name="guest_detail" value={form.guest_detail} onChange={handleChange} placeholder="e.g. child, neighbor, cousin..." />
             </div>
             <div className="text-xs text-muted-foreground mb-2">
-              Les invités créés auront le droit <b>VISITOR</b> par défaut.
+              User created will have the <b>VISITOR</b> role by default.
             </div>
             {error && <div className="text-red-500 text-sm">{error}</div>}
             <DialogFooter>
-              <Button type="submit" disabled={loading}>{loading ? 'Envoi...' : guestToEdit ? 'Enregistrer' : 'Inviter'}</Button>
+              <Button type="submit" disabled={loading}>{loading ? 'Sending...' : guestToEdit ? 'Save' : 'Invite'}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

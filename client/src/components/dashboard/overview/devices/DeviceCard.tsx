@@ -126,9 +126,10 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onOpenDetail }) => {
 
   return (
     <Card 
-      style={{ backgroundColor: '#FFFFFF' }}
+      style={{}}
       className={cn(
         "transition-all duration-300 ease-in-out overflow-hidden",
+        "bg-white text-primary dark:bg-[#181926] dark:text-gray-100 border dark:border-gray-700",
         isHovered && "shadow-lg scale-101",
         isDeviceOn ? "border-primary/20" : "border-border"
       )}
@@ -139,16 +140,17 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onOpenDetail }) => {
         <div className="flex items-start gap-3">
           <div className={cn(
             "w-10 h-10 rounded-full flex items-center justify-center transition-colors border",
-            deviceColorClass
+            deviceColorClass,
+            "bg-gray-100 dark:bg-[#23243a] dark:border-gray-600"
           )}>
             <DeviceIcon type={device.type} />
           </div>
           
           <div>
-            <CardTitle className="text-base">{device.name}</CardTitle>
+            <CardTitle className="text-base dark:text-gray-100">{device.name}</CardTitle>
             <CardDescription className="flex items-center gap-1 mt-0.5">
               <Clock className="h-3 w-3" />
-              <span className="text-xs">{device.activeTime || 'Active for 3 hours'}</span>
+              <span className="text-xs dark:text-gray-300">{device.activeTime || 'Active for 3 hours'}</span>
             </CardDescription>
           </div>
         </div>
@@ -170,10 +172,10 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onOpenDetail }) => {
           onStateUpdate={setLocalState}
         />
       </CardContent>
-      <CardFooter className="px-4 py-3 border-t flex justify-between items-center bg-muted/10">
+      <CardFooter className="px-4 py-3 border-t flex justify-between items-center bg-muted/10 dark:bg-[#222338] dark:border-gray-700">
         <div className="flex items-center gap-1">
-          <Zap className="h-3 w-3 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">
+          <Zap className="h-3 w-3 text-muted-foreground dark:text-gray-400" />
+          <span className="text-xs text-muted-foreground dark:text-gray-300">
             {(() => {
               // Mapping local pour correspondance type → puissance de base (en kW)
               //ici ca gère juste l'affichage sur les cards
@@ -251,7 +253,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onOpenDetail }) => {
           variant={isDeviceOn ? "default" : "outline"}
           className={cn(
             "text-xs px-2 h-5",
-            isDeviceOn && "bg-green-500 hover:bg-green-500/90"
+            isDeviceOn && "bg-green-500 hover:bg-green-500/90 dark:bg-green-600 dark:hover:bg-green-600/90 dark:text-white"
           )}
         >
           {isDeviceOn ? "ON" : "OFF"}

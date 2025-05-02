@@ -34,6 +34,16 @@ const DashboardPage: React.FC = (): ReactNode => {
     devices: false,
     roomDetail: false
   });
+
+  const handleDeviceDeleted = async () => {
+    for (const key of Array.from(deviceCache.current.keys())) {
+      if (key.startsWith(selectedHomeId)) {
+        deviceCache.current.delete(key);
+      }
+    }
+    await loadDevicesWithContext();
+  };
+  
   const previousRoomId = useRef<string>(selectedRoomId);
 
   useEffect(() => {
@@ -342,6 +352,7 @@ const DashboardPage: React.FC = (): ReactNode => {
             onDeviceDetailDialogChange={setIsDeviceDetailDialogOpen}
             onRenameDevice={handleRenameDevice}
             onDeleteDevice={handleDeleteDevice}
+            onDeviceDeleted={handleDeviceDeleted}
           />
         </DevicesWithSelectedHome>
       </RoomsWithSelectedHome>
