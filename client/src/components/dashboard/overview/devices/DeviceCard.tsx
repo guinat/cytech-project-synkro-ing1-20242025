@@ -176,20 +176,19 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onOpenDetail }) => {
               // Mapping local pour correspondance type → puissance de base (en kW)
               //ici ca gère juste l'affichage sur les cards
               const DEVICE_TYPE_POWER: Record<string, number> = {
-                smart_bulb_x: 0.01,
+                smart_bulb_x: 0.07,
                 smart_thermostat_x: 0.05,
                 smart_shutter_x: 0,
                 smart_television_x: 0.1,
-                smart_oven_x: 0.2,
+                smart_oven_x: 1.8,
                 smart_doorlocker_x: 0,
-                smart_speaker_x: 0.1,
-                security_camera_x: 0.1,
-                smart_fridge_x: 0.1,
-                dish_washer: 0.2,
-                washing_machine: 0.2,
+                smart_speaker_x: 0.02,
+                security_camera_x: 0.03,
+                smart_fridge_x: 0.25,
+                dish_washer: 2,
+                washing_machine: 2.5,
               };
               if (device.type === 'smart_bulb_x') {
-                // Brightness dynamique (0-100)
                 const brightness = localState.brightness ?? 100;
                 const power = DEVICE_TYPE_POWER.smart_bulb_x * (brightness / 100);
                 return `${(power * 1000).toFixed(1)} W`;
@@ -197,31 +196,31 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onOpenDetail }) => {
                 const temperature = localState.temperature ?? 100;
                 const cycle = localState.cycle_selection ?? "Normal";
                 const coef = cycle === "Normal" ? 1 : cycle === "Eco" ? 0.9 : cycle === "Quick" ? 1.2 : 1;
-                const power = DEVICE_TYPE_POWER.dish_washer * coef * (temperature / 100);
+                const power = DEVICE_TYPE_POWER.dish_washer * coef * ((50 + temperature) / 150);
                 return `${(power * 1000).toFixed(1)} W`;
               } else if (device.type === 'washing_machine') {
                 const temperature = localState.temperature ?? 100;
                 const spin_speed_control = localState.spin_speed_control ?? 2000;
                 const cycle = localState.cycle_selection ?? "Normal";
                 const coef = cycle === "Normal" ? 1 : cycle === "Eco" ? 0.9 : cycle === "Quick" ? 1.2 : 1;
-                const power = DEVICE_TYPE_POWER.washing_machine * coef * (temperature / 100) * (spin_speed_control / 2000);
+                const power = DEVICE_TYPE_POWER.washing_machine * coef * ((50 +temperature) / 150) * (spin_speed_control / 2000);
                 return `${(power * 1000).toFixed(1)} W`;
               } else if (device.type === 'smart_thermostat_x') {
                 const temperature = localState.temperature ?? 100;
-                const power = DEVICE_TYPE_POWER.smart_thermostat_x * (temperature / 100);
+                const distance = Math.abs(temperature - 50);
+                const power = DEVICE_TYPE_POWER.smart_thermostat_x * (0.2 + (distance / 50) * (1 - 0.2));
                 return `${(power * 1000).toFixed(1)} W`;
               } else if (device.type === 'smart_oven_x') {
-                // Conversion température (50-250°C) → pourcentage (0-100), robustesse contre NaN
                 const heat = localState.heat ?? 100;
-                const power = DEVICE_TYPE_POWER.smart_oven_x * (heat / 100);
+                const power = DEVICE_TYPE_POWER.smart_oven_x * (heat / 250);
                 return `${(power * 1000).toFixed(1)} W`;
               } else if (device.type === 'smart_fridge_x') {
                 const mode = localState.mode ?? 'normal';
                 let power = 0;
                 if(mode === 'normal') {
-                  power = 0.1;
+                  power = 0.25;
                 } else if(mode === 'eco') {
-                  power = 0.08;
+                  power = 0.15;
                 }
                 return `${(power * 1000).toFixed(1)} W`;
               } else {

@@ -64,7 +64,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
   const [localState, setLocalState] = useState<any>(device?.state || {});
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [deviceDetails, setDeviceDetails] = useState<EnhancedDevice | null>(device);
-  const [totalConsumption, setTotalConsumption] = useState<string>('0 kWh');
+  const [totalConsumption, setTotalConsumption] = useState<string>('0 Wh');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -78,7 +78,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
 
           let statsData: DeviceStatsResponse = {
             activeTime: '0 h',
-            energyConsumption: '0 kWh',
+            energyConsumption: '0 Wh',
             lastActiveAt: new Date().toISOString(),
             isOn: device.state?.power === 'on' || device.state?.isOn === true || false
           };
@@ -202,10 +202,10 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
           const deviceId = deviceDetails.id;
           
           const kWh = await getDeviceTotalConsumption(deviceId);
-          setTotalConsumption(`${kWh.toFixed(2)} kWh`);
+          setTotalConsumption(`${kWh.toFixed(2)} Wh`);
         } catch (error) {
           console.error("Erreur lors de la récupération de la consommation:", error);
-          setTotalConsumption('0 kWh');
+          setTotalConsumption('0 Wh');
         }
       }
     };
