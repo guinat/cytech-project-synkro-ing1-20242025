@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import DeviceDynamicControls from '../devices/DeviceDynamicControls';
 import DeviceIcon from '../devices/DeviceIcon';
 import { Edit, Trash2, AlertTriangle, Clock, Zap, History } from 'lucide-react';
-import { updateDevice, deleteDevice, Device, getDeviceCommand } from '@/services/devices.service';
+import { updateDevice, deleteDevice, Device, getDeviceCommand, getDeviceTotalConsumption } from '@/services/devices.service';
 
 import { apiFetch } from '@/services/api';
 import { formatDistanceToNow, parseISO } from 'date-fns';
@@ -65,6 +65,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
   const [localState, setLocalState] = useState<any>(device?.state || {});
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [deviceDetails, setDeviceDetails] = useState<EnhancedDevice | null>(device);
+  const [totalConsumption, setTotalConsumption] = useState<string>('0 kWh');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -194,6 +195,27 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
     }
   }, [device, open]);
 
+  // Récupérer la consommation totale réelle
+  useEffect(() => {
+    const fetchTotalConsumption = async () => {
+      if (deviceDetails) {
+        try {
+          const deviceId = deviceDetails.id;
+          
+          const kWh = await getDeviceTotalConsumption(deviceId);
+          setTotalConsumption(`${kWh.toFixed(2)} kWh`);
+        } catch (error) {
+          console.error("Erreur lors de la récupération de la consommation:", error);
+          setTotalConsumption('0 kWh');
+        }
+      }
+    };
+    
+    if (open && deviceDetails) {
+      fetchTotalConsumption();
+    }
+  }, [open, deviceDetails]);
+
   useEffect(() => {
     if (deviceDetails) {
       setEditName(deviceDetails.name);
@@ -303,8 +325,8 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
                 <div className="bg-muted/40 rounded-lg p-3 flex items-center gap-2">
                   <Zap className="h-4 w-4 text-primary" />
                   <div>
-                    <div className="text-xs text-muted-foreground">Consommation</div>
-                    <div className="font-medium">{deviceDetails?.energyConsumption || '0 kWh'}</div>
+                    <div className="text-xs text-muted-foreground">Total consumption</div>
+                    <div className="font-medium">{totalConsumption}</div>
                   </div>
                 </div>
                 <div className="bg-muted/40 rounded-lg p-3 flex items-center gap-2">
