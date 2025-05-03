@@ -23,4 +23,7 @@ urlpatterns = [
     path('<uuid:home_pk>/rooms/<uuid:room_pk>/devices/<uuid:device_pk>/commands/<uuid:pk>/',
          DeviceCommandViewSet.as_view({'get': 'retrieve'}),
          name='device-commands-detail'),
+    path('<uuid:home_pk>/rooms/<uuid:room_pk>/devices/<uuid:device_pk>/consumption/',
+         DeviceConsumptionHistoryView.as_view(),
+         name='device-consumption-history'),
 ]

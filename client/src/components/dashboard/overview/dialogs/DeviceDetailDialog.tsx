@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import DeviceDynamicControls from '../devices/DeviceDynamicControls';
 import DeviceIcon from '../devices/DeviceIcon';
 import { Edit, Trash2, AlertTriangle, Clock, Zap, History } from 'lucide-react';
-import { updateDevice, deleteDevice, Device, getDeviceCommand } from '@/services/devices.service';
+import { updateDevice, deleteDevice, Device, getDeviceCommand, getDeviceTotalConsumption } from '@/services/devices.service';
 
 import { apiFetch } from '@/services/api';
 import { formatDistanceToNow, parseISO } from 'date-fns';
@@ -65,6 +65,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
   const [localState, setLocalState] = useState<any>(device?.state || {});
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [deviceDetails, setDeviceDetails] = useState<EnhancedDevice | null>(device);
+  const [totalConsumption, setTotalConsumption] = useState<string>('0 kWh');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -91,6 +92,76 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
             console.warn("L'endpoint des stats n'est pas encore disponible:", statsError);
           }
 
+          // Calcul de la durée ON à partir de l'historique des commandes
+          let activeTime = '0 h';
+          try {
+            // @ts-ignore
+            const commands = await getDeviceCommand(device.home, device.room, device.id);
+            if (Array.isArray(commands) && commands.length > 0) {
+              // Filtrer uniquement les commandes on/off exécutées avec executed_at
+              const onOffCmds = commands
+                .filter(cmd => cmd.capability === 'on_off' && !!cmd.executed_at)
+                .sort((a, b) => (a.executed_at && b.executed_at ? a.executed_at.localeCompare(b.executed_at) : 0));
+
+              let totalMs = 0;
+              let lastOn: string | null = null;
+              for (const cmd of onOffCmds) {
+                let isOn: boolean | undefined = undefined;
+                if (typeof cmd.parameters === 'object' && cmd.parameters !== null) {
+                  // Certains backends envoient parameters en string, on parse si besoin
+                  let paramsObj: any = cmd.parameters;
+                  if (typeof paramsObj === 'string') {
+                    try {
+                      paramsObj = JSON.parse(paramsObj);
+                    } catch {}
+                  }
+                  if (typeof paramsObj === 'object' && paramsObj !== null && 'on_off' in paramsObj) {
+                    isOn = paramsObj.on_off;
+                  }
+                }
+                if (isOn && !lastOn) {
+                  lastOn = cmd.executed_at!;
+                } else if (isOn === false && lastOn) {
+                  // Ajoute la période ON
+                  totalMs += new Date(cmd.executed_at!).getTime() - new Date(lastOn).getTime();
+                  lastOn = null;
+                }
+              }
+              // Si le dernier état est ON, on considère que le device est encore allumé jusqu'à maintenant
+              if (lastOn) {
+                totalMs += new Date().getTime() - new Date(lastOn).getTime();
+              }
+              // Formattage de la durée
+              const totalMin = Math.floor(totalMs / 60000);
+              const h = Math.floor(totalMin / 60);
+              const min = totalMin % 60;
+              if (h > 0 && min > 0) activeTime = `${h} h ${min} min`;
+              else if (h > 0) activeTime = `${h} h`;
+              else activeTime = `${min} min`;
+            }
+          } catch (e) {
+            // fallback: statsData.activeTime
+            activeTime = statsData.activeTime;
+          }
+
+          // Récupération de la dernière commande exécutée
+          let lastCommandAt: string | null = null;
+          try {
+            // @ts-ignore
+            const commands = await getDeviceCommand(device.home, device.room, device.id);
+            if (Array.isArray(commands) && commands.length > 0) {
+              // On prend la dernière commande exécutée (la plus récente)
+              const sorted = [...commands].sort((a, b) => {
+                if (!a.executed_at) return 1;
+                if (!b.executed_at) return -1;
+                return b.executed_at.localeCompare(a.executed_at);
+              });
+              lastCommandAt = sorted[0].executed_at || null;
+            }
+          } catch (e) {
+            // ignore erreur, fallback handled below
+          }
+
           const enhancedDevice: EnhancedDevice = {
             ...device,
             name: deviceData.name || device.name,
@@ -99,9 +170,9 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
             room: device.room,
             home_id: device.home_id || device.home,
             room_id: device.room_id || device.room,
-            activeTime: statsData.activeTime,
+            activeTime: activeTime, // Utilise la valeur calculée
             energyConsumption: statsData.energyConsumption,
-            lastActiveAt: statsData.lastActiveAt,
+            lastActiveAt: lastCommandAt || undefined, // On priorise la vraie dernière commande
             isOn: statsData.isOn,
             state: device.state,
             brand: deviceData.brand || device.brand || ''
@@ -123,6 +194,27 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
       fetchDeviceStats();
     }
   }, [device, open]);
+
+  // Récupérer la consommation totale réelle
+  useEffect(() => {
+    const fetchTotalConsumption = async () => {
+      if (deviceDetails) {
+        try {
+          const deviceId = deviceDetails.id;
+          
+          const kWh = await getDeviceTotalConsumption(deviceId);
+          setTotalConsumption(`${kWh.toFixed(2)} kWh`);
+        } catch (error) {
+          console.error("Erreur lors de la récupération de la consommation:", error);
+          setTotalConsumption('0 kWh');
+        }
+      }
+    };
+    
+    if (open && deviceDetails) {
+      fetchTotalConsumption();
+    }
+  }, [open, deviceDetails]);
 
   useEffect(() => {
     if (deviceDetails) {
@@ -173,7 +265,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
 
 
   const formatLastActive = (lastActiveAt?: string) => {
-    if (!lastActiveAt) return "Inconnu";
+    if (!lastActiveAt) return "Never used";
     try {
       const date = parseISO(lastActiveAt);
       return formatDistanceToNow(date, { addSuffix: true, locale: fr });
@@ -181,6 +273,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
       return "Format de date invalide";
     }
   };
+
 
   if (!device) return null;
 
@@ -232,8 +325,8 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
                 <div className="bg-muted/40 rounded-lg p-3 flex items-center gap-2">
                   <Zap className="h-4 w-4 text-primary" />
                   <div>
-                    <div className="text-xs text-muted-foreground">Consommation</div>
-                    <div className="font-medium">{deviceDetails?.energyConsumption || '0 kWh'}</div>
+                    <div className="text-xs text-muted-foreground">Total consumption</div>
+                    <div className="font-medium">{totalConsumption}</div>
                   </div>
                 </div>
                 <div className="bg-muted/40 rounded-lg p-3 flex items-center gap-2">

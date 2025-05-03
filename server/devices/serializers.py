@@ -15,13 +15,97 @@ class DeviceSerializerMixin:
 
 class DeviceSerializer(serializers.ModelSerializer):
     capabilities = serializers.SerializerMethodField(read_only=True)
+    energyConsumption = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Device
         fields = [
-            'id', 'name', 'type', 'product_code', 'brand', 'room', 'state', 'capabilities', 'created_at', 'updated_at'  # <<< AJOUT brand ici
+            'id', 'name', 'type', 'product_code', 'brand', 'room', 'state', 'capabilities', 'created_at', 'updated_at', 'energyConsumption'  # <<< AJOUT brand ici
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'capabilities']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'capabilities', 'energyConsumption']
+
+    def get_energyConsumption(self, obj):
+        # Logique identique à EnergyConsumptionView dans views.py
+        from .views import DEVICE_TYPE_POWER
+        device_state = obj.state or {}
+        type_ = getattr(obj, 'type', None)
+        power_kw = DEVICE_TYPE_POWER.get(type_, 0)
+
+        # Gestion de l'état ON/OFF (toujours 0 si off)
+        on_off = device_state.get('on_off', None)
+        power = device_state.get('power', None)
+        if (on_off in [None, False, 0, 'off', 'Off', 'OFF', 'false', 'False', 'FALSE']) or (power is not None and power != 'on'):
+            return 0.0
+
+        # smart_bulb_x : brightness
+        if type_ == 'smart_bulb_x':
+            brightness = device_state.get('brightness', 100)
+            if brightness is not None and isinstance(brightness, (int, float)):
+                power_kw *= (brightness / 100)
+            else:
+                power_kw *= 1
+        # smart_thermostat_x : temperature
+        elif type_ == 'smart_thermostat_x':
+            temperature = device_state.get('temperature', 100)
+            if temperature is not None and isinstance(temperature, (int, float)):
+                power_kw *= (temperature / 100)
+            else:
+                power_kw *= 1
+        # dish_washer : temperature, cycle
+        elif type_ == 'dish_washer':
+            temperature = device_state.get('temperature', 100)
+            cycle = device_state.get('cycle_selection', 'Normal')
+            if cycle == 'Normal':
+                coef = 1
+            elif cycle == 'Eco':
+                coef = 0.9
+            elif cycle == 'Quick':
+                coef = 1.2
+            else:
+                coef = 1
+            if temperature is not None and isinstance(temperature, (int, float)):
+                power_kw *= coef * (temperature / 100)
+            else:
+                power_kw *= coef
+        # washing_machine : temperature, spin_speed_control, cycle
+        elif type_ == 'washing_machine':
+            temperature = device_state.get('temperature', 100)
+            spin_speed_control = device_state.get('spin_speed_control', 2000)
+            cycle = device_state.get('cycle_selection', 'Normal')
+            if cycle == 'Normal':
+                coef = 1
+            elif cycle == 'Eco':
+                coef = 0.9
+            elif cycle == 'Quick':
+                coef = 1.2
+            else:
+                coef = 1
+            if temperature is not None and isinstance(temperature, (int, float)):
+                power_kw *= coef * (temperature / 100) * (spin_speed_control / 2000)
+            else:
+                power_kw *= coef
+        # smart_oven_x : heat
+        elif type_ == 'smart_oven_x':
+            heat = device_state.get('heat', 0)
+            if heat is not None and isinstance(heat, (int, float)) and 50 <= heat <= 250:
+                power_kw = 0.2 * (heat / 250)
+            else:
+                power_kw = 0.0
+        # smart_fridge_x : mode, on_off, power
+        elif type_ == 'smart_fridge_x':
+            mode = device_state.get('mode', 'normal')
+            on_off = device_state.get('on_off', True)
+            power = device_state.get('power', 'on')
+            if (on_off is not None and on_off) or (power is not None and power == 'on'):
+                if mode == 'eco':
+                    power_kw = 0.09
+                else:
+                    power_kw = 0.15
+            else:
+                power_kw = 0.0
+
+        return round(power_kw, 5)
+
 
     def get_capabilities(self, obj):
         return obj.capabilities

@@ -30,7 +30,7 @@ export function DeviceHistoryModal({ homeId, roomId, deviceId, triggerClassName 
       const cmds = await getDeviceCommand(homeId, roomId, deviceId);
       setCommands(cmds);
     } catch (e) {
-      setError("Impossible de récupérer l'historique.");
+      setError("Unable to retrieve history.");
     } finally {
       setLoading(false);
     }
@@ -69,7 +69,7 @@ export function DeviceHistoryModal({ homeId, roomId, deviceId, triggerClassName 
                 ))}
               </ul>
             ) : (
-              <div className="text-gray-400">Aucune commande trouvée.</div>
+              <div className="text-gray-400">No commands found.</div>
             )}
           </div>
         )}

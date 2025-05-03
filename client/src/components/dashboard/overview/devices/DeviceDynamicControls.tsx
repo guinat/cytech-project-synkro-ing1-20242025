@@ -2,7 +2,7 @@ import React from 'react';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { sendDeviceCommand, getDevice } from '@/services/devices.service';
+import { sendDeviceCommand, getDevice, postDeviceConsumption } from '@/services/devices.service';
 import { Select as SelectShadcn, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from '@/components/ui/button'; // Import du bouton
 
@@ -95,6 +95,17 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
       const updatedDevice = await getDevice(homeId, roomId, id);
       // Compatibilité : certains Device n'ont pas la propriété 'state'
       onStateUpdate((updatedDevice as any).state ?? updatedDevice ?? {});
+      // Récupération de la consommation et injection dans l'historique
+      // On suppose que la consommation est calculée côté back et disponible dans updatedDevice.energyConsumption ou updatedDevice.state.energyConsumption
+      const consumption = (updatedDevice as any).energyConsumption ?? (updatedDevice as any).state?.energyConsumption;
+      // On envoie systématiquement, même si la conso vaut 0 (pour l'historique OFF)
+      if (typeof consumption !== 'undefined') {
+        await postDeviceConsumption({
+          device: id,
+          timestamp: new Date().toISOString(),
+          consumption: typeof consumption === 'string' ? parseFloat(consumption) : consumption
+        });
+      }
     } catch (e: any) {
       console.error('Erreur lors de l\'envoi de la commande', capability, e);
       toast.error(`Erreur commande: ${capability} - ${e?.message || ''}`);
@@ -306,8 +317,7 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
         <div>
           <span>Spin Speed (RPM)</span>
           <div className="flex justify-between text-xs">
-            <span>0</span>
-            <span>1000</span>
+            <span>500</span>
             <span>2000</span>
           </div>
           <Slider

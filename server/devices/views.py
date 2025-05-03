@@ -119,6 +119,7 @@ class DeviceViewSet(viewsets.ModelViewSet):
 
 
 # Mapping local type → puissance (en kW)
+#ici ca gère le back pour la vraie consommation à afficher
 DEVICE_TYPE_POWER = {
     "smart_bulb_x": 0.01,        # 10W
     "smart_thermostat_x": 0.05,  # 50W
@@ -127,6 +128,10 @@ DEVICE_TYPE_POWER = {
     "smart_oven_x": 0.2,         # 200W
     "smart_doorlocker_x": 0,
     "smart_speaker_x": 0.1,      # 100W
+    "security_camera_x": 0.1,      # 10W
+    "smart_fridge_x": 0.1,
+    "dish_washer": 0.2,
+    "washing_machine": 0.2,
 }
 
 class EnergyConsumptionView(APIView): #TODO?: Check logics & data
@@ -180,11 +185,51 @@ class EnergyConsumptionView(APIView): #TODO?: Check logics & data
                     power_kw *= (brightness/100)
                 else:
                     power_kw *= 1 
+            
+            if device.type == "smart_thermostat_x":
+                temperature = device_state.get("temperature", 100)
+                if temperature is not None and isinstance(temperature, (int, float)):
+                    power_kw *= (temperature/100)
+                else:
+                    power_kw *= 1 
+
+            if device.type == "dish_washer":
+                temperature = device_state.get("temperature", 100)
+                cycle = device_state.get("cycle_selection", "Normal")
+                if cycle == "Normal":
+                    coef= 1
+                elif cycle == "Eco":
+                    coef= 0.9
+                elif cycle == "Quick":
+                    coef= 1.2
+                else:
+                    coef= 1
+                if temperature is not None and isinstance(temperature, (int, float)):
+                    power_kw *= coef*(temperature/100)
+                else:
+                    power_kw *= coef 
+            
+            if device.type == "washing_machine":
+                temperature = device_state.get("temperature", 100)
+                spin_speed_control = device_state.get("spin_speed_control", 2000)
+                cycle = device_state.get("cycle_selection", "Normal")
+                if cycle == "Normal":
+                    coef= 1
+                elif cycle == "Eco":
+                    coef= 0.9
+                elif cycle == "Quick":
+                    coef= 1.2
+                else:
+                    coef= 1
+                if temperature is not None and isinstance(temperature, (int, float)):
+                    power_kw *= coef*(temperature/100)*(spin_speed_control/2000)
+                else:
+                    power_kw *= coef 
 
             if device.type == "smart_oven_x":
                 heat = device_state.get("heat", 0)
                 if heat is not None and isinstance(heat, (int, float)) and 50 <= heat <= 250:
-                    power_kw = 0.2 * (heat - 50) / (250 - 50)
+                    power_kw = 0.2 * (heat/250)
                 else:
                     power_kw = 0.0 
 
