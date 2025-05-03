@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Device, DeviceCommand
+from .models import Device, DeviceCommand, DeviceConsumptionHistory
 from .device_catalogue import DEVICE_TYPE_MAP
 
 class DeviceSerializerMixin:
