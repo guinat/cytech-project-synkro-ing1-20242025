@@ -16,7 +16,6 @@ import { updateDevice, deleteDevice, Device, getDeviceCommand, getDeviceTotalCon
 
 import { apiFetch } from '@/services/api';
 import { formatDistanceToNow, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 interface DeviceDetailDialogProps {
   open: boolean;
@@ -195,7 +194,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
     }
   }, [device, open]);
 
-  // Récupérer la consommation totale réelle
+  // Récupérer la consommation totale réelle et l'actualiser toutes les secondes
   useEffect(() => {
     const fetchTotalConsumption = async () => {
       if (deviceDetails) {
@@ -211,9 +210,24 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
       }
     };
     
+    let intervalId: NodeJS.Timeout | null = null;
+    
     if (open && deviceDetails) {
+      // Récupération initiale
       fetchTotalConsumption();
+      
+      // Mise en place de l'actualisation toutes les secondes
+      intervalId = setInterval(() => {
+        fetchTotalConsumption();
+      }, 1000);
     }
+    
+    // Nettoyage de l'intervalle à la fermeture du dialogue ou au démontage du composant
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
   }, [open, deviceDetails]);
 
   useEffect(() => {
@@ -268,16 +282,16 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
     if (!lastActiveAt) return "Never used";
     try {
       const date = parseISO(lastActiveAt);
-      return formatDistanceToNow(date, { addSuffix: true, locale: fr });
+      return formatDistanceToNow(date, { addSuffix: true });
     } catch (e) {
-      return "Format de date invalide";
+      return "Invalid date format";
     }
   };
 
 
   if (!device) return null;
 
-  const isDeviceOn = deviceDetails?.isOn || localState.power === 'on' || localState.isOn === true;
+  const isDeviceOn = localState.on_off === true || deviceDetails?.isOn || localState.power === 'on' || localState.isOn === true;
   const deviceColorClass = deviceColors[device.type.toLowerCase()] || deviceColors.default;
   const homeId = deviceDetails?.home_id || device.home || "";
   const roomId = deviceDetails?.room_id || device.room || "";
@@ -309,7 +323,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
                   <DialogTitle className="text-xl">{deviceDetails?.name || device.name}</DialogTitle>
                   <div className="text-xs text-muted-foreground">Type: {device.type}</div>
                   {deviceDetails?.brand && (
-                    <div className="text-xs text-muted-foreground">Marque: {deviceDetails.brand}</div>
+                    <div className="text-xs text-muted-foreground">Brand: {deviceDetails.brand}</div>
                   )}
                 </div>
                 <div className="ml-auto">
@@ -320,33 +334,35 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
               </div>
             </DialogHeader>
 
+            <Separator />
+
             <div className="space-y-4 mt-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-muted/40 rounded-lg p-3 flex items-center gap-2">
+                <div className="bg-yellow-50 dark:bg-yellow-400 rounded-lg p-3 flex items-center gap-2">
                   <Zap className="h-4 w-4 text-primary" />
                   <div>
                     <div className="text-xs text-muted-foreground">Total consumption</div>
                     <div className="font-medium">{totalConsumption}</div>
                   </div>
                 </div>
-                <div className="bg-muted/40 rounded-lg p-3 flex items-center gap-2">
+                <div className="bg-green-100 dark:bg-green-400 rounded-lg p-3 flex items-center gap-2">
                   <Clock className="h-4 w-4 text-primary" />
                   <div>
-                    <div className="text-xs text-muted-foreground">Temps actif</div>
+                    <div className="text-xs text-muted-foreground">Time active</div>
                     <div className="font-medium">{deviceDetails?.activeTime || '0 h'}</div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-muted/40 rounded-lg p-3 flex items-center gap-2">
+              <div className="bg-sky-100 dark:bg-sky-400 rounded-lg p-3 flex items-center gap-2">
                 <History className="h-4 w-4 text-primary" />
                 <div>
-                  <div className="text-xs text-muted-foreground">Dernière activité</div>
+                  <div className="text-xs text-muted-foreground">Last interaction</div>
                   <div className="font-medium">{formatLastActive(deviceDetails?.lastActiveAt)}</div>
                 </div>
               </div>
 
-              <div className="rounded-lg border border-border p-4">
+              {/* <div className="rounded-lg border border-border p-4">
                 <h3 className="text-sm font-medium mb-3">Contrôles</h3>
                 <DeviceDynamicControls
                   device={{ ...deviceDetails, id: deviceDetails?.id || device.id, state: localState, home_id: homeId, room_id: roomId }}
@@ -361,10 +377,10 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
                     }
                   }}
                 />
-              </div>
+              </div> */}
 
               <form onSubmit={handleRename} className="space-y-3">
-                <Label htmlFor="deviceName" className="text-sm font-medium">Renommer l'appareil</Label>
+                <Label htmlFor="deviceName" className="text-sm font-medium">Rename device</Label>
                 <div className="flex gap-2">
                   <Input
                     id="deviceName"
@@ -384,7 +400,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
                     ) : (
                       <Edit className="h-4 w-4" />
                     )}
-                    {isRenaming ? 'Enregistrement...' : 'Enregistrer'}
+                    {isRenaming ? 'Saving...' : 'Save'}
                   </Button>
                 </div>
               </form>
@@ -402,17 +418,17 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
                   {isConfirmingDelete ? (
                     <>
                       <AlertTriangle className="h-4 w-4" />
-                      Confirmer
+                      Confirm
                     </>
                   ) : isDeleting ? (
                     <>
                       <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                      Suppression...
+                      Deleting...
                     </>
                   ) : (
                     <>
                       <Trash2 className="h-4 w-4" />
-                      Supprimer
+                      Delete
                     </>
                   )}
                 </Button>

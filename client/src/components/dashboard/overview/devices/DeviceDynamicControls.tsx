@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { sendDeviceCommand, getDevice, postDeviceConsumption } from '@/services/devices.service';
 import { Select as SelectShadcn, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from '@/components/ui/button'; // Import du bouton
+import { SkipBack, SkipForward } from 'lucide-react'; // Import des icônes pour les boutons précédent/suivant
 
 interface DeviceDynamicControlsProps {
   device: any;
@@ -221,22 +222,30 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
             onValueCommit={([v]) => handleSendCommand('volume', v)}
           />
         </div>
-        <div className="flex items-center gap-2 mt-2">
-          <button
-            className="px-3 py-1 rounded bg-muted border hover:bg-primary/10"
-            onClick={handlePrev}
-            type="button"
-          >
-            Previous Track
-          </button>
-          <span className="font-semibold text-base mx-2">{playlist[localTrackIndex]}</span>
-          <button
-            className="px-3 py-1 rounded bg-muted border hover:bg-primary/10"
-            onClick={handleNext}
-            type="button"
-          >
-            Next Track
-          </button>
+        <div className="grid grid-cols-3 items-center mt-2">
+          <div className="justify-self-start">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handlePrev}
+              className="h-8 w-8 rounded-full"
+            >
+              <SkipBack className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="justify-self-center text-center overflow-hidden whitespace-nowrap text-ellipsis px-2">
+            <span className="font-semibold text-base">{playlist[localTrackIndex]}</span>
+          </div>
+          <div className="justify-self-end">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleNext}
+              className="h-8 w-8 rounded-full"
+            >
+              <SkipForward className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
     );

@@ -4,7 +4,7 @@ import DeviceDynamicControls from './DeviceDynamicControls';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Clock, Zap } from 'lucide-react';
+import { MoreHorizontal, Clock, Zap, BarChart2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getEnergyConsumption } from '@/services/devices.service';
 
@@ -148,10 +148,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onOpenDetail }) => {
           
           <div>
             <CardTitle className="text-base dark:text-gray-100">{device.name}</CardTitle>
-            <CardDescription className="flex items-center gap-1 mt-0.5">
-              <Clock className="h-3 w-3" />
-              <span className="text-xs dark:text-gray-300">{device.activeTime || 'Active for 3 hours'}</span>
-            </CardDescription>
           </div>
         </div>
         
@@ -239,14 +235,15 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onOpenDetail }) => {
         
         <Button
               variant="ghost"
-              size="sm"
-              className="text-xs"
+              size="icon"
+              className="h-8 w-8"
+              title="Export statistics"
               onClick={async (e) => {
                 e.stopPropagation();
                 await exportConsumptionPerSecond(device);
               }}
             >
-              Export txt
+              <BarChart2 className="h-4 w-4" />
         </Button>
         
         <Badge 

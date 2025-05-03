@@ -22,6 +22,26 @@ export function DeviceHistoryModal({ homeId, roomId, deviceId, triggerClassName 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+  
+  // Fonction pour formater les noms de paramètres
+  const formatParameterName = (paramName: string): string => {
+    const parameterMappings: Record<string, string> = {
+      'brightness': 'Brightness',
+      'color': 'Light color',
+      'temperature': 'Temperature',
+      'position': 'Opening level',
+      'volume': 'Volume',
+      'channel': 'Channel',
+      'heat': 'Heat setting',
+      'mode': 'Consumption mode',
+      'trackIndex': 'Track changed',
+      'cycle_selection': 'Cycle selected',
+      'spin_speed_control': 'Spin speed control',
+      // Ajoutez d'autres mappings ici selon vos besoins
+    };
+    
+    return parameterMappings[paramName] || paramName;
+  };
 
   async function fetchHistory() {
     setLoading(true);
@@ -39,14 +59,14 @@ export function DeviceHistoryModal({ homeId, roomId, deviceId, triggerClassName 
   return (
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o) fetchHistory(); }}>
       <DialogTrigger asChild>
-        <button className={triggerClassName}>Historique</button>
+        <button className={triggerClassName}>History</button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Historique des commandes</DialogTitle>
+          <DialogTitle>Command history :</DialogTitle>
         </DialogHeader>
         {loading ? (
-          <div>Chargement...</div>
+          <div>Loading...</div>
         ) : error ? (
           <div style={{ color: 'red' }}>{error}</div>
         ) : (
@@ -54,18 +74,38 @@ export function DeviceHistoryModal({ homeId, roomId, deviceId, triggerClassName 
             {commands.length > 0 ? (
               <ul className="space-y-1">
                 {commands.map((cmd, idx) => (
-                  Object.entries(cmd.parameters).map(([param, value], j) => (
-                    <li key={idx + '-' + j} className="flex gap-4 items-center border-b border-gray-200 py-1">
-                      <span className="text-xs text-gray-500 min-w-[120px]">
-                        {cmd.executed_at || cmd.created_at
-                          ? new Date(cmd.executed_at || cmd.created_at).toLocaleString('fr-FR')
-                          : 'Date inconnue'}
-                      </span>
-                      <span className="font-semibold text-blue-700">{param}</span>
-                      <span className="mx-2 text-gray-400">→</span>
-                      <span className="text-black dark:text-white">{String(value)}</span>
-                    </li>
-                  ))
+                  Object.entries(cmd.parameters).map(([param, value], j) => {
+                    // Gestion spéciale pour les commandes on_off
+                    if (param === 'on_off') {
+                      const isOn = value === true || value === 'true';
+                      return (
+                        <li key={idx + '-' + j} className="flex gap-4 items-center border-b border-gray-200 py-1">
+                          <span className="text-xs text-gray-500 min-w-[120px]">
+                            {cmd.executed_at || cmd.created_at
+                              ? new Date(cmd.executed_at || cmd.created_at).toLocaleString('en-US')
+                              : 'Unknown date'}
+                          </span>
+                          <span className={isOn ? "font-semibold text-green-600" : "font-semibold text-red-600"}>
+                            {isOn ? "Switched on" : "Switched off"}
+                          </span>
+                        </li>
+                      );
+                    }
+                    
+                    // Affichage normal pour les autres commandes
+                    return (
+                      <li key={idx + '-' + j} className="flex gap-4 items-center border-b border-gray-200 py-1">
+                        <span className="text-xs text-gray-500 min-w-[120px]">
+                          {cmd.executed_at || cmd.created_at
+                            ? new Date(cmd.executed_at || cmd.created_at).toLocaleString('en-US')
+                            : 'Unknown date'}
+                        </span>
+                        <span className="font-semibold text-blue-700">{formatParameterName(param)}</span>
+                        <span className="mx-2 text-gray-400">→</span>
+                        <span className="text-black dark:text-white">{String(value)}</span>
+                      </li>
+                    );
+                  })
                 ))}
               </ul>
             ) : (
