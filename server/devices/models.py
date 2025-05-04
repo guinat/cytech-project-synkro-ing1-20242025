@@ -3,6 +3,8 @@ from django.db import models
 from django.conf import settings
 from rooms.models import Room
 
+#models are used to define the structure of the database
+
 from .device_catalogue import DEVICE_TYPE_MAP
 
 class Device(models.Model):
@@ -15,7 +17,7 @@ class Device(models.Model):
     )
     type = models.CharField(max_length=50) 
     product_code = models.CharField(max_length=6)
-    brand = models.CharField(max_length=100, null=True, blank=True)  # <<< AJOUT
+    brand = models.CharField(max_length=100, null=True, blank=True)
     state = models.JSONField(default=dict, blank=True)  
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -23,6 +25,7 @@ class Device(models.Model):
     def __str__(self):
         return f"{self.name} in {self.room.name}"
 
+    #capabilities are the actions that can be performed on the device
     @property
     def capabilities(self):
         return DEVICE_TYPE_MAP.get(self.type, {}).get('capabilities', [])

@@ -67,6 +67,8 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
     }
   }, [granularity]);
   
+
+  //download csv or pdf data
   const downloadCSV = () => {
     const headers = ["Period", ...devices.map(d => d.device_name)];
     const rows = data.map(row => [row.period, ...devices.map(d => row[d.device_name] ?? 0)]);
@@ -74,7 +76,6 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     saveAs(blob, "energy_consumption.csv");
   };
-
   const downloadPDF = () => {
     const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "A4" });
     const tableColumn = ["Period", ...devices.map(d => d.device_name)];
@@ -146,7 +147,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
         });
       }
 
-      // Nettoyage des clés incompatibles avec la granularité actuelle
+      // clean keys incompatible with the current granularity
       Object.keys(currentHistoricalData).forEach(deviceId => {
         const cleanedConsumption: Record<string, number> = {};
 
@@ -194,7 +195,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
           new Set(devicesWithHistory.flatMap(d => Object.keys(d.consumption ?? {})))
         ).sort();
   
-        // Regroupement des clés selon la granularité
+        // group keys according to granularity
         let groupedKeys: string[] = [];
   
         if (granularity === 'hour') {
@@ -259,7 +260,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
           groupedKeys = allKeys; // minute
         }
 
-        // Limitation aux 10 dernières périodes
+        // limit to the last 10 periods
         let limitStartDate: Date | null = null;
         let limitedKeys: string[] = [];
 
@@ -291,7 +292,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
           limitedKeys = groupedKeys.slice(-10);
         }
 
-        // Construction des données pour le graphique
+        // build chart data
         if (granularity !== 'month') {
           const chartData = limitedKeys.map(key => {
             const entry: any = { period: key };
@@ -325,7 +326,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
             return entry;
           });
 
-          // Formatage des dates pour l'affichage
+          // format dates for display
           chartData.forEach(entry => {
             try {
               let date: Date | null = null;

@@ -1,9 +1,11 @@
+#Definition of every device type
+
 DEVICE_TYPES = [
     {
         "type": "smart_bulb_x",
         "name": "Smart Bulb X",
         "brand": "Philips",
-        "description": "Control lighting, color, and brightness.",
+        "description": "Control lighting, color, and brightness in you rooms.",
         "capabilities": ["on_off", "brightness", "color"],
     },
     {
@@ -24,42 +26,42 @@ DEVICE_TYPES = [
         "type": "smart_television_x",
         "name": "Smart Television X",
         "brand": "Samsung",
-        "description": "Power, volume, and channel control.",
+        "description": "Stream your favorite content and adjust volume.",
         "capabilities": ["on_off", "volume", "channel"],
     },
     {
         "type": "smart_oven_x",
         "name": "Smart Oven X",
         "brand": "Bosch",
-        "description": "Remote start and stop, and temperature (heat) adjustment.",
+        "description": "Cook meals remotely with precision and safety.",
         "capabilities": ["on_off", "heat"],
     },
     {
         "type": "smart_fridge_x",
         "name": "Smart Fridge X",
         "brand": "Samsung",
-        "description": "Adjust consumption mode (eco/normal) and monitor temperature.",
+        "description": "Keep food fresh and adjust consumption mode.",
         "capabilities": ["on_off", "mode"],
     },
     {
         "type": "smart_doorlocker_x",
         "name": "Smart Doorlocker X",
         "brand": "Apple",
-        "description": "Remotely lock or unlock your door for security.",
+        "description": "Secure access with remote locking.",
         "capabilities": ["on_off"],
     },
     {
         "type": "smart_speaker_x",
         "name": "Smart Speaker X",
         "brand": "Apple",
-        "description": "Control your music and volume.",
+        "description": "Control your music and adjust volume.",
         "capabilities": ["on_off", "volume", "trackIndex"],
     },
     {
         "type": "security_camera_x",
         "name": "Security Camera X",
         "brand": "Nest",
-        "description": "Monitor your home",
+        "description": "Monitor your home.",
         "capabilities": ["on_off", "video_stream", "motion_detection"],
     },
     {
@@ -88,5 +90,3 @@ DEVICE_TYPES = [
 ]
 
 DEVICE_TYPE_MAP = {d["type"]: d for d in DEVICE_TYPES}
-
-#TODO: Add more device types

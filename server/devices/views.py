@@ -79,7 +79,7 @@ class DeviceViewSet(viewsets.ModelViewSet):
         if user.is_authenticated and hasattr(user, 'points'):
             user.points += 5
             user.save()
-        # Historique action utilisateur
+        # History of user's action
         user = request.user if request.user.is_authenticated else None
         ip = request.META.get('HTTP_X_FORWARDED_FOR', '').split(',')[0] or request.META.get('REMOTE_ADDR')
         user_agent = request.META.get('HTTP_USER_AGENT', '')
@@ -118,20 +118,19 @@ class DeviceViewSet(viewsets.ModelViewSet):
         )
 
 
-# Mapping local type → puissance (en kW)
-#ici ca gère le back pour la vraie consommation à afficher
+#Local mapping of device type to power
 DEVICE_TYPE_POWER = {
-    "smart_bulb_x": 0.01,        # 10W
+    "smart_bulb_x": 0.07,        # 70W
     "smart_thermostat_x": 0.05,  # 50W
-    "smart_shutter_x": 0,        # ça consomme pas car c'est un volet
+    "smart_shutter_x": 0,        # no consumption
     "smart_television_x": 0.1,   # 100W
-    "smart_oven_x": 0.2,         # 200W
-    "smart_doorlocker_x": 0,
-    "smart_speaker_x": 0.1,      # 100W
-    "security_camera_x": 0.1,      # 10W
-    "smart_fridge_x": 0.1,
-    "dish_washer": 0.2,
-    "washing_machine": 0.2,
+    "smart_oven_x": 1.8,         # 1800W
+    "smart_doorlocker_x": 0,     # no consumption
+    "smart_speaker_x": 0.02,     # 20W
+    "security_camera_x": 0.03,   # 30W
+    "smart_fridge_x": 0.25,      # 250W or 150W depending on the mode
+    "dish_washer": 2,            # 2000W
+    "washing_machine": 2.5,       # 2500W
 }
 
 class EnergyConsumptionView(APIView): #TODO?: Check logics & data
@@ -174,6 +173,7 @@ class EnergyConsumptionView(APIView): #TODO?: Check logics & data
         results = []
         total = 0.0
 
+        #calculate the consumption for each device
         for device in devices:
             power_kw = DEVICE_TYPE_POWER.get(getattr(device, 'type', None), 0)
             
@@ -189,7 +189,8 @@ class EnergyConsumptionView(APIView): #TODO?: Check logics & data
             if device.type == "smart_thermostat_x":
                 temperature = device_state.get("temperature", 100)
                 if temperature is not None and isinstance(temperature, (int, float)):
-                    power_kw *= (temperature/100)
+                    distance = abs(temperature - 50)
+                    power_kw *= 0.2 + (distance / 50) * (1 - 0.2)
                 else:
                     power_kw *= 1 
 
@@ -205,7 +206,7 @@ class EnergyConsumptionView(APIView): #TODO?: Check logics & data
                 else:
                     coef= 1
                 if temperature is not None and isinstance(temperature, (int, float)):
-                    power_kw *= coef*(temperature/100)
+                    power_kw *= coef*((50+temperature)/150)
                 else:
                     power_kw *= coef 
             
@@ -222,14 +223,14 @@ class EnergyConsumptionView(APIView): #TODO?: Check logics & data
                 else:
                     coef= 1
                 if temperature is not None and isinstance(temperature, (int, float)):
-                    power_kw *= coef*(temperature/100)*(spin_speed_control/2000)
+                    power_kw *= coef*((50+temperature)/150)*(spin_speed_control/2000)
                 else:
                     power_kw *= coef 
 
             if device.type == "smart_oven_x":
                 heat = device_state.get("heat", 0)
                 if heat is not None and isinstance(heat, (int, float)) and 50 <= heat <= 250:
-                    power_kw = 0.2 * (heat/250)
+                    power_kw *= (heat/250)
                 else:
                     power_kw = 0.0 
 
@@ -240,9 +241,9 @@ class EnergyConsumptionView(APIView): #TODO?: Check logics & data
                 
                 if (on_off is not None and on_off) or (power is not None and power == "on"):
                     if mode == "eco":
-                        power_kw = 0.09
-                    else:
                         power_kw = 0.15
+                    else:
+                        power_kw = 0.25
                 else:
                     power_kw = 0.0
 

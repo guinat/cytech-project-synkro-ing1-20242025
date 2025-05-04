@@ -131,7 +131,7 @@ export function calculateTotalDeviceConsumption(history: DeviceConsumptionHistor
     totalWh += whPerMinute * durationMinutes;
   }
   
-  // Conversion Wh → kWh (division par 1000, pas multiplication)
+  // On garde la valeur en Wh
   return totalWh * 1000;
 }
 
