@@ -32,9 +32,9 @@ interface DeviceData {
 
 const granularities = [
   { label: 'Minute', value: 'minute' },
-  { label: 'Heure', value: 'hour' },
-  { label: 'Jour', value: 'day' },
-  { label: 'Mois', value: 'month' },
+  { label: 'Hour', value: 'hour' },
+  { label: 'Day', value: 'day' },
+  { label: 'Month', value: 'month' },
 ];
 
 const refreshIntervals = {
@@ -400,9 +400,9 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle className="text-lg">Consommation d'énergie</CardTitle>
+            <CardTitle className="text-lg">Energy Consumption</CardTitle>
             <CardDescription>
-              Analyse des 10 derniers points
+              10 last points analysis
               <Badge variant="outline" className="ml-2 text-xs">{autoRefresh ? getRefreshLabel() : "Manuel"}</Badge>
             </CardDescription>
           </div>
@@ -411,7 +411,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
               <SelectTrigger className="h-10 w-48">
                 <div className="flex items-center gap-2">
                   <DownloadIcon className="h-5 w-5" />
-                  <SelectValue placeholder="Télécharger" />
+                  <SelectValue placeholder="Download" />
                 </div>
               </SelectTrigger>
               <SelectContent>
@@ -425,7 +425,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
             </Button>
             <Button variant="outline" size="sm" onClick={loadData} disabled={loading} className="h-8">
               <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
-              Actualiser
+              Refresh
             </Button>
           </div>
         </div>
@@ -433,10 +433,10 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
       <CardContent>
         <div className="flex flex-wrap gap-3 mb-4">
           <div className="flex-1 min-w-[120px]">
-            <label className="text-xs text-muted-foreground mb-1 block">Période</label>
+            <label className="text-xs text-muted-foreground mb-1 block">Period</label>
             <Select value={granularity} onValueChange={(value) => setGranularity(value as any)}>
               <SelectTrigger className="h-8">
-                <SelectValue placeholder="Sélectionner une période" />
+                <SelectValue placeholder="Select a period" />
               </SelectTrigger>
               <SelectContent>
                 {granularities.map(g => (
@@ -447,13 +447,13 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
           </div>
           
           <div className="flex-1 min-w-[120px]">
-            <label className="text-xs text-muted-foreground mb-1 block">Appareil</label>
+            <label className="text-xs text-muted-foreground mb-1 block">Device</label>
             <Select value={selectedDevice} onValueChange={setSelectedDevice}>
               <SelectTrigger className="h-8">
-                <SelectValue placeholder="Tous les appareils" />
+                <SelectValue placeholder="All devices" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous les appareils</SelectItem>
+                <SelectItem value="all">All devices</SelectItem>
                 {devices.map(d => (
                   <SelectItem key={d.device_id} value={d.device_id}>{d.device_name}</SelectItem>
                 ))}
@@ -462,7 +462,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
           </div>
           
           <div className="flex-1 min-w-[120px]">
-            <label className="text-xs text-muted-foreground mb-1 block">Mode d'affichage</label>
+            <label className="text-xs text-muted-foreground mb-1 block">Print mode</label>
             <div className="flex items-center space-x-2 mt-1">
               <Switch 
                 id="cumulative" 
@@ -470,7 +470,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
                 onCheckedChange={setCumulative}
               />
               <Label htmlFor="cumulative" className="text-xs">
-                {cumulative ? "Consommation cumulée" : "Consommation par période"}
+                {cumulative ? "Cumulative consumption" : "Consumption per period"}
               </Label>
             </div>
           </div>
@@ -490,7 +490,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
           </div>
         ) : data.length === 0 ? (
           <div className="w-full h-[250px] flex items-center justify-center text-muted-foreground">
-            Aucune donnée disponible pour la période sélectionnée
+            No data available for the period
           </div>
         ) : (
           <div className="w-full h-[250px]">
@@ -504,7 +504,7 @@ const EnergyConsumptionChart: React.FC<EnergyConsumptionChartProps> = ({ homeId,
       tickMargin={10}
       domain={cumulative ? ['auto', 'auto'] : [0, 'auto']}
       label={{
-        value: cumulative ? "Consommation cumulée (kWh)" : "Consommation (kWh)",
+        value: cumulative ? "Cumulative consumption (kWh)" : "Consommation (kWh)",
         angle: -90, 
         position: 'outsideLeft',
         style: { fontSize: '12px', textAnchor: 'middle' },
