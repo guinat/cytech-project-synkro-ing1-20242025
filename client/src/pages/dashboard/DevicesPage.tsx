@@ -11,19 +11,19 @@ const DevicesPage: React.FC = () => {
   React.useEffect(() => {
     getPublicDeviceTypes()
       .then(setDeviceTypes)
-      .catch((e) => setError(e.message || 'Erreur de chargement'))
+      .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64 text-lg">Chargement du catalogue...</div>;
+    return <div className="flex justify-center items-center h-64 text-lg">Loading catalog...</div>;
   }
 
   if (error) {
     return <div className="text-red-500 text-center mt-8">{error}</div>;
   }
 
-  // Filtrage des devices selon la recherche (nom ou description)
+  // Filtering devices based on search input (name or description)
   const filteredDeviceTypes = deviceTypes.filter(deviceType =>
     deviceType.name.toLowerCase().includes(search.toLowerCase()) ||
     (deviceType.description && deviceType.description.toLowerCase().includes(search.toLowerCase()))
@@ -31,12 +31,12 @@ const DevicesPage: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto py-10 px-4">
-      <h1 className="text-3xl font-bold mb-8 text-center">Catalogue des objets connectés</h1>
-      {/* Barre de recherche */}
+      <h1 className="text-3xl font-bold mb-8 text-center">Connected Devices Catalog</h1>
+      {/* Search bar */}
       <div className="flex justify-center mb-8">
         <input
           type="text"
-          placeholder="Rechercher un appareil..."
+          placeholder="Search for a device..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="border rounded-md px-4 py-2 w-full max-w-md text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"

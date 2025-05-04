@@ -19,7 +19,7 @@ import {
 interface MembersSettingsProps {
   home: Home;
   onInvite: (email: string, homeId: string) => Promise<void>;
-  onRemoveMember?: (homeId: string, userId: string) => Promise<void>; 
+  onRemoveMember?: (homeId: string, userId: string) => Promise<void>;
 }
 
 const MembersSettings: React.FC<MembersSettingsProps> = ({
@@ -30,7 +30,7 @@ const MembersSettings: React.FC<MembersSettingsProps> = ({
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [memberToRemove, setMemberToRemove] = useState<{id: string, name: string} | null>(null);
+  const [memberToRemove, setMemberToRemove] = useState<{ id: string, name: string } | null>(null);
   const { user } = useAuth();
 
   const handleInviteSubmit = async (e: React.FormEvent) => {
@@ -50,10 +50,10 @@ const MembersSettings: React.FC<MembersSettingsProps> = ({
       setIsLoading(false);
     }
   };
-  
+
   const handleRemoveMember = async () => {
     if (!memberToRemove || !onRemoveMember) return;
-    
+
     setIsLoading(true);
     try {
       await onRemoveMember(home.id, memberToRemove.id);
@@ -97,20 +97,20 @@ const MembersSettings: React.FC<MembersSettingsProps> = ({
                     <TableCell>
                       <div className="flex gap-2 items-center">
                         {user && (user.id === member.id || user.email === member.email) && (
-                          <Badge variant="secondary">vous</Badge>
+                          <Badge variant="secondary">you</Badge>
                         )}
                         {member.is_owner && (
-                          <Badge variant="outline">propriétaire</Badge>
+                          <Badge variant="outline">owner</Badge>
                         )}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
                       {!member.is_owner && user && member.id !== user.id && home.permissions?.can_delete && onRemoveMember && (
-                        <Button 
-                          variant="destructive" 
+                        <Button
+                          variant="destructive"
                           size="sm"
-                          onClick={() => setMemberToRemove({ 
-                            id: member.id, 
+                          onClick={() => setMemberToRemove({
+                            id: member.id,
                             name: member.username || member.email
                           })}
                         >
@@ -152,13 +152,13 @@ const MembersSettings: React.FC<MembersSettingsProps> = ({
           )}
         </CardContent>
       </Card>
-      
+
       <Dialog open={!!memberToRemove} onOpenChange={(open) => !open && setMemberToRemove(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirm Member Removal</DialogTitle>
             <DialogDescription>
-              Are you sure you want to remove {memberToRemove?.name} from this home? 
+              Are you sure you want to remove {memberToRemove?.name} from this home?
               They will no longer have access to this home and its devices.
             </DialogDescription>
           </DialogHeader>
