@@ -2,6 +2,8 @@ from rest_framework import serializers
 from .models import Device, DeviceCommand, DeviceConsumptionHistory
 from .device_catalogue import DEVICE_TYPE_MAP
 
+#serializers are used to convert complex data types, such as querysets and model instances, into native Python datatypes that can then be easily rendered into JSON, XML, or other content types.
+
 class DeviceSerializerMixin:
     def validate_name(self, value):
         if len(value) > 100:
@@ -25,26 +27,26 @@ class DeviceSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at', 'capabilities', 'energyConsumption']
 
     def get_energyConsumption(self, obj):
-        # Logique identique à EnergyConsumptionView dans views.py
+        # same logic as EnergyConsumptionView in views.py
         from .views import DEVICE_TYPE_POWER
         device_state = obj.state or {}
         type_ = getattr(obj, 'type', None)
         power_kw = DEVICE_TYPE_POWER.get(type_, 0)
 
-        # Gestion de l'état ON/OFF (toujours 0 si off)
+        # Check if device is off (is so, return 0)
         on_off = device_state.get('on_off', None)
         power = device_state.get('power', None)
         if (on_off in [None, False, 0, 'off', 'Off', 'OFF', 'false', 'False', 'FALSE']) or (power is not None and power != 'on'):
             return 0.0
 
-        # smart_bulb_x : brightness
+        # do consumption for each device type
         if type_ == 'smart_bulb_x':
             brightness = device_state.get('brightness', 100)
             if brightness is not None and isinstance(brightness, (int, float)):
                 power_kw *= (brightness / 100)
             else:
                 power_kw *= 1
-        # smart_thermostat_x : temperature
+        
         elif type_ == 'smart_thermostat_x':
             temperature = device_state.get('temperature', 100)
             if temperature is not None and isinstance(temperature, (int, float)):
@@ -52,7 +54,7 @@ class DeviceSerializer(serializers.ModelSerializer):
                 power_kw *= 0.2 + (distance / 50) * (1 - 0.2)
             else:
                 power_kw *= 1
-        # dish_washer : temperature, cycle
+        
         elif type_ == 'dish_washer':
             temperature = device_state.get('temperature', 100)
             cycle = device_state.get('cycle_selection', 'Normal')
@@ -68,7 +70,7 @@ class DeviceSerializer(serializers.ModelSerializer):
                 power_kw *= coef * ((50 + temperature) / 150)
             else:
                 power_kw *= coef
-        # washing_machine : temperature, spin_speed_control, cycle
+        
         elif type_ == 'washing_machine':
             temperature = device_state.get('temperature', 100)
             spin_speed_control = device_state.get('spin_speed_control', 2000)
@@ -85,14 +87,14 @@ class DeviceSerializer(serializers.ModelSerializer):
                 power_kw *= coef * ((50 + temperature) / 150) * (spin_speed_control / 2000)
             else:
                 power_kw *= coef
-        # smart_oven_x : heat
+        
         elif type_ == 'smart_oven_x':
             heat = device_state.get('heat', 0)
             if heat is not None and isinstance(heat, (int, float)) and 50 <= heat <= 250:
                 power_kw *= (heat / 250)
             else:
                 power_kw = 0.0
-        # smart_fridge_x : mode, on_off, power
+        
         elif type_ == 'smart_fridge_x':
             mode = device_state.get('mode', 'normal')
             on_off = device_state.get('on_off', True)

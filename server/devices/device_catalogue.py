@@ -1,3 +1,5 @@
+#Definition of every device type
+
 DEVICE_TYPES = [
     {
         "type": "smart_bulb_x",
@@ -88,5 +90,3 @@ DEVICE_TYPES = [
 ]
 
 DEVICE_TYPE_MAP = {d["type"]: d for d in DEVICE_TYPES}
-
-#TODO: Add more device types

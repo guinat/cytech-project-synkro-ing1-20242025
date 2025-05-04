@@ -79,7 +79,7 @@ class DeviceViewSet(viewsets.ModelViewSet):
         if user.is_authenticated and hasattr(user, 'points'):
             user.points += 5
             user.save()
-        # Historique action utilisateur
+        # History of user's action
         user = request.user if request.user.is_authenticated else None
         ip = request.META.get('HTTP_X_FORWARDED_FOR', '').split(',')[0] or request.META.get('REMOTE_ADDR')
         user_agent = request.META.get('HTTP_USER_AGENT', '')
@@ -118,20 +118,19 @@ class DeviceViewSet(viewsets.ModelViewSet):
         )
 
 
-# Mapping local type → puissance (en kW)
-#ici ca gère le back pour la vraie consommation à afficher
+#Local mapping of device type to power
 DEVICE_TYPE_POWER = {
     "smart_bulb_x": 0.07,        # 70W
     "smart_thermostat_x": 0.05,  # 50W
-    "smart_shutter_x": 0,        # ça consomme pas car c'est un volet
+    "smart_shutter_x": 0,        # no consumption
     "smart_television_x": 0.1,   # 100W
     "smart_oven_x": 1.8,         # 1800W
-    "smart_doorlocker_x": 0,
+    "smart_doorlocker_x": 0,     # no consumption
     "smart_speaker_x": 0.02,     # 20W
     "security_camera_x": 0.03,   # 30W
-    "smart_fridge_x": 0.25,      # 250W ou 150W
+    "smart_fridge_x": 0.25,      # 250W or 150W depending on the mode
     "dish_washer": 2,            # 2000W
-    "washing_machine": 2.5,     # 2500W
+    "washing_machine": 2.5,       # 2500W
 }
 
 class EnergyConsumptionView(APIView): #TODO?: Check logics & data
@@ -174,6 +173,7 @@ class EnergyConsumptionView(APIView): #TODO?: Check logics & data
         results = []
         total = 0.0
 
+        #calculate the consumption for each device
         for device in devices:
             power_kw = DEVICE_TYPE_POWER.get(getattr(device, 'type', None), 0)
             

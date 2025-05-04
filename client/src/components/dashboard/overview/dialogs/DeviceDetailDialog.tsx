@@ -7,13 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { DeviceHistoryModal } from '@/components/ui/DeviceHistoryModal';
-
 import { cn } from '@/lib/utils';
 import DeviceDynamicControls from '../devices/DeviceDynamicControls';
 import DeviceIcon from '../devices/DeviceIcon';
 import { Edit, Trash2, AlertTriangle, Clock, Zap, History } from 'lucide-react';
 import { updateDevice, deleteDevice, Device, getDeviceCommand, getDeviceTotalConsumption } from '@/services/devices.service';
-
 import { apiFetch } from '@/services/api';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 
@@ -88,16 +86,14 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
               `/homes/${device.home}/rooms/${device.room}/devices/${device.id}/stats/`
             );
           } catch (statsError) {
-            console.warn("L'endpoint des stats n'est pas encore disponible:", statsError);
+            console.warn("Endpoint stats not available:", statsError);
           }
 
-          // Calcul de la durée ON à partir de l'historique des commandes
+          // calculate total active time from command history
           let activeTime = '0 h';
           try {
-            // @ts-ignore
             const commands = await getDeviceCommand(device.home, device.room, device.id);
             if (Array.isArray(commands) && commands.length > 0) {
-              // Filtrer uniquement les commandes on/off exécutées avec executed_at
               const onOffCmds = commands
                 .filter(cmd => cmd.capability === 'on_off' && !!cmd.executed_at)
                 .sort((a, b) => (a.executed_at && b.executed_at ? a.executed_at.localeCompare(b.executed_at) : 0));
@@ -107,7 +103,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
               for (const cmd of onOffCmds) {
                 let isOn: boolean | undefined = undefined;
                 if (typeof cmd.parameters === 'object' && cmd.parameters !== null) {
-                  // Certains backends envoient parameters en string, on parse si besoin
+                  // some backends send parameters as string, we parse if needed
                   let paramsObj: any = cmd.parameters;
                   if (typeof paramsObj === 'string') {
                     try {
@@ -121,16 +117,15 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
                 if (isOn && !lastOn) {
                   lastOn = cmd.executed_at!;
                 } else if (isOn === false && lastOn) {
-                  // Ajoute la période ON
                   totalMs += new Date(cmd.executed_at!).getTime() - new Date(lastOn).getTime();
                   lastOn = null;
                 }
               }
-              // Si le dernier état est ON, on considère que le device est encore allumé jusqu'à maintenant
+              // if the last state is On, we consider the device is still on until now
               if (lastOn) {
                 totalMs += new Date().getTime() - new Date(lastOn).getTime();
               }
-              // Formattage de la durée
+              // format total active time
               const totalMin = Math.floor(totalMs / 60000);
               const h = Math.floor(totalMin / 60);
               const min = totalMin % 60;
@@ -143,13 +138,12 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
             activeTime = statsData.activeTime;
           }
 
-          // Récupération de la dernière commande exécutée
+          // get last command executed
           let lastCommandAt: string | null = null;
           try {
-            // @ts-ignore
             const commands = await getDeviceCommand(device.home, device.room, device.id);
             if (Array.isArray(commands) && commands.length > 0) {
-              // On prend la dernière commande exécutée (la plus récente)
+              //we simply sort the commands by executed_at and take the first one
               const sorted = [...commands].sort((a, b) => {
                 if (!a.executed_at) return 1;
                 if (!b.executed_at) return -1;
@@ -169,9 +163,9 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
             room: device.room,
             home_id: device.home_id || device.home,
             room_id: device.room_id || device.room,
-            activeTime: activeTime, // Utilise la valeur calculée
+            activeTime: activeTime,
             energyConsumption: statsData.energyConsumption,
-            lastActiveAt: lastCommandAt || undefined, // On priorise la vraie dernière commande
+            lastActiveAt: lastCommandAt || undefined,
             isOn: statsData.isOn,
             state: device.state,
             brand: deviceData.brand || device.brand || ''
@@ -183,7 +177,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
           }
         } catch (error) {
           console.error("Failed to fetch device data:", error);
-          toast.error("Impossible de charger les détails de l'appareil");
+          toast.error("Failed to load device details");
           setDeviceDetails(device);
         } finally {
           setIsLoading(false);
@@ -194,7 +188,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
     }
   }, [device, open]);
 
-  // Récupérer la consommation totale réelle et l'actualiser toutes les secondes
+  // fetch the total consumption and update it every second
   useEffect(() => {
     const fetchTotalConsumption = async () => {
       if (deviceDetails) {
@@ -204,7 +198,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
           const kWh = await getDeviceTotalConsumption(deviceId);
           setTotalConsumption(`${kWh.toFixed(2)} Wh`);
         } catch (error) {
-          console.error("Erreur lors de la récupération de la consommation:", error);
+          console.error("Failed to fetch total consumption:", error);
           setTotalConsumption('0 Wh');
         }
       }
@@ -213,16 +207,16 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
     let intervalId: NodeJS.Timeout | null = null;
     
     if (open && deviceDetails) {
-      // Récupération initiale
+      // initial fetch
       fetchTotalConsumption();
       
-      // Mise en place de l'actualisation toutes les secondes
+      // update frequently
       intervalId = setInterval(() => {
         fetchTotalConsumption();
       }, 1000);
     }
     
-    // Nettoyage de l'intervalle à la fermeture du dialogue ou au démontage du composant
+    // clean up interval on close or unmount
     return () => {
       if (intervalId) {
         clearInterval(intervalId);
@@ -248,7 +242,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
       }
     } catch (error) {
       console.error("Failed to rename device:", error);
-      toast.error("Impossible de renommer l'appareil");
+      toast.error("Failed to rename device");
     } finally {
       setIsRenaming(false);
     }
@@ -266,7 +260,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
         }
       } catch (error) {
         console.error("Failed to delete device:", error);
-        toast.error("Impossible de supprimer l'appareil");
+        toast.error("Failed to delete device");
       } finally {
         setIsDeleting(false);
         setIsConfirmingDelete(false);
@@ -274,12 +268,11 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
     } else {
       setIsConfirmingDelete(true);
     }
-    console.log("test");
   };
 
 
   const formatLastActive = (lastActiveAt?: string) => {
-    if (!lastActiveAt) return "Never used";
+    if (!lastActiveAt) return "Never used ...";
     try {
       const date = parseISO(lastActiveAt);
       return formatDistanceToNow(date, { addSuffix: true });
@@ -306,7 +299,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
         {isLoading ? (
           <>
             <DialogHeader>
-              <DialogTitle className="text-xl">{device?.name || "Chargement..."}</DialogTitle>
+              <DialogTitle className="text-xl">{device?.name || "Loading..."}</DialogTitle>
             </DialogHeader>
             <div className="flex justify-center items-center min-h-[300px]">
               <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -335,17 +328,17 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
             </DialogHeader>
 
             <Separator />
-
+            {/* display last interaction, total active time, total consumption */}
             <div className="space-y-4 mt-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-yellow-50 dark:bg-yellow-400 rounded-lg p-3 flex items-center gap-2">
+                <div className="bg-yellow-50 dark:bg-rose-950 rounded-lg p-3 flex items-center gap-2">
                   <Zap className="h-4 w-4 text-primary" />
                   <div>
                     <div className="text-xs text-muted-foreground">Total consumption</div>
                     <div className="font-medium">{totalConsumption}</div>
                   </div>
                 </div>
-                <div className="bg-green-100 dark:bg-green-400 rounded-lg p-3 flex items-center gap-2">
+                <div className="bg-green-100 dark:bg-fuchsia-950 rounded-lg p-3 flex items-center gap-2">
                   <Clock className="h-4 w-4 text-primary" />
                   <div>
                     <div className="text-xs text-muted-foreground">Time active</div>
@@ -354,7 +347,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
                 </div>
               </div>
 
-              <div className="bg-sky-100 dark:bg-sky-400 rounded-lg p-3 flex items-center gap-2">
+              <div className="bg-sky-100 dark:bg-indigo-900 rounded-lg p-3 flex items-center gap-2">
                 <History className="h-4 w-4 text-primary" />
                 <div>
                   <div className="text-xs text-muted-foreground">Last interaction</div>
@@ -362,23 +355,9 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
                 </div>
               </div>
 
-              {/* <div className="rounded-lg border border-border p-4">
-                <h3 className="text-sm font-medium mb-3">Contrôles</h3>
-                <DeviceDynamicControls
-                  device={{ ...deviceDetails, id: deviceDetails?.id || device.id, state: localState, home_id: homeId, room_id: roomId }}
-                  homeId={homeId}
-                  roomId={roomId}
-                  onStateUpdate={(state) => {
-                    setLocalState(state);
-                    if (state.power === 'on' || state.isOn === true) {
-                      setDeviceDetails(prev => prev ? { ...prev, isOn: true } : null);
-                    } else if (state.power === 'off' || state.isOn === false) {
-                      setDeviceDetails(prev => prev ? { ...prev, isOn: false } : null);
-                    }
-                  }}
-                />
-              </div> */}
+              <Separator />
 
+              {/* rename device */}
               <form onSubmit={handleRename} className="space-y-3">
                 <Label htmlFor="deviceName" className="text-sm font-medium">Rename device</Label>
                 <div className="flex gap-2">
@@ -407,6 +386,7 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
 
               <Separator />
 
+              {/* delete device or see history */}
               <div className="flex justify-end">
                 <Button
                   variant="destructive"
@@ -432,6 +412,8 @@ const DeviceDetailDialog: React.FC<DeviceDetailDialogProps> = ({ open, onOpenCha
                     </>
                   )}
                 </Button>
+
+                {/* see history */}
                 <DeviceHistoryModal
                   homeId={homeId}
                   roomId={roomId}

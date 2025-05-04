@@ -28,34 +28,12 @@ interface DeviceCardProps {
   onOpenDetail?: (device: EnhancedDevice) => void;
 }
 
-const exportConsumption = (device: EnhancedDevice) => {
-  const lines = [
-    `Nom de l'appareil: ${device.name}`,
-    `ID: ${device.id}`,
-    `Type: ${device.type}`,
-    `Home ID: ${device.home}`,
-    `Room ID: ${device.room}`,
-    
-    `Consommation: ${device.energyConsumption || 'N/A'}`,
-    `Temps d'activité: ${device.activeTime || 'N/A'}`
-  ];
 
-  const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
-  const url = window.URL.createObjectURL(blob);
-
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `${device.name.replace(/\s+/g, '_')}_consommation.txt`;
-  link.click();
-
-  window.URL.revokeObjectURL(url);
-};
-
-// Nouvelle fonction d'export détaillée par seconde
+// function to export consumption of a device per second, in a txt file
 export const exportConsumptionPerSecond = async (device: EnhancedDevice) => {
-  // On prend les 10 dernières minutes pour l'exemple
+  // we take the last 10 minutes
   const now = new Date();
-  const dateStart = new Date(now.getTime() - 10 * 60 * 1000); // 10 minutes avant
+  const dateStart = new Date(now.getTime() - 10 * 60 * 1000); // 10 minutes ago
 
   const params = {
     home_id: device.home,
@@ -63,7 +41,7 @@ export const exportConsumptionPerSecond = async (device: EnhancedDevice) => {
     device_id: device.id,
     date_start: dateStart.toISOString(),
     date_end: now.toISOString(),
-    granularity: 'minute' as 'minute', // Correction du type
+    granularity: 'minute' as 'minute',
     cumulative: 'false',
   };
 
@@ -71,18 +49,18 @@ export const exportConsumptionPerSecond = async (device: EnhancedDevice) => {
     const res = await getEnergyConsumption(params);
     const deviceData = res.devices.find(d => d.device_id === device.id);
     if (!deviceData || !deviceData.consumption) {
-      alert("Aucune donnée de consommation disponible pour cet appareil.");
+      alert("No consumption data available for this device.");
       return;
     }
-    // Pour chaque minute, on répartit la consommation sur 60 secondes
+    // For each minute, we distribute the consumption over 60 seconds
     const lines = [
-      `Nom de l'appareil: ${device.name}`,
+      `Device name: ${device.name}`,
       `ID: ${device.id}`,
       `Type: ${device.type}`,
       `Home ID: ${device.home}`,
       `Room ID: ${device.room}`,
       '',
-      'Temps relevé ;Consommation (kWh sur ce temps'
+      'Time ;Consumption (kWh on this time'
     ];
     Object.entries(deviceData.consumption).forEach(([minuteIso, value]) => {
       const minuteDate = new Date(minuteIso);
@@ -99,7 +77,7 @@ export const exportConsumptionPerSecond = async (device: EnhancedDevice) => {
     link.click();
     window.URL.revokeObjectURL(url);
   } catch (e: any) {
-    alert("Erreur lors de l'export: " + (e?.message || e)); // Correction typage e: any
+    alert("Error during export: " + (e?.message || e));
   }
 };
 
@@ -109,7 +87,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onOpenDetail }) => {
   const homeId = device.home;
   const roomId = device.room;
   
-  //const isDeviceOn = localState.power === 'on' || localState.isOn === true || device.isOn === true;
   const isDeviceOn = localState.on_off === true || localState.power === 'on' || localState.isOn === true || device.isOn === true;
 
   const deviceColors: Record<string, string> = {
@@ -143,6 +120,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onOpenDetail }) => {
             deviceColorClass,
             "bg-gray-100 dark:bg-[#23243a] dark:border-gray-600"
           )}>
+            {/* display the icon of the device */}
             <DeviceIcon type={device.type} />
           </div>
           
@@ -151,6 +129,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onOpenDetail }) => {
           </div>
         </div>
         
+        {/* button to open details of the device */}
         <Button
           variant="ghost"
           size="icon"
@@ -160,7 +139,9 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onOpenDetail }) => {
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </CardHeader>
+
       <CardContent className="p-4 pt-3">
+        {/* load all the dynamic controls of the device */}
         <DeviceDynamicControls
           device={{ ...device, state: localState }}
           homeId={homeId}
@@ -168,13 +149,17 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onOpenDetail }) => {
           onStateUpdate={setLocalState}
         />
       </CardContent>
+
       <CardFooter className="px-4 py-3 border-t flex justify-between items-center bg-muted/10 dark:bg-[#222338] dark:border-gray-700">
         <div className="flex items-center gap-1">
           <Zap className="h-3 w-3 text-muted-foreground dark:text-gray-400" />
           <span className="text-xs text-muted-foreground dark:text-gray-300">
             {(() => {
-              // Mapping local pour correspondance type → puissance de base (en kW)
-              //ici ca gère juste l'affichage sur les cards
+              // if the device is off, the consumption is 0
+              if(isDeviceOn === false) {
+                return 0;
+              }
+              // calculate the consumption of the device
               const DEVICE_TYPE_POWER: Record<string, number> = {
                 smart_bulb_x: 0.07,
                 smart_thermostat_x: 0.05,
@@ -231,7 +216,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onOpenDetail }) => {
           </span>
         </div>
 
-        
+        {/* button to export the consumption of the device */}
         <Button
               variant="ghost"
               size="icon"

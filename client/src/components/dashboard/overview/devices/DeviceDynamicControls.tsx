@@ -4,8 +4,8 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { sendDeviceCommand, getDevice, postDeviceConsumption } from '@/services/devices.service';
 import { Select as SelectShadcn, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from '@/components/ui/button'; // Import du bouton
-import { SkipBack, SkipForward } from 'lucide-react'; // Import des icônes pour les boutons précédent/suivant
+import { Button } from '@/components/ui/button';
+import { SkipBack, SkipForward } from 'lucide-react';
 
 interface DeviceDynamicControlsProps {
   device: any;
@@ -15,7 +15,7 @@ interface DeviceDynamicControlsProps {
   cycle?: string; 
   delayStart?: number; 
   spinSpeed?: number;
-  onOffTemps?: number;  // Nouvelle capacité "on/off_temps"
+  onOffTemps?: number;
 }
 
 
@@ -35,6 +35,7 @@ export const capabilityLabels: Record<string, string> = {
 const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, homeId, roomId, onStateUpdate, cycle, delayStart, spinSpeed, onOffTemps }) => {
   const { id, state = {}, capabilities = [] } = device;
 
+  // stock all possible capabilities
   const [localBrightness, setLocalBrightness] = React.useState<number>(state.brightness ?? 0);
   const [localTemperature, setLocalTemperature] = React.useState<number>(state.temperature ?? 20);
   const [localColor, setLocalColor] = React.useState<string>(state.color || '#ffffff');
@@ -47,13 +48,12 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
   const [localCycle, setLocalCycle] = React.useState<string>(cycle ?? 'Normal'); 
   const [localDelayStart, setLocalDelayStart] = React.useState<number>(delayStart ?? 0); 
   const [localSpinSpeed, setLocalSpinSpeed] = React.useState<number>(state.spin_speed_control ?? 1000); 
-  const [localOnOffTemps, setLocalOnOffTemps] = React.useState<number>(onOffTemps ?? 0);  // Temps de délai
+  const [localOnOffTemps, setLocalOnOffTemps] = React.useState<number>(onOffTemps ?? 0);
 
 
   React.useEffect(() => {
     setLocalChannel(state.channel ? String(state.channel) : '1');
   }, [state.channel]);
-
   React.useEffect(() => {
     setLocalFridgeMode(state.mode ?? 'normal');
   }, [state.mode]);
@@ -63,7 +63,6 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
   React.useEffect(() => {
     setLocalTrackIndex(typeof state.trackIndex === 'number' ? state.trackIndex : 0);
   }, [state.trackIndex]);  const [localMotionDetection, setLocalMotionDetection] = React.useState<string>(state.motion_detection ?? "Regular");
-  
   React.useEffect(() => {
     setLocalBrightness(state.brightness ?? 0);
   }, [state.brightness]);
@@ -86,18 +85,18 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
     setLocalMotionDetection(state.motion_detection || 'Regular');
   }, [state.motion_detection]);
 
-  // Fonction pour envoyer la commande au serveur
+
+  // function to send command to the server
   const handleSendCommand = async (capability: string, value: any) => {
     try {
-      toast.error(`Envoi de la commande : ${capability} avec la valeur`, value);
+      toast.error(`Command sent : ${capability} with value`, value);
       await sendDeviceCommand(homeId, roomId, id, capability, { [capability]: value });
-      toast.success(`Commande envoyée: ${capability}`); // Désactivé pour ne pas spammer de notifications
-      // Récupère le device à jour depuis l'API après la commande
+      toast.success(`Command sent: ${capability}`);
+      // get the updated device from the API after the command
       const updatedDevice = await getDevice(homeId, roomId, id);
-      // Compatibilité : certains Device n'ont pas la propriété 'state'
+      // compatibility : some devices do not have the 'state' property
       onStateUpdate((updatedDevice as any).state ?? updatedDevice ?? {});
-      // Récupération de la consommation et injection dans l'historique
-      // On suppose que la consommation est calculée côté back et disponible dans updatedDevice.energyConsumption ou updatedDevice.state.energyConsumption
+      // get the consumption and inject it into the history
       const consumption = (updatedDevice as any).energyConsumption ?? (updatedDevice as any).state?.energyConsumption;
       // On envoie systématiquement, même si la conso vaut 0 (pour l'historique OFF)
       if (typeof consumption !== 'undefined') {
@@ -108,29 +107,14 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
         });
       }
     } catch (e: any) {
-      console.error('Erreur lors de l\'envoi de la commande', capability, e);
-      toast.error(`Erreur commande: ${capability} - ${e?.message || ''}`);
+      console.error('Error sending command', capability, e);
+      toast.error(`Error command: ${capability} - ${e?.message || ''}`);
     }
   };
 
-
-
-  // Fonction de validation
-  const handleValidate = async () => {
-    if (localOnOffTemps === 0) {
-      // Si onOffTemps est à 0, lance immédiatement l'appareil et le met en "ON"
-      await handleSendCommand('on_off', true);  // Met l'appareil en "ON"
-      toast.success("L'appareil est maintenant allumé.");
-    } else {
-      // Si onOffTemps est supérieur à 0, met l'appareil en "Prévu"
-      toast.success(`Démarrage prévu dans ${localOnOffTemps} minutes.`);
-      // Tu peux ici également gérer un timer pour démarrer l'appareil après un délai
-    }
-  };
-
-  // Cas spécial : volets (shutter) avec on_off + position synchronisés
+  // Special case : shutters (shutter) with on_off + position synchronized
   if (capabilities.includes('on_off') && capabilities.includes('position')) {
-    // Le switch est on si position à 100, off sinon
+    // The switch is on if position is 100, or off otherwise
     const isOn = localPosition === 100;
     const handleToggle = async (checked: boolean) => {
       const newPosition = checked ? 100 : 0;
@@ -175,23 +159,22 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
   }
 
 
-  // Contrôle spécial pour smart_speaker_x
+  // Special case : smart_speaker_x
   if (device.type === 'smart_speaker_x') {
-    // Playlist locale (exemple)
     const playlist = [
       'Imagine Dragons - Believer',
       'Daft Punk - Get Lucky',
       'Queen - Bohemian Rhapsody',
-      'The Weeknd - Blinding Lights',
+      'The Weeknd - Timeless',
       'Kanye West - Devil in A New Dress',
     ];
-    // Index courant dans la playlist (stocké dans le state)
     const currentTrackIndex = typeof state.trackIndex === 'number' ? state.trackIndex : 0;
     const [localTrackIndex, setLocalTrackIndex] = React.useState(currentTrackIndex);
     React.useEffect(() => {
       setLocalTrackIndex(currentTrackIndex);
     }, [currentTrackIndex]);
 
+    // Next and previous track handlers
     const handleNext = () => {
       const nextIndex = (localTrackIndex + 1) % playlist.length;
       setLocalTrackIndex(nextIndex);
@@ -251,9 +234,7 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
     );
   }
 
-
-  
-  // Cas générique pour tous les autres devices
+  // Generic case for all other devices
   return (
     <div className="space-y-4">
       {/* On/Off Switch */}
@@ -266,6 +247,7 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
           />
         </div>
       )}
+      {/* Heat Slider */}
       {capabilities.includes('heat') && (
         <div>
           <span>Heat</span>
@@ -280,6 +262,7 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
           <span className="ml-2">{localHeat}°C</span>
         </div>
       )}
+      {/* Mode Select */}
       {capabilities.includes('mode') && (
         <div className="mt-2">
           <span>Mode</span>
@@ -339,7 +322,7 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
           <div className="text-center text-sm mt-2">Spin Speed: {localSpinSpeed} RPM</div>
         </div>
       )}
-      
+      {/* Brightness Slider */}
       {capabilities.includes('brightness') && (
         <div>
           <span>Brightness</span>
@@ -358,6 +341,7 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
           <div className="text-center text-sm mt-2">Brightness: {localBrightness}%</div>
         </div>
       )}
+      {/* Volume Slider */}
       {capabilities.includes('volume') && (
         <div>
           <span>Volume</span>
@@ -371,6 +355,7 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
           <span className="ml-2">{localVolume}</span>
         </div>
       )}
+      {/* Color picker */}
       {capabilities.includes('color') && (
         <div>
           <span>Color</span>
@@ -383,6 +368,7 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
           />
         </div>
       )}
+      {/* Temperature Slider */}
       {capabilities.includes('temperature') && (
         <div>
           <span>Temperature</span>
@@ -402,7 +388,7 @@ const DeviceDynamicControls: React.FC<DeviceDynamicControlsProps> = ({ device, h
         </div>
       )}
 
-      {/* Contrôle spécial pour la télévision : channel (1-64) */}
+      {/* Channel input */}
       {capabilities.includes('channel') && (
         <div className="flex items-center gap-2">
           <span>Channel</span>

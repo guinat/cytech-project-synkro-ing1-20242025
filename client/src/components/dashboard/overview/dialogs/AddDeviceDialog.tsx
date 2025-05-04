@@ -74,7 +74,7 @@ const AddDeviceDialog: React.FC<AddDeviceDialogProps> = ({ open, onOpenChange, o
     if (!deviceName.trim() || !selectedRoomId || !deviceType) return;
     const selectedType = deviceTypes.find(dt => dt.id === deviceType);
     if (!deviceType || !selectedType) {
-      toast.error("Le type d'appareil sélectionné est invalide ou n'existe plus. Veuillez réessayer.");
+      toast.error("This device type does not exist or is not available. Please try again.");
       return;
     }
     const debugPayload = {

@@ -1,5 +1,7 @@
 import React from 'react';
 
+// we generate the icon based on the type of the device, and using svg
+
 const DeviceIcon: React.FC<{ type: string }> = ({ type }) => {
   const lowerType = type.toLowerCase();
   
@@ -22,7 +24,6 @@ const DeviceIcon: React.FC<{ type: string }> = ({ type }) => {
     );
   }
 
-  // Fridge
   if (lowerType.includes('fridge')) {
     return (
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -33,7 +34,7 @@ const DeviceIcon: React.FC<{ type: string }> = ({ type }) => {
       </svg>
     );
   }
-  // Oven
+
   if (lowerType.includes('oven')) {
     return (
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -45,7 +46,7 @@ const DeviceIcon: React.FC<{ type: string }> = ({ type }) => {
       </svg>
     );
   }
-  // Light/Bulb
+
   if (lowerType.includes('light') || lowerType.includes('bulb')) {
     return (
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -59,7 +60,7 @@ const DeviceIcon: React.FC<{ type: string }> = ({ type }) => {
       </svg>
     );
   }
-  // Shutter (volet)
+
   if (lowerType.includes('shutter')) {
     return (
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -70,7 +71,7 @@ const DeviceIcon: React.FC<{ type: string }> = ({ type }) => {
       </svg>
     );
   }
-  // Door Locker (cadenas)
+
   if (lowerType.includes('locker') || lowerType.includes('lock')) {
     return (
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -80,7 +81,7 @@ const DeviceIcon: React.FC<{ type: string }> = ({ type }) => {
       </svg>
     );
   }
-  // Thermostat
+
   if (lowerType.includes('thermostat')) {
     return (
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -90,7 +91,7 @@ const DeviceIcon: React.FC<{ type: string }> = ({ type }) => {
       </svg>
     );
   }
-  // Security Camera
+
   if (lowerType.includes('camera')) {
     return (
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -100,7 +101,7 @@ const DeviceIcon: React.FC<{ type: string }> = ({ type }) => {
       </svg>
     );
   }
-  // Dishwasher
+
   if (lowerType.includes('dish_washer') || lowerType.includes('dishwasher')) {
     return (
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -111,7 +112,7 @@ const DeviceIcon: React.FC<{ type: string }> = ({ type }) => {
       </svg>
     );
   }
-  // Washing Machine
+
   if (lowerType.includes('washing_machine') || lowerType.includes('washingmachine')) {
     return (
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -119,47 +120,6 @@ const DeviceIcon: React.FC<{ type: string }> = ({ type }) => {
         <circle cx="12" cy="14" r="5" />
         <circle cx="12" cy="14" r="2" />
         <rect x="8" y="7" width="8" height="2" rx="1" />
-      </svg>
-    );
-  }
-  
-  if (lowerType.includes('router')) {
-    return (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="8" width="20" height="8" rx="2" />
-        <line x1="6" y1="12" x2="6" y2="12" />
-        <line x1="10" y1="12" x2="10" y2="12" />
-      </svg>
-    );
-  }
-  
-  if (lowerType.includes('wifi')) {
-    return (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M5 12.55a11 11 0 0 1 14.08 0" />
-        <path d="M1.42 9a16 16 0 0 1 21.16 0" />
-        <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
-        <line x1="12" y1="20" x2="12.01" y2="20" />
-      </svg>
-    );
-  }
-  
-  if (lowerType.includes('heater')) {
-    return (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20.32 12.33a4.21 4.21 0 0 0 0-8.66M16 8.83V4h-.8C9.03 4 4 9.03 4 15.2c0 2.2.53 4.28 1.45 6.12A3.14 3.14 0 0 0 8.32 23h7.37a3.14 3.14 0 0 0 2.86-1.68c.93-1.84 1.45-3.92 1.45-6.12 0-2.94-1.03-5.63-2.74-7.73" />
-        <path d="M12 19a4 4 0 0 1-4-4c0-3 4-9 4-9s4 6 4 9a4 4 0 0 1-4 4Z" />
-      </svg>
-    );
-  }
-  
-  if (lowerType.includes('socket')) {
-    return (
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="6" width="20" height="12" rx="2" />
-        <circle cx="12" cy="12" r="2" />
-        <path d="M10 10v4" />
-        <path d="M14 10v4" />
       </svg>
     );
   }

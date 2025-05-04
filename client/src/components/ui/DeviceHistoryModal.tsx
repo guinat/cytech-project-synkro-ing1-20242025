@@ -23,7 +23,7 @@ export function DeviceHistoryModal({ homeId, roomId, deviceId, triggerClassName 
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   
-  // Fonction pour formater les noms de paramètres
+  // we rename some parameters to make them more readable, for exemple 'trackIndex' to 'Track changed'
   const formatParameterName = (paramName: string): string => {
     const parameterMappings: Record<string, string> = {
       'brightness': 'Brightness',
@@ -37,7 +37,6 @@ export function DeviceHistoryModal({ homeId, roomId, deviceId, triggerClassName 
       'trackIndex': 'Track changed',
       'cycle_selection': 'Cycle selected',
       'spin_speed_control': 'Spin speed control',
-      // Ajoutez d'autres mappings ici selon vos besoins
     };
     
     return parameterMappings[paramName] || paramName;
@@ -75,7 +74,8 @@ export function DeviceHistoryModal({ homeId, roomId, deviceId, triggerClassName 
               <ul className="space-y-1">
                 {commands.map((cmd, idx) => (
                   Object.entries(cmd.parameters).map(([param, value], j) => {
-                    // Gestion spéciale pour les commandes on_off
+                    // special case for on_off commands
+                    // we display "Switched on" in green or "Switched off" in red instead of "on_off" and the value
                     if (param === 'on_off') {
                       const isOn = value === true || value === 'true';
                       return (
@@ -92,7 +92,7 @@ export function DeviceHistoryModal({ homeId, roomId, deviceId, triggerClassName 
                       );
                     }
                     
-                    // Affichage normal pour les autres commandes
+                    // normal display for other commands
                     return (
                       <li key={idx + '-' + j} className="flex gap-4 items-center border-b border-gray-200 py-1">
                         <span className="text-xs text-gray-500 min-w-[120px]">
