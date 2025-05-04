@@ -18,10 +18,10 @@ const scrollToSection = (id: string) => {
 };
 
 const TEAM = [
-  { name: "Nathan", role: "Back & Front End", avatar: "NJ" },
-  { name: "Matias", role: "Back & Front End", avatar: "MD" },
-  { name: "Alice", role: "Front End", avatar: "AL" },
-  { name: "Kylian", role: "Front End", avatar: "KD" },
+  { name: "Nathan", role: "Back & Front End", avatar: "NG" },
+  { name: "Matias", role: "Back & Front End", avatar: "MV" },
+  { name: "Alice", role: "Front End", avatar: "AF" },
+  { name: "Killian", role: "Front End", avatar: "KK" },
   { name: "Younes", role: "Back End", avatar: "YD" },
 ];
 
@@ -128,7 +128,7 @@ const LandingPage = () => {
     <div className="bg-white text-primary min-h-screen w-full font-sans">
       {/* Hero Section with Background Beams */}
       <BackgroundBeamsWithCollisionDemo />
-      
+
       {/* Main Hero Content */}
       <section className="flex flex-col items-center justify-center h-screen relative z-10 px-4 -mt-[100vh]">
         <motion.div
@@ -144,14 +144,14 @@ const LandingPage = () => {
             Manage, monitor, and optimize your connected home with ease.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button 
+            <Button
               className="px-6 py-2 text-sm rounded-md bg-primary text-white hover:bg-primary/90 transition-all duration-300"
               onClick={() => window.location.href = '/discover'}
             >
               Discover Synkro
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="px-6 py-2 text-sm rounded-md border-primary text-primary hover:bg-primary hover:text-white transition-all duration-300"
               onClick={() => window.location.href = '/auth/sign_up'}
             >
@@ -160,11 +160,11 @@ const LandingPage = () => {
           </div>
         </motion.div>
       </section>
-      
+
       {/* Features Demo Cards */}
       <section className="py-12 px-4 bg-white">
         <div className="max-w-5xl mx-auto">
-          
+
 
           {/* Synkro Logo Section */}
           <div
@@ -185,7 +185,7 @@ const LandingPage = () => {
           <CardHoverEffectDemo />
         </div>
       </section>
-      
+
       {/* Stats Section */}
       <motion.section
         ref={statsSectionRef}
@@ -205,7 +205,7 @@ const LandingPage = () => {
                 num = parseInt(match[1].replace(/\s/g, ""), 10);
               }
               const isPercent = stat.value.includes('%');
-              
+
               return (
                 <motion.div
                   key={stat.label}
@@ -225,9 +225,9 @@ const LandingPage = () => {
                           format={n =>
                             stat.value.startsWith("+") ?
                               "+" + n.toLocaleString("en-US") + (isPercent ? "%" : "") :
-                            stat.value.startsWith("-") ?
-                              "-" + n.toLocaleString("en-US") + (isPercent ? "%" : "") :
-                              n.toLocaleString("en-US") + (isPercent ? "%" : "")
+                              stat.value.startsWith("-") ?
+                                "-" + n.toLocaleString("en-US") + (isPercent ? "%" : "") :
+                                n.toLocaleString("en-US") + (isPercent ? "%" : "")
                           }
                         />
                       </span>
@@ -240,7 +240,7 @@ const LandingPage = () => {
           </div>
         </div>
       </motion.section>
-      
+
       {/* Features Section */}
       <motion.section
         id="features"
@@ -261,7 +261,7 @@ const LandingPage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: index * 0.1 }}
-                whileHover={{ 
+                whileHover={{
                   y: -5,
                   transition: { duration: 0.2 }
                 }}
@@ -296,7 +296,7 @@ const LandingPage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: index * 0.1 }}
-                whileHover={{ 
+                whileHover={{
                   scale: 1.03,
                   transition: { duration: 0.2 }
                 }}
@@ -326,14 +326,14 @@ const LandingPage = () => {
       >
         <div className="max-w-2xl mx-auto">
           <h2 className="text-xl font-medium text-center text-primary/80 mb-8">FAQ</h2>
-          
+
           <Tabs defaultValue="tab1" className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-6 bg-gray-50">
               <TabsTrigger value="tab1" className="text-xs">Compatibility</TabsTrigger>
               <TabsTrigger value="tab2" className="text-xs">Usage</TabsTrigger>
               <TabsTrigger value="tab3" className="text-xs">Security</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="tab1" className="space-y-4">
               <Card className="border border-gray-100 bg-white shadow-sm hover:shadow-md transition-all duration-300">
                 <CardContent className="pt-4 px-4">
@@ -352,7 +352,7 @@ const LandingPage = () => {
                 </CardContent>
               </Card>
             </TabsContent>
-            
+
             <TabsContent value="tab2" className="space-y-4">
               <Card className="border border-gray-100 bg-white shadow-sm hover:shadow-md transition-all duration-300">
                 <CardContent className="pt-4 px-4">
@@ -371,7 +371,7 @@ const LandingPage = () => {
                 </CardContent>
               </Card>
             </TabsContent>
-            
+
             <TabsContent value="tab3" className="space-y-4">
               <Card className="border border-gray-100 bg-white shadow-sm hover:shadow-md transition-all duration-300">
                 <CardContent className="pt-4 px-4">
@@ -393,7 +393,7 @@ const LandingPage = () => {
           </Tabs>
         </div>
       </motion.section>
-      
+
       {/* CTA Section */}
       <motion.section
         className="py-16 px-4 bg-gray-50 text-center"
@@ -412,14 +412,14 @@ const LandingPage = () => {
             <h2 className="text-xl font-medium text-primary mb-3">Ready to transform your home?</h2>
             <p className="text-sm text-primary/70 mb-6">Join the Synkro community and take control of your living space.</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button 
+              <Button
                 className="px-6 py-2 text-sm rounded-md bg-primary text-white hover:bg-primary/90 transition-all duration-300"
                 onClick={() => window.location.href = '/auth/sign_up'}
               >
                 Get Started
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="px-6 py-2 text-sm rounded-md border-primary text-primary hover:bg-primary hover:text-white transition-all duration-300"
                 onClick={() => window.location.href = '/discover'}
               >
@@ -486,7 +486,7 @@ const LandingPage = () => {
           </div>
         </div>
       </footer>
-      
+
       {/* Styles d'animation */}
       <style>{`
         @keyframes fade-in-up-scroll {

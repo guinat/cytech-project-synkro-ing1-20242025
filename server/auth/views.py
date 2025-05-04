@@ -23,10 +23,9 @@ class RegisterView(views.APIView):
     authentication_classes = []
 
     def post(self, request):
-        # Limite à 10 utilisateurs maximum
-        if User.objects.count() >= 10:
+        if User.objects.count() >= 4:
             return ApiResponse.error(
-                message="Limite d'utilisateurs atteinte : impossible de créer plus de 10 comptes.",
+                message="Maximum number of users reached",
                 status_code=status.HTTP_403_FORBIDDEN
             )
         serializer = RegisterSerializer(data=request.data)
