@@ -11,7 +11,6 @@
   <h3 align="center">Synkro</h3>
 
   <p align="center">
-    TODO:
     <br />
     <a href="https://github.com/guinat/cytech-project-synkro-ing1-20242025"><strong>Explore the docs »</strong></a>
     <br />
@@ -49,7 +48,13 @@
 
 ## About The Project
 
-TODO:
+This project was developed as part of a web development course.
+It was carried out by a team of 5 students.
+
+The goal of the project is to build a smart digital platform that integrates various services and functionalities for people living in a connected home.
+It combines device management, real-time monitoring, user collaboration, gamification, and data export features.
+
+You can find the full project instructions in the repository.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -164,7 +169,38 @@ Open your browser at <http://localhost:5173> to access the React app.
 
 ## Usage
 
-TODO: 
+Synkro is a smart home management web application designed to give users full control over their connected devices in a structured and collaborative environment. Here's how you can use the application.
+
+### 🏠 Home and Room Management
+- **Create a Home**: Each user can be part of one to three virtual homes within the platform, either by creating them or by joining existing ones.
+- **Add Rooms**: Inside a home, users can define various rooms (e.g., living room, kitchen, bedroom).
+- **Add Devices**: Within each room, users can add a wide variety of smart devices such as TVs, speakers, ovens, washing machine, and more.
+
+### 👥 User Collaboration
+- **Invite Users**: Home owners can invite other users to join their home.
+- **Shared Control**: Invited users gain control over all devices within the shared home.
+
+### ⚡ Device Monitoring and Consumption
+- **Live Consumption**: The real-time energy consumption of each device is displayed.
+- **Total Consumption**: Users can also view the cumulative energy usage of devices since they were added.
+
+### 📊 Statistics and Exporting
+- **Graphical Insights**: Synkro presents a detailed graph showing the evolution of energy consumption across different devices over time.
+- **Data Export**:
+  - Export global consumption data in **CSV** or **PDF** formats.
+  - Export individual device consumption history in a **TXT** file.
+
+### 🎯 Gamification and Points System
+- **Earn Points**: Users earn points by performing actions within the application, such as creating devices or simply logging in.
+- **Unlock Features**: Certain features are accessible only after reaching specific point thresholds, encouraging user engagement and discovery.
+
+### 🔐 Account and Access
+- **Free Tour**: Users can explore the available device catalog without signing up.
+- **Registration and Login**: To fully access all functionalities, users must create an account and log in.
+- **Email Verification**: Upon registration, a verification link is sent to the user to activate the account.
+
+### 🛠️ Admin Panel
+- **Administration Tools**: An admin module allows administrators to manage users and maintain the system's overall configuration and health.
 
 ### Contributors
 
