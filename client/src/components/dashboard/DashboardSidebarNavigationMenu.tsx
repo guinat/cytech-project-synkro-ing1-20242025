@@ -2,10 +2,10 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { NavItem, NavSection } from '@/components/dashboard/DashboardSidebarNavigation';
 import { cn } from '@/lib/utils';
-import { 
-  Settings, 
-  User, 
-  Gauge, 
+import {
+  Settings,
+  User,
+  Gauge,
   Lightbulb,
   FileCog,
   Key,
@@ -34,7 +34,7 @@ const SidebarNavigationMenu: React.FC<NavigationMenuProps> = ({
   const mainNavigation = [
     { icon: Gauge, label: 'Dashboard', href: '/dashboard' },
     { icon: Lightbulb, label: 'Devices', href: '/dashboard/devices' },
-    ...(profile?.role =="ADMIN"
+    ...(profile?.role == "ADMIN"
       ? [{ icon: Key, label: 'Administrator', href: '/dashboard/guests' }]
       : []),
   ];
@@ -44,15 +44,15 @@ const SidebarNavigationMenu: React.FC<NavigationMenuProps> = ({
     { icon: Settings, label: 'Settings', href: '/dashboard/settings' },
   ];
 
-  const adminNavigation = userRole === 'admin' 
-    ? [{ icon: FileCog, label: 'Admin Panel', href: '/dashboard/admin' }] 
+  const adminNavigation = userRole === 'admin'
+    ? [{ icon: FileCog, label: 'Admin Panel', href: '/dashboard/admin' }]
     : [];
 
   return (
     <>
       <NavSection title="Menu" showTitle={showFullWidth}>
         {mainNavigation.map((item) => (
-          <NavItem 
+          <NavItem
             key={item.href}
             icon={item.icon}
             label={item.label}
@@ -66,9 +66,9 @@ const SidebarNavigationMenu: React.FC<NavigationMenuProps> = ({
         <div className="h-px bg-border" />
       </div>
 
-      <NavSection title="Compte" showTitle={showFullWidth}>
+      <NavSection title="Account" showTitle={showFullWidth}>
         {secondaryNavigation.map((item) => (
-          <NavItem 
+          <NavItem
             key={item.href}
             icon={item.icon}
             label={item.label}
@@ -83,10 +83,10 @@ const SidebarNavigationMenu: React.FC<NavigationMenuProps> = ({
           <div className={cn("mx-3 my-4", !showFullWidth && "border-0")}>
             <div className="h-px bg-border" />
           </div>
-          
+
           <NavSection title="Administration" showTitle={showFullWidth}>
             {adminNavigation.map((item) => (
-              <NavItem 
+              <NavItem
                 key={item.href}
                 icon={item.icon}
                 label={item.label}
